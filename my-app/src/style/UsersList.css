@@ -1,0 +1,65 @@
+
+:root {
+  --navbar-height: 60px;
+}
+
+.userlist-container {
+  padding: 30px;
+  padding-top: calc(var(--navbar-height) + 20px);
+  font-family: Arial, sans-serif;
+  min-height: 80vh;
+  background: #f8f8f8;
+}
+
+.userlist-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  gap: 10px;
+}
+
+.search-bar {
+  flex: 1;
+  padding: 10px 15px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  font-size: 14px;
+}
+
+.export-buttons button {
+  margin-left: 10px;
+  padding: 10px 15px;
+  border: none;
+  background-color: #8750fd;
+  color: #fff;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background 0.2s;
+}
+
+.export-buttons button:hover {
+  background-color: #6b3cd6;
+}
+
+.userlist-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #fff;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+.userlist-table th,
+.userlist-table td {
+  padding: 15px;
+  text-align: left;
+  border-bottom: 1px solid #eee;
+}
+
+.userlist-table th {
+  background-color: #f5f5f5;
+  font-weight: bold;
+}
