@@ -116,6 +116,12 @@
   color: #555;
 }
 
+.helper-text {
+  font-size: 0.85rem;
+  color: #555;
+  margin: 2px 0 6px 0;
+}
+
 /* Errors */
 .error-input {
   border: 1px solid #e74c3c;

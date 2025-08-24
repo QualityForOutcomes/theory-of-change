@@ -16,6 +16,15 @@ export default function FormPanel({ data, updateField }: FormProps) {
     "externalInfluences",
   ];
 
+  const fieldPrompts: Record<keyof Data, string> = {
+    goal: "What is the long-term change you want to achieve?",
+    aim: "What is the immediate purpose of this project?",
+    beneficiaries: "Who will directly benefit from this project?",
+    activities: "What specific actions will you take?",
+    objectives: "What measurable outcomes do you want to achieve?",
+    externalInfluences: "What external factors might affect success?",
+  };
+
   const [errors, setErrors] = useState<Record<keyof Data, string>>({
     goal: "",
     aim: "",
@@ -32,7 +41,6 @@ export default function FormPanel({ data, updateField }: FormProps) {
     setProgress((filledFields / fields.length) * 100);
   }, [data]);
 
-  // Validation check
   const validateField = (field: keyof Data, value: string) => {
     if (!value.trim()) {
       setErrors((prev) => ({ ...prev, [field]: `${field} is required` }));
@@ -59,6 +67,9 @@ export default function FormPanel({ data, updateField }: FormProps) {
               : field.charAt(0).toUpperCase() + field.slice(1)}
           </label>
 
+          {/* Inline prompt */}
+          <p className="helper-text">{fieldPrompts[field]}</p>
+
           {field === "beneficiaries" ? (
             <input
               value={data[field]}
@@ -81,6 +92,7 @@ export default function FormPanel({ data, updateField }: FormProps) {
             />
           )}
 
+          {/* Error text */}
           {errors[field] && <span className="error-text">{errors[field]}</span>}
         </div>
       ))}
