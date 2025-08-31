@@ -14,16 +14,28 @@ export default function VisualPanel({ data }: VisualProps) {
   ];
 
   return (
+  <div className="right-panel-container">
+    {/* Buttons at the top */}
+    <div className="panel-buttons">
+      <button className="btn customize">Customize</button>
+      <button className="btn export">Export</button>
+    </div>
+
+    {/* Cards + arrows */}
     <div className="right-panel">
-      {columns.map((col) => (
-        <div className="column" key={col.title}>
-          <div className="column-title">{col.title}</div>
-          <div className="column-card" style={{ backgroundColor: col.color }}>
-            {col.value || "..."}
+      {columns.map((col, index) => (
+        <React.Fragment key={col.title}>
+          <div className="flow-card" style={{ backgroundColor: col.color }}>
+            <div className="card-title">{col.title}</div>
+            <div className="card-value">{col.value || "..."}</div>
           </div>
-        </div>
+          {index < columns.length - 1 && <span className="flow-arrow">→</span>}
+        </React.Fragment>
       ))}
     </div>
-  );
+  </div>
+);
+
+
 }
 

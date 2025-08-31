@@ -1,7 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import FormPanel from "../components/FormPanel";
 import VisualPanel from "../components/VisualPanel";
 import "../style/App.css";
+import Joyride, { CallBackProps, Step } from "react-joyride";
 
 export type Data = {
   goal: string;
@@ -9,7 +10,7 @@ export type Data = {
   beneficiaries: string;
   activities: string;
   objectives: string;
-  externalInfluences: string; 
+  externalInfluences: string;
 };
 
 function App() {
@@ -22,6 +23,7 @@ function App() {
     externalInfluences: "",
   });
 
+  const [runTour, setRunTour] = useState(true);
   const [exportOpen, setExportOpen] = useState(false);
 
   const updateField = (field: keyof Data, value: string) => {
@@ -30,44 +32,73 @@ function App() {
 
   const handleExport = (type: "PDF" | "PNG") => {
     console.log(`Exporting as ${type}`);
-    // TODO: implement export functionality
     setExportOpen(false);
   };
 
   const handleCustomize = () => {
     console.log("Opening Customize options...");
-    // TODO: Add customization logic
+  };
+
+  // Joyride steps
+  const steps: Step[] = [
+    {
+      target: ".progress-container",
+      content: "This is the progress bar showing completion % of the form.",
+    },
+    {
+      target: "#field-goal",
+      content: "Start by defining your long-term Goal here.",
+    },
+    {
+      target: "#field-aim",
+      content: "Now write the immediate Aim of your project.",
+    },
+    {
+      target: "#field-beneficiaries",
+      content: "Specify who will benefit from this project.",
+    },
+    {
+      target: "#customize-btn",
+      content: "You can customize your visual map here.",
+    },
+    {
+      target: "#export-btn",
+      content: "Export your visual as PDF or PNG using this button.",
+    },
+  ];
+
+  const handleJoyrideCallback = (data: CallBackProps) => {
+    // optional: you can handle step changes here
+    // e.g., console.log(data);
   };
 
   return (
     <div className="app-container">
+      <Joyride
+  steps={steps}
+  run={runTour}
+  continuous
+  scrollToFirstStep
+  disableScrolling={false}   
+  spotlightClicks={true}     
+  scrollOffset={100}         
+  showSkipButton
+  showProgress
+  callback={handleJoyrideCallback}
+  styles={{
+    options: {
+      zIndex: 10000,
+    },
+  }}
+/>
+
+
+      {/* Left Side = Form */}
       <FormPanel data={data} updateField={updateField} />
 
-      {/* Right panel wrapper with export button */}
-     <div className="right-panel-wrapper">
-        <div className="panel-header">
-          <div className="panel-buttons">
-            <button className="btn customize" onClick={handleCustomize}>
-              Customize
-            </button>
-            <div className="export-wrapper">
-              <button
-                className="btn export"
-                onClick={() => setExportOpen(!exportOpen)}
-              >
-                Export ▼
-              </button>
-              {exportOpen && (
-                <div className="export-options">
-                  <div onClick={() => handleExport("PDF")}>PDF</div>
-                  <div onClick={() => handleExport("PNG")}>PNG</div>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
+      {/* Right Side = Visual */}
+      <div className="right-panel-wrapper">
 
-        {/* VisualPanel content */}
         <VisualPanel data={data} />
       </div>
     </div>

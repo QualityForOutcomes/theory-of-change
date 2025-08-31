@@ -3,7 +3,7 @@
 }
 
 .navbar {
-  position: fixed;
+  position: relative;
   top: 0;
   left: 0;
   right: 0;
@@ -16,6 +16,7 @@
   padding: 0 20px;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
   font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif; /* different font */
+  margin-bottom: 20px;
 }
 
 .navbar-left {

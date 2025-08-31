@@ -7,6 +7,10 @@ type FormProps = {
 };
 
 export default function FormPanel({ data, updateField }: FormProps) {
+  const [isOpen, setIsOpen] = useState(true);
+
+  const toggleSidebar = () => setIsOpen(!isOpen);
+
   const fields: (keyof Data)[] = [
     "goal",
     "aim",
@@ -16,13 +20,22 @@ export default function FormPanel({ data, updateField }: FormProps) {
     "externalInfluences",
   ];
 
-  const fieldPrompts: Record<keyof Data, string> = {
-    goal: "What is the long-term change you want to achieve?",
-    aim: "What is the immediate purpose of this project?",
-    beneficiaries: "Who will directly benefit from this project?",
-    activities: "What specific actions will you take?",
-    objectives: "What measurable outcomes do you want to achieve?",
-    externalInfluences: "What external factors might affect success?",
+  const fieldLabels: Record<keyof Data, string> = {
+    goal: "Step 1: Identify Big-Picture Goal",
+    aim: "Step 2: Define Project Aim",
+    beneficiaries: "Step 3: Define Project Beneficiaries",
+    activities: "Step 4: Define Project Activities",
+    objectives: "Step 5: Define Project Objectives",
+    externalInfluences: "Step 6: External Influences",
+  };
+
+  const fieldExamples: Record<keyof Data, string> = {
+    goal: "e.g., Reduce poverty in rural areas within 5 years",
+    aim: "e.g., Improve access to clean water for villages",
+    beneficiaries: "e.g., Rural households, farmers, local schools",
+    activities: "e.g., Build wells, train locals, provide water filters",
+    objectives: "e.g., 80% households with safe drinking water in 2 years",
+    externalInfluences: "e.g., Government policies, climate conditions",
   };
 
   const [errors, setErrors] = useState<Record<keyof Data, string>>({
@@ -34,7 +47,8 @@ export default function FormPanel({ data, updateField }: FormProps) {
     externalInfluences: "",
   });
 
-  // Progress bar calculation
+  const maxChars = 200;
+
   const [progress, setProgress] = useState(0);
   useEffect(() => {
     const filledFields = fields.filter((f) => data[f].trim() !== "").length;
@@ -50,29 +64,31 @@ export default function FormPanel({ data, updateField }: FormProps) {
   };
 
   return (
-    <div className="left-panel">
+    <div className="sidebar-container">
+  <div className={`sidebar ${isOpen ? "open" : "collapsed"}`}>
+    {/* Sidebar content */}
+    <div className="sidebar-content">
       <h1>Theory of Change Form</h1>
 
       {/* Progress Bar */}
-      <div className="progress-container">
+      <div className="progress-container" id="progress-bar">
         <div className="progress-bar" style={{ width: `${progress}%` }}></div>
       </div>
       <p className="progress-text">{Math.round(progress)}% completed</p>
 
       {fields.map((field) => (
-        <div className="form-group" key={field}>
-          <label>
-            {field === "externalInfluences"
-              ? "External Influences"
-              : field.charAt(0).toUpperCase() + field.slice(1)}
+        <div className="form-group" key={field} id={`step-${field}`}>
+          <label htmlFor={`field-${field}`} className="form-label">
+            {fieldLabels[field]}
           </label>
 
-          {/* Inline prompt */}
-          <p className="helper-text">{fieldPrompts[field]}</p>
+          <p className="helper-text">{fieldExamples[field]}</p>
 
           {field === "beneficiaries" ? (
             <input
+              id={`field-${field}`}
               value={data[field]}
+              maxLength={maxChars}
               onChange={(e) => {
                 updateField(field, e.target.value);
                 validateField(field, e.target.value);
@@ -82,7 +98,9 @@ export default function FormPanel({ data, updateField }: FormProps) {
             />
           ) : (
             <textarea
+              id={`field-${field}`}
               value={data[field]}
+              maxLength={maxChars}
               onChange={(e) => {
                 updateField(field, e.target.value);
                 validateField(field, e.target.value);
@@ -92,10 +110,19 @@ export default function FormPanel({ data, updateField }: FormProps) {
             />
           )}
 
-          {/* Error text */}
-          {errors[field] && <span className="error-text">{errors[field]}</span>}
+          {errors[field] && (
+            <span className="error-text">{errors[field]}</span>
+          )}
         </div>
       ))}
     </div>
+  </div>
+
+  {/* Toggle button outside sidebar */}
+  <button className="toggle-btn" onClick={toggleSidebar}>
+    {isOpen ? "←" : "→"}
+  </button>
+</div>
+
   );
 }

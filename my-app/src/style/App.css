@@ -2,37 +2,55 @@
   --navbar-height: 60px;
 }
 
+/* Gradient background fills the whole screen */
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    180deg,
+    rgba(203, 108, 230, 0.3) 0%,
+    rgba(135, 75, 253, 0.15) 40%,
+    #ffffff 100%
+  );
+  background-attachment: fixed;  /* keeps gradient steady */
+  overflow-x: hidden;            /* prevent bottom scrollbar */
+  box-sizing: border-box;
+  min-height: 100vh;
+}
 
 /* ---------- Main container ---------- */
 .app-container {
   display: flex;
   flex-direction: row;
-  padding-top: var(--navbar-height); /* Push content below navbar */
-  padding-left: 20px;
-  padding-right: 20px;
+  padding-top: 10px;
   padding-bottom: 20px;
-  gap: 30px;
+  min-height: 100vh;
+  gap: 0px;
   font-family: Arial, sans-serif;
-  min-height: 100vh;   /* Fills screen */
-  background: linear-gradient(
-    180deg,                     /* top to bottom */
-    rgba(203, 108, 230, 0.3) 0%, /* very light pinkish-purple at top */
-    rgba(135, 75, 253, 0.15) 40%, /* lighter violet in middle */
-    #ffffff 100%                 /* white at bottom */
-  );
   box-sizing: border-box;
+  background: transparent;
+  overflow-y: auto;
 }
+
 
 /* ---------- Left panel ---------- */
 .left-panel {
-  flex: 2.5 1 0;
-  min-width: 300px;
+  flex: 0 0 220px;          /* keep narrow, fixed width */
+  max-width: 220px;         
+  min-width: 180px;  
+  min-height: 0;       
   background-color: rgba(255, 255, 255, 0.95);
-  padding: 24px;
-  overflow-y: auto;
-  border-right: 1px solid #ccc;
+  padding: 20px 10px 20px 10px; /* less left padding */
+  overflow-y: auto;  
+  overflow-x: hidden; 
+   margin: 0;      
+  height: 100vh;
   box-sizing: border-box;
+  border-right: none;       /* remove border if you want flush edge */
 }
+
 
 /* Padding between form content and scrollbar */
 .left-panel .form-group {
@@ -41,7 +59,7 @@
 
 /* Thin scrollbar */
 .left-panel::-webkit-scrollbar {
-  width: 6px;
+  width: 8px;
 }
 .left-panel::-webkit-scrollbar-track {
   background: #f0f0f0;
@@ -136,42 +154,92 @@
 }
 
 /* ---------- Right panel ---------- */
-.right-panel {
-  flex: 1 1 0;
+
+.visual-flow {
   display: flex;
-  justify-content: space-evenly;
-  align-items: flex-start;
+  flex-direction: column; /* stack cards vertically */
+  align-items: flex-start; /* align to the left */
   padding: 30px;
-  gap: 25px;
+  gap: 15px; /* space between cards */
 }
+
+.flow-card-wrapper {
+  display: flex;
+  flex-direction: column;      /* stack card + arrow vertically */
+  align-items: center;
+  gap: 10px;
+}
+
+.flow-card {
+  flex: 1 1 auto;          
+  min-width: 120px;
+  max-width: 280px;
+  min-height: 120px;
+  border-radius: 12px;
+  text-align: center;
+  padding: 16px;
+  background-color: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.flow-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.2);
+}
+
+.card-title {
+  font-weight: bold;
+  margin-bottom: 8px;
+}
+
+.card-value {
+  font-size: 14px;
+}
+
+.flow-arrow {
+  font-size: 28px;
+  margin: 0 5px; /* spacing between cards */
+  color: #555;
+}
+
+.right-panel {
+  display: flex;
+  justify-content: flex-start; /* cards flow left-to-right */
+  align-items: flex-start;     /* align to top */
+  gap: 20px;                   /* space between cards/arrows */
+  padding: 20px;
+  flex: 1;
+  box-sizing: border-box;
+  overflow-x: auto;            /* scroll if too many cards */
+  overflow-y: hidden;
+  height: 100%; 
+}
+
 
 /* Right panel container with brand gradient */
 .right-panel-container {
-  flex: 1;
-  border-radius: 16px;
-  padding: 20px;
+  background-color: #f0f0f0;
+  border-radius: 16px;  
   display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-start;
-  background: linear-gradient(
-    135deg,
-    rgba(112,46,243,0.3),
-    rgba(135,75,253,0.3),
-    rgba(203,108,230,0.3)
-  );
+  justify-content: flex-start; /* left-align columns */
+  gap: 20px;                   /* spacing between columns */
+  padding: 20px;
   box-shadow: 0 8px 25px rgba(0,0,0,0.1);
-  overflow-x: hidden;
-  align-items: flex-start;
-  gap: 15px;
+  flex-direction: column;
+  width: 100%;            /* fill available space */
+  box-sizing: border-box;
+  
 }
 
 /* Each column */
 .column {
-  flex: 0 0 140px;
   display: flex;
   flex-direction: column;
   align-items: center;
+  flex: 0 0 140px;  /* width of each column */
 }
+
 
 .column-title {
   font-weight: bold;
@@ -188,20 +256,25 @@
   border-radius: 10px;
   text-align: center;
   background-color: rgba(255, 255, 255, 0.9);
-  box-shadow: 0px 4px 12px rgba(0,0,0,0.15);
-  font-size: 12px;
+  border: 1px solid #ccc;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .column-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0px 6px 16px rgba(0,0,0,0.2);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.2);
 }
+
 .right-panel-wrapper {
   flex: 1;
   display: flex;
   flex-direction: column;
   gap: 15px;
+  margin-left: 20px;
+  box-sizing: border-box;
+  padding-right: 20px;
+  overflow-y: visible;
 }
 
 .panel-header {
@@ -212,6 +285,7 @@
 
 .panel-buttons {
   display: flex;
+  justify-content: flex-end;
   gap: 10px;
 }
 
@@ -261,3 +335,88 @@
   background-color: #f5f5f5;
 }
 
+/* guide tour */
+.popup-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+}
+
+.popup {
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
+  max-width: 400px;
+  text-align: center;
+  box-shadow: 0px 4px 12px rgba(0,0,0,0.2);
+}
+
+/* Sidebar wrapper */
+.sidebar-container {
+  position: relative;
+  display: flex;
+  flex-shrink: 0;   /* don’t squeeze */
+  height: auto;     /* allow to grow naturally with content */
+}
+
+/* Sidebar */
+.sidebar {
+  width: 300px;
+  transition: width 0.3s ease;
+  background-color: rgba(255,255,255,0.95);
+  border-right: 1px solid #ccc;
+  overflow: hidden;
+}
+
+/* Expanded / collapsed */
+.sidebar.open { width: 350px; }
+.sidebar.collapsed { width: 50px; }
+
+/* Scrollable content inside sidebar */
+.sidebar-content {
+  padding: 24px;
+  padding-bottom: 30px;
+  height: 100%;
+  overflow-y: auto;
+  transition: opacity 0.3s ease;
+  box-sizing: border-box;
+}
+
+.sidebar.collapsed .sidebar-content {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Toggle button always visible */
+.toggle-btn {
+  position: absolute;
+  top: 20px;
+  right: -15px; /* stick out half circle */
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: #8750fd;
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 30px;
+  text-align: center;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+  transition: background 0.3s;
+  z-index: 10;
+}
+
+.toggle-btn:hover { background: #7030f3; }
+
+/* Move button when collapsed */
+.sidebar.collapsed + .toggle-btn {
+  left: 50px;
+}
