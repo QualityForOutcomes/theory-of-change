@@ -1,0 +1,133 @@
+@import url('https://fonts.googleapis.com/css2?family=Raleway:wght@700;900&display=swap');
+
+.projects-container {
+  max-width: 600px;
+  margin: 40px auto;
+  padding: 20px;
+  font-family: "Segoe UI", sans-serif;
+  text-align: center;
+}
+
+.projects-container h1 {
+  font-family: 'Raleway', sans-serif;
+  font-size: 3rem;
+  font-weight: 900;
+  text-align: center;
+  color: #ffffff;
+
+  /* darker purple glow using layered text-shadow */
+  text-shadow:
+    0 0 1px #5b00b3,   /* dark purple close glow */
+    0 0 2px #7a2be2,   /* medium purple */
+    0 0 4px #a076f9,   /* lighter purple outer glow */
+    0 0 6px #bf7fff;   /* faint lilac for sparkle */
+}
+
+
+/* Gradient border / glow using pseudo-element */
+.projects-container h1::before {
+  content: attr(data-text);
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 0;
+
+  background: linear-gradient(90deg, #a076f9, #c77bff, #e0b7ff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+
+  /* Tight blur / glow close to the letters */
+  filter: blur(1px);
+}
+
+
+/* Gradient button */
+.create-btn {
+  background: linear-gradient(90deg, #cb6ce6, #874bfd);
+  color: white;
+  font-weight: 600;
+  border: none;
+  padding: 12px 18px;
+  border-radius: 8px;
+  cursor: pointer;
+  margin-bottom: 16px;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.create-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(135, 75, 253, 0.3);
+}
+
+.create-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 6px rgba(135, 75, 253, 0.25);
+}
+
+/* Form styling */
+.create-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.create-form input {
+  padding: 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.form-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+.form-actions button {
+  padding: 8px 14px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+}
+
+/* Cancel button muted */
+.form-actions button:last-child {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+/* Project list */
+.projects-list {
+  list-style: none;
+  padding: 0;
+  margin-top: 20px;
+}
+
+.project-card {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* Open button styled to complement */
+.open-btn {
+  background: linear-gradient(90deg, #874bfd, #cb6ce6);
+  color: white;
+  font-weight: 600;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+
+.open-btn:hover {
+  opacity: 0.9;
+}

@@ -14,7 +14,7 @@ html, body {
     rgba(135, 75, 253, 0.15) 40%,
     #ffffff 100%
   );
-  background-attachment: fixed;  /* keeps gradient steady */
+  background-attachment: fixed;  /* gradient fixed */
   overflow-x: hidden;            /* prevent bottom scrollbar */
   box-sizing: border-box;
   min-height: 100vh;
@@ -34,26 +34,33 @@ html, body {
   overflow-y: auto;
 }
 
+.left-panel .scrollable {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 10px;
+}
 
 /* ---------- Left panel ---------- */
 .left-panel {
   flex: 0 0 220px;          /* keep narrow, fixed width */
   max-width: 220px;         
-  min-width: 180px;  
-  min-height: 0;       
-  background-color: rgba(255, 255, 255, 0.95);
-  padding: 20px 10px 20px 10px; /* less left padding */
-  overflow-y: auto;  
-  overflow-x: hidden; 
+  min-width: 180px;        
+  background-color: transparent;
+  padding: 20px 10px 20px 10px; /* less left padding */  
    margin: 0;      
   height: 100vh;
   box-sizing: border-box;
-  border-right: none;       /* remove border if you want flush edge */
+  display: flex;
+  flex-direction: column;
 }
 
 
 /* Padding between form content and scrollbar */
 .left-panel .form-group {
+  flex: 1;              /* fill remaining height */
+  overflow-y: auto;     /* scroll when content is too tall */
+  overflow-x: hidden;
   padding-right: 10px;
 }
 
@@ -219,7 +226,7 @@ html, body {
 
 /* Right panel container with brand gradient */
 .right-panel-container {
-  background-color: #f0f0f0;
+  background-color: #f2eeee;
   border-radius: 16px;  
   display: flex;
   justify-content: flex-start; /* left-align columns */
@@ -362,22 +369,26 @@ html, body {
 .sidebar-container {
   position: relative;
   display: flex;
-  flex-shrink: 0;   /* don’t squeeze */
-  height: auto;     /* allow to grow naturally with content */
+  flex-shrink: 0;   
+  height: auto;     
 }
 
 /* Sidebar */
 .sidebar {
-  width: 300px;
-  transition: width 0.3s ease;
-  background-color: rgba(255,255,255,0.95);
-  border-right: 1px solid #ccc;
-  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  width: 320px;                     /* open width */
+  transition: width 0.28s ease;
+  background: rgba(255,255,255,0.95);
+  border-right: 1px solid #e6e6e6;
+  box-sizing: border-box;
+  height: calc(100vh - var(--navbar-height)); /* full height under navbar */
+  overflow: visible;               
 }
 
 /* Expanded / collapsed */
 .sidebar.open { width: 350px; }
-.sidebar.collapsed { width: 50px; }
+.sidebar.collapsed { width: 64px; }
 
 /* Scrollable content inside sidebar */
 .sidebar-content {
@@ -389,6 +400,16 @@ html, body {
   box-sizing: border-box;
 }
 
+.sidebar-header {
+  display: flex;
+  align-items: center; /* Center vertically */
+  justify-content: space-between; /* Toggle left, title right */
+  gap: 10px;
+  padding: 10px 12px;
+  border-bottom: 1px solid #f0f0f0;
+  flex: 0 0 auto;
+}
+
 .sidebar.collapsed .sidebar-content {
   opacity: 0;
   pointer-events: none;
@@ -396,27 +417,171 @@ html, body {
 
 /* Toggle button always visible */
 .toggle-btn {
-  position: absolute;
+  position: relative;
   top: 20px;
   right: -15px; /* stick out half circle */
-  width: 30px;
-  height: 30px;
+  width: 36px;
+  height: 36px;
+  display: flex;
   border-radius: 50%;
   background: #8750fd;
   color: #fff;
   border: none;
   cursor: pointer;
-  font-size: 16px;
-  line-height: 30px;
+  font-size: 20px;   /* Bigger arrow */
+  font-weight: bold; /* Make arrow bold */
+  line-height: 1;    
   text-align: center;
   box-shadow: 0 2px 6px rgba(0,0,0,0.2);
-  transition: background 0.3s;
+  transition: background 0.3s ease;
   z-index: 10;
+  flex-direction: column;
+  padding: 5px;
+  justify-content: space-between;
+}
+.toggle-btn span {
+  display: block;
+  height: 3px;
+  background: #fff;
+  border-radius: 2px;
+  transition: all 0.3s ease;
 }
 
+.toggle-btn:hover {
+  background: #7030f3;
+}
 .toggle-btn:hover { background: #7030f3; }
 
-/* Move button when collapsed */
-.sidebar.collapsed + .toggle-btn {
-  left: 50px;
+.influence-cloud {
+  --cloud-color: #cbe3ff;   /* default */
+  position: relative;
+  display: inline-block;
+  background: var(--cloud-color);
+  color: #333;
+  border-radius: 50px;
+  padding: 1rem 2rem;
+  text-align: center;
+  font-weight: 600;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  margin: 20px auto;
 }
+
+/* Fluffy edges */
+.influence-cloud::before,
+.influence-cloud::after {
+  content: "";
+  position: absolute;
+  background: var(--cloud-color); 
+  border-radius: 50%;
+}
+
+.influence-cloud::before {
+  width: 25px;
+  height: 25px;
+  left: -15px;
+  top: 10px;
+}
+
+.influence-cloud::after {
+  width: 30px;
+  height: 30px;
+  right: -18px;
+  top: 5px;
+}
+
+/* Tail */
+.influence-cloud .cloud-value::after {
+  content: "";
+  position: absolute;
+  bottom: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 20px;
+  height: 20px;
+  background: var(--cloud-color);  /* ✅ dynamic */
+  border-radius: 50%;
+}
+
+
+.btn-save {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 14px;   /* smaller size */
+  font-size: 14px;
+  font-weight: 500;
+  border: none;
+  border-radius: 20px; /* rounded corners */
+  background: linear-gradient(135deg, #cb6ce6, #874bfd); /* gradient */
+  color: #fff;
+  cursor: pointer;
+  box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+  transition: background 0.2s ease, transform 0.15s ease;
+  gap: 6px;
+}
+
+.btn-save:hover:not(:disabled) {
+  background: linear-gradient(135deg, #b45ada, #7030f3);
+  transform: translateY(-1px);
+}
+
+.btn-save:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+
+/* Spinner */
+.spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.app-header h1 {
+  font-family: 'Arial', sans-serif;  /* modern font */
+  font-weight: 700;
+  font-size: 2rem;                  /* responsive size */
+  background: linear-gradient(90deg, #7E57C2, #42A5F5); /* branding gradient */
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;  /* gradient text effect */
+  color: #7E57C2;                     /* fallback color */
+  letter-spacing: 1px;                 /* soft feel */
+  margin: 0;
+}
+
+.app-header, .form-header {
+  text-align: center;
+  margin: 30px 0 40px 0;
+}
+
+
+.main-title {
+  font-family: 'Arial', sans-serif;
+  font-weight: 700;
+  font-size: 2rem;
+  color: #000; /* black text */
+  letter-spacing: 1px;
+  margin: 0;
+}
+
+
+.project-title {
+  font-family: 'Arial', sans-serif;
+  font-weight: 500;
+  font-size: 1rem;       /* smaller font */
+  color: #555;            /* subtle gray */
+  margin-top: 6px;
+  opacity: 0.8;           /* soft, modern look */
+}
+
+
