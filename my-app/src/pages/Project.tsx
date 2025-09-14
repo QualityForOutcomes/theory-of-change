@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+
 import { createTocProject, fetchUserTocs } from "../services/api";
 import "../style/Project.css";
 
 type Project = { projectId: string; projectName: string };
+
+
 
 const ProjectsPage: React.FC = () => {
   const [projects, setProjects] = useState<Project[]>([]);
@@ -13,12 +16,14 @@ const ProjectsPage: React.FC = () => {
 
   const userId = localStorage.getItem("userId") || "1234";
 
+
   // Load user projects
   useEffect(() => {
     const loadProjects = async () => {
       try {
         const res = await fetchUserTocs(userId);
         console.log("TOCs response:", res);
+
 
         if (res.success && res.data?.projects) {
           setProjects(res.data.projects);
@@ -31,6 +36,7 @@ const ProjectsPage: React.FC = () => {
     };
     loadProjects();
   }, [userId]);
+
 
   // Create new project
   const handleCreateProject = async () => {
@@ -65,6 +71,7 @@ const ProjectsPage: React.FC = () => {
     }
   };
 
+
   return (
     <div className="projects-container">
       <h1>Workspace</h1>
@@ -90,6 +97,7 @@ const ProjectsPage: React.FC = () => {
       <ul className="projects-list">
         {projects.map((p) => (
           <li key={p.projectId} className="project-card">
+
             <h3>{p.projectName}</h3>
             <button
   className="open-btn"
@@ -100,6 +108,7 @@ const ProjectsPage: React.FC = () => {
 >
   Open
 </button>
+
 
           </li>
         ))}
