@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { createTocProject, fetchUserProjects } from "../services/api";
+
+import { createTocProject, fetchUserTocs } from "../services/api";
 import "../style/Project.css";
 
-type TOCData = { projectTitle: string; status: string };
-type Project = { userId: string; projectId: string; tocData: TOCData };
+type Project = { projectId: string; projectName: string };
+
+
 
 const ProjectsPage: React.FC = () => {
   const [projects, setProjects] = useState<Project[]>([]);
@@ -14,12 +16,15 @@ const ProjectsPage: React.FC = () => {
 
   const userId = localStorage.getItem("userId") || "1234";
 
-  // Load all projects for this user
+
+  // Load user projects
   useEffect(() => {
     const loadProjects = async () => {
       try {
-        const res = await fetchUserProjects(userId);
-        console.log("Projects response:", res);
+        const res = await fetchUserTocs(userId);
+        console.log("TOCs response:", res);
+
+
         if (res.success && res.data?.projects) {
           setProjects(res.data.projects);
         } else {
@@ -32,40 +37,40 @@ const ProjectsPage: React.FC = () => {
     loadProjects();
   }, [userId]);
 
-  // Create a new project
-  // When creating a new project
-const handleCreateProject = async () => {
-  if (!newProjectTitle.trim()) return;
 
-  try {
-    const res = await createTocProject({
-      userId,
-      projectTitle: newProjectTitle,
-      status: "draft",
-    });
+  // Create new project
+  const handleCreateProject = async () => {
+    if (!newProjectTitle.trim()) return;
 
-    if (res.success && res.data) {
-      const newProj: Project = res.data;
+    try {
+      const res = await createTocProject({
+        userId,
+        projectTitle: newProjectTitle,
+        status: "draft",
+      });
 
-      // Store userId + projectId in localStorage
-      localStorage.setItem("userId", newProj.userId);
-      localStorage.setItem("projectId", newProj.projectId);
+      if (res.success && res.data) {
+        const newProj: Project = {
+          projectId: res.data.projectId,
+          projectName: res.data.projectTitle, // backend sends projectTitle here
+        };
 
-      // Update local state
-      setProjects([newProj, ...projects]);
-      setNewProjectTitle("");
-      setShowForm(false);
+        localStorage.setItem("userId", userId);
+        localStorage.setItem("projectId", newProj.projectId);
 
-      // Navigate to the form page for this project
-      navigate(`/projects/${newProj.projectId}`);
-    } else {
-      alert(res.message || "Failed to create project");
+        setProjects([newProj, ...projects]);
+        setNewProjectTitle("");
+        setShowForm(false);
+        navigate(`/projects/${newProj.projectId}`);
+      } else {
+        alert(res.message || "Failed to create project");
+      }
+    } catch (err) {
+      console.error("Error creating project", err);
+      alert("Error creating project");
     }
-  } catch (err) {
-    console.error("Error creating project", err);
-    alert("Error creating project");
-  }
-};
+  };
+
 
   return (
     <div className="projects-container">
@@ -92,15 +97,19 @@ const handleCreateProject = async () => {
       <ul className="projects-list">
         {projects.map((p) => (
           <li key={p.projectId} className="project-card">
-            <h3>{p.tocData.projectTitle}</h3>
+
+            <h3>{p.projectName}</h3>
             <button
-              onClick={() => {
-                localStorage.setItem("projectId", p.projectId); // Store for App.tsx
-                navigate(`/projects/${p.projectId}`);
-              }}
-            >
-              Open
-            </button>
+  className="open-btn"
+  onClick={() => {
+    localStorage.setItem("projectId", p.projectId);
+    navigate(`/projects/${p.projectId}`);
+  }}
+>
+  Open
+</button>
+
+
           </li>
         ))}
       </ul>

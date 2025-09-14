@@ -79,3 +79,22 @@ export const fetchUserProjects = async (userId: string) => {
     throw error;
   }
 };
+
+export const fetchUserTocs = async (userId: string) => {
+  try {
+    const response = await axios.get(
+      `${API_BASE}/api/project/toc.GetProjectList`,
+      {
+        params: { userId },
+        headers: { "Content-Type": "application/json" },
+      }
+    );
+    return response.data; // { success, message, data: { projects, count }, statusCode }
+  } catch (error: any) {
+    console.error(
+      "Error fetching user TOCs:",
+      error.response?.data || error.message
+    );
+    throw error;
+  }
+};
