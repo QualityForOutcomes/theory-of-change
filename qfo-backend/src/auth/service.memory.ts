@@ -1,6 +1,7 @@
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { env } from "../env";
+import { emailService } from "./email.service";
 
 type User = {
   id: string;
@@ -101,8 +102,13 @@ export async function requestPasswordReset(emailRaw: string) {
   
   resetTokens.set(token, resetToken);
   
-  // In a real app, you would send an email here
-  console.log(`Password reset token for ${email}: ${token}`);
+  // Send password reset email
+  try {
+    await emailService.sendPasswordResetEmail(email, token);
+  } catch (error) {
+    console.error('Failed to send password reset email:', error);
+    // Still return success message for security (don't reveal if email sending failed)
+  }
   
   return { message: "If this email exists, you will receive a reset code" };
 }
@@ -131,18 +137,18 @@ export async function resetPassword(token: string, newPassword: string) {
 }
 
 (async () => {
-  const demoEmail = "demo@example.com";
+  const demoEmail = "milanghadiya2@gmail.com";
   if (!users.has(demoEmail)) {
     const hash = await bcrypt.hash("secret123", 12);
     users.set(demoEmail, {
       id: makeId(),
       email: demoEmail,
       password: hash,
-      firstName: "Demo",
-      lastName: "User",
+      firstName: "Milan",
+      lastName: "Ghadiya",
       createdAt: nowISO(),
       updatedAt: nowISO(),
     });
-    // console.log("Seeded demo user: demo@example.com / secret123");
+    // console.log("Seeded demo user: milanghadiya2@gmail.com / secret123");
   }
 })();

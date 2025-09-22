@@ -48,33 +48,41 @@ export default function AuthCard() {
     return "";
   }
 
-  async function submitRegister() {
-    const { token, user } = await api("/auth/register", {
+  const submitRegister = async () => {
+    console.log("Registration: Starting registration process");
+    const res = await api("/auth/register", {
       method: "POST",
-      body: JSON.stringify({
-        email: form.email.trim(),
-        password: form.password,
-        firstName: form.firstName,
-        lastName: form.lastName,
-        org: form.organisation,
-      }),
+      body: { email: form.email.trim(), password: form.password },
     });
-    localStorage.setItem("token", token);
-    setAuthUser(user);
-    nav("/dashboard", { replace: true });     
-  }
+    localStorage.setItem("token", res.token);
+    console.log("Registration: Token stored:", res.token ? "yes" : "no");
+    console.log("Registration: User data received:", res.user);
+    setAuthUser(res.user);
+    console.log("Registration: Navigating to dashboard");
+    // Small delay to ensure state is set before navigation
+    setTimeout(() => {
+      nav("/dashboard", { replace: true });
+    }, 100);
+  };
 
   async function submitLogin() {
+    console.log("LoginPage: Starting login...");
     const { token, user } = await api("/auth/login", {
       method: "POST",
-      body: JSON.stringify({
+      body: {
         email: form.email.trim(),
         password: form.password,
-      }),
+      },
     });
+    console.log("LoginPage: Login successful, token:", token ? "received" : "missing");
+    console.log("LoginPage: User data:", user);
     localStorage.setItem("token", token);
     setAuthUser(user);                          
-    nav("/dashboard", { replace: true });    
+    console.log("LoginPage: Navigating to dashboard...");
+    // Small delay to ensure state is set before navigation
+    setTimeout(() => {
+      nav("/dashboard", { replace: true });
+    }, 100);
   }
 
   async function handleSubmit(e) {

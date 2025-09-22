@@ -7,7 +7,13 @@ export async function api(path, options = {}) {
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
     ...(options.headers || {}),
   };
-  const res = await fetch(`${BASE}${path}`, { ...options, headers });
+  
+  // Stringify the body if it's an object
+  const body = options.body && typeof options.body === 'object' 
+    ? JSON.stringify(options.body) 
+    : options.body;
+  
+  const res = await fetch(`${BASE}${path}`, { ...options, headers, body });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(data?.error || "Request failed");
   return data;
