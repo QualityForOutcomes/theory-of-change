@@ -177,6 +177,21 @@ create trigger trg_canvas_updated       before update on ProjectCanvas for each 
 create trigger trg_export_updated       before update on ExportFile    for each row execute procedure set_updated_at();
 
 
-
-
---data population
+-- ensuring timezones are more timezone-aware
+ALTER TABLE "User"          ALTER COLUMN created_at TYPE timestamptz USING created_at AT TIME ZONE 'UTC';
+ALTER TABLE UserProfile     ALTER COLUMN updated_at TYPE timestamptz USING updated_at AT TIME ZONE 'UTC';
+ALTER TABLE Subscription    ALTER COLUMN start_date TYPE timestamptz USING start_date AT TIME ZONE 'UTC';
+ALTER TABLE Subscription    ALTER COLUMN renewal_date TYPE timestamptz USING renewal_date AT TIME ZONE 'UTC';
+ALTER TABLE Subscription    ALTER COLUMN updated_at TYPE timestamptz USING updated_at AT TIME ZONE 'UTC';
+ALTER TABLE Subscription    ALTER COLUMN expires_at TYPE timestamptz USING expires_at AT TIME ZONE 'UTC';
+ALTER TABLE Invoice         ALTER COLUMN period_start TYPE timestamptz USING period_start AT TIME ZONE 'UTC';
+ALTER TABLE Invoice         ALTER COLUMN period_end   TYPE timestamptz USING period_end   AT TIME ZONE 'UTC';
+ALTER TABLE Invoice         ALTER COLUMN issued_at    TYPE timestamptz USING issued_at AT TIME ZONE 'UTC';
+ALTER TABLE Invoice         ALTER COLUMN due_at       TYPE timestamptz USING due_at AT TIME ZONE 'UTC';
+ALTER TABLE Project         ALTER COLUMN updated_at   TYPE timestamptz USING updated_at AT TIME ZONE 'UTC';
+ALTER TABLE Project         ALTER COLUMN created_at   TYPE timestamptz USING created_at AT TIME ZONE 'UTC';
+ALTER TABLE ProjectCanvas   ALTER COLUMN updated_at   TYPE timestamptz USING updated_at AT TIME ZONE 'UTC';
+ALTER TABLE ExportFile      ALTER COLUMN created_at   TYPE timestamptz USING created_at AT TIME ZONE 'UTC';
+ALTER TABLE ExportFile      ALTER COLUMN updated_at   TYPE timestamptz USING updated_at AT TIME ZONE 'UTC';
+ALTER TABLE ExportFile      ALTER COLUMN expires_at   TYPE timestamptz USING expires_at AT TIME ZONE 'UTC';
+ALTER TABLE Payment         ALTER COLUMN paid_at      TYPE timestamptz USING paid_at AT TIME ZONE 'UTC';
