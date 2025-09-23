@@ -149,6 +149,7 @@ create index if not exists ix_export_project       on ExportFile(project_ID);
 create index if not exists ix_export_status        on ExportFile(status);
 create index if not exists ix_authprovider_email   on UserAuthProvider(email_address);
 create index if not exists ix_subscription_email   on Subscription(email_address);
+CREATE UNIQUE INDEX IF NOT EXISTS uq_user_email_lower ON "User"(lower(email_address));
 
 -- updated_at helper
 create or replace function set_updated_at() returns trigger as $$
