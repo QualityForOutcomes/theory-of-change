@@ -39,6 +39,10 @@ create table if not exists UserAuthProvider (
   constraint uq_auth_provider unique (provider, provider_user_id)
 );
 
+ALTER TABLE UserAuthProvider
+  ADD CONSTRAINT uq_auth_email_provider UNIQUE (email_address, provider);
+
+
 -- UserTermsAcceptance
 create table if not exists UserTermsAcceptance (
   email_address varchar(255) primary key references "User"(email_address) on delete cascade,
