@@ -18,3 +18,21 @@ export async function api(path, options = {}) {
   if (!res.ok) throw new Error(data?.error || "Request failed");
   return data;
 }
+
+// Stripe API functions
+export const stripeApi = {
+  async getPlans() {
+    return api('/stripe/plans');
+  },
+
+  async createCheckoutSession(priceId, userId) {
+    return api('/stripe/create-checkout-session', {
+      method: 'POST',
+      body: { priceId, userId }
+    });
+  },
+
+  async getSubscriptionStatus(customerId) {
+    return api(`/stripe/subscription-status/${customerId}`);
+  }
+};
