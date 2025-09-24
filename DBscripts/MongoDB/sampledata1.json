@@ -1,0 +1,22 @@
+{
+  "email": "diana@example.com",
+  "projectID": "7",
+  "tocData": {
+    "projectTitle": "Clean Water Access",
+    "bigPictureGoal": "Provide safe drinking water",
+    "projectAim": "Install wells in remote areas",
+    "objectives": ["Build 10 wells", "Train local maintenance teams"],
+    "beneficiaries": {
+      "description": "Rural households",
+      "estimatedReach": 500
+    },
+    "activities": ["Well construction", "Community training"],
+    "outcomes": ["Reduced waterborne diseases", "Improved sanitation"],
+    "externalFactors": ["Seasonal rainfall", "Groundwater levels"],
+    "evidenceLinks": ["http://example.com/report-water"],
+    "status": "in-progress",
+    "type": "project",
+    "createdAt": { "$date": "2025-08-10T04:00:00Z" },
+    "updatedAt": { "$date": "2025-09-12T04:00:00Z" }
+  }
+}
