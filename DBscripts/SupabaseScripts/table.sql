@@ -9,6 +9,8 @@ do $$ begin create type subscription_status_enum as enum ('trialing','active','p
 do $$ begin create type invoice_status_enum as enum ('draft','open','paid','void','uncollectible'); exception when duplicate_object then null; end $$;
 do $$ begin create type export_status_enum as enum ('queued','processing','ready','failed'); exception when duplicate_object then null; end $$;
 
+ALTER TABLE "User" ADD CONSTRAINT chk_username_not_blank CHECK (username IS NULL OR length(btrim(username)) > 0);
+
 -- User (email_address is the natural unique identifier)
 create table if not exists "User" (
   user_ID        serial primary key,
