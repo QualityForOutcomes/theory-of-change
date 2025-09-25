@@ -1,174 +1,209 @@
 import React, { useState } from "react";
 import { Data } from "../pages/App";
+import "../style/Visual.css"
 
 type VisualProps = {
   data: Data;
 };
 
-type Template = {
-  name: string;
-  columns: { title: string; color: string }[];
-  influenceColor: string;
+type CardConfig = {
+  value: string;
+  bgColor: string;
+  textColor: string;
 };
 
-type TemplatePreviewProps = {
-  template: Template;
+type ColumnConfig = {
+  title: string;
+  cards: CardConfig[];
 };
-
-// Small preview component for template colors
-function TemplatePreview({ template }: TemplatePreviewProps) {
-  return (
-    <div
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: "6px",
-        marginBottom: "4px",
-      }}
-    >
-      {/* Influence cloud preview */}
-      <div
-        style={{
-          width: "16px",
-          height: "16px",
-          borderRadius: "50%",
-          backgroundColor: template.influenceColor,
-          border: "1px solid #ccc",
-        }}
-      ></div>
-
-      {/* Column color previews */}
-      {template.columns.map((col, i) => (
-        <div
-          key={i}
-          style={{
-            width: "16px",
-            height: "16px",
-            borderRadius: "4px",
-            backgroundColor: col.color,
-            border: "1px solid #ccc",
-          }}
-        />
-      ))}
-
-      {/* Template name */}
-      <span style={{ marginLeft: "8px" }}>{template.name}</span>
-    </div>
-  );
-}
 
 export default function VisualPanel({ data }: VisualProps) {
-  // Define templates
-  const templates: Template[] = [
+  const [columns, setColumns] = useState<ColumnConfig[]>([
     {
-      name: "Purple Haze",
-      influenceColor: "#A3C2FF",
-      columns: [
-        { title: "Activities", color: "#8C6BDC" },
-        { title: "Objectives", color: "#A07CFD" },
-        { title: "Aim", color: "#C074E0" },
-        { title: "Goal", color: "#8C6BDC" },
-      ],
+      title: "Activities",
+      cards: [
+        { value: data.activities || "...", bgColor: "#8C6BDC", textColor: "#fff" }
+      ]
     },
     {
-      name: "Sunset Glow",
-      influenceColor: "#FFAB66",
-      columns: [
-        { title: "Goal", color: "#FF8F5C" },
-        { title: "Aim", color: "#FFA877" },
-        { title: "Objectives", color: "#FFCC66" },
-        { title: "Activities", color: "#FFAB66" },
-      ],
+      title: "Objectives",
+      cards: [
+        { value: data.objectives || "...", bgColor: "#A07CFD", textColor: "#fff" }
+      ]
     },
     {
-      name: "Ocean Breeze",
-      influenceColor: "#26A69A",
-      columns: [
-        { title: "Activities", color: "#4DB6AC" },
-        { title: "Objectives", color: "#26A69A" },
-        { title: "Aim", color: "#00897B" },
-        { title: "Goal", color: "#00695C" },
-      ],
+      title: "Aim",
+      cards: [
+        { value: data.aim || "...", bgColor: "#C074E0", textColor: "#fff" }
+      ]
     },
     {
-      name: "Fiery Dawn",
-      influenceColor: "#FF8F00",
-      columns: [
-        { title: "Activities", color: "#FF7043" },
-        { title: "Objectives", color: "#F4511E" },
-        { title: "Aim", color: "#FFB300" },
-        { title: "Goal", color: "#FFA000" },
-      ],
-    },
-  ];
+      title: "Goal",
+      cards: [
+        { value: data.goal || "...", bgColor: "#8C6BDC", textColor: "#fff" }
+      ]
+    }
+  ]);
 
-  const [selectedTemplate, setSelectedTemplate] = useState<Template>(
-    templates[0]
-  );
-  const [showTemplateOptions, setShowTemplateOptions] = useState(false);
+  const [influenceColor, setInfluenceColor] = useState("#A3C2FF");
+  const [showCustomize, setShowCustomize] = useState(false);
 
-  const handleTemplateSelect = (template: Template) => {
-    setSelectedTemplate(template);
-    setShowTemplateOptions(false);
+  const handleAddCard = (colIndex: number) => {
+    const newColumns = [...columns];
+    newColumns[colIndex].cards.push({
+      value: "New Card",
+      bgColor: "#C074E0",
+      textColor: "#fff"
+    });
+    setColumns(newColumns);
+  };
+
+  const handleRemoveCard = (colIndex: number, cardIndex: number) => {
+    const newColumns = [...columns];
+    if (cardIndex === 0) return; // Do not remove main card
+    newColumns[colIndex].cards.splice(cardIndex, 1);
+    setColumns(newColumns);
+  };
+
+  const handleCardColorChange = (
+    colIndex: number,
+    cardIndex: number,
+    field: "bgColor" | "textColor",
+    value: string
+  ) => {
+    const newColumns = [...columns];
+    newColumns[colIndex].cards[cardIndex][field] = value;
+    setColumns(newColumns);
+  };
+
+  const handleCardTextChange = (
+    colIndex: number,
+    cardIndex: number,
+    value: string
+  ) => {
+    const newColumns = [...columns];
+    newColumns[colIndex].cards[cardIndex].value = value;
+    setColumns(newColumns);
   };
 
   return (
     <div className="right-panel-container">
       {/* Buttons */}
       <div className="panel-buttons">
-        <div style={{ position: "relative" }}>
-          <button
-            className="btn customize"
-            onClick={() => setShowTemplateOptions(!showTemplateOptions)}
-          >
-            Customize
-          </button>
-          {showTemplateOptions && (
-            <div className="export-options">
-              {templates.map((t) => (
-                <div key={t.name} onClick={() => handleTemplateSelect(t)}>
-                  <TemplatePreview template={t} />
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+        <button
+          className="btn customize"
+          onClick={() => setShowCustomize(!showCustomize)}
+        >
+          {showCustomize ? "Hide Customization" : "Customize"}
+        </button>
         <button className="btn export">Export</button>
       </div>
 
       {/* Influence Cloud */}
       <div
         className="influence-cloud"
-        style={{ ["--cloud-color" as any]: selectedTemplate.influenceColor }}
+        style={{ ["--cloud-color" as any]: influenceColor }}
       >
         <div className="cloud-value">{data.externalInfluences || "..."}</div>
       </div>
 
-      {/* Cards */}
+      {/* Cloud customization */}
+      {showCustomize && (
+        <div className="cloud-customize">
+          <span className="label">Cloud Color</span>
+          <input
+            type="color"
+            value={influenceColor}
+            onChange={(e) => setInfluenceColor(e.target.value)}
+            className="color-picker"
+          />
+        </div>
+      )}
+
+      {/* Cards Flow */}
       <div className="right-panel">
-        {selectedTemplate.columns.map((col, index) => {
-          // Map title to the correct data value
-          const valueMap: Record<string, string> = {
-            Activities: data.activities,
-            Objectives: data.objectives,
-            Aim: data.aim,
-            Goal: data.goal,
-          };
-          return (
-            <React.Fragment key={col.title}>
-              <div
-                className="flow-card"
-                style={{ backgroundColor: col.color }}
+        {columns.map((col, colIndex) => (
+          <React.Fragment key={col.title}>
+            <div className="outer-card">
+              {col.cards.map((card, cardIndex) => (
+                <div key={cardIndex} className="card-container">
+                  <div
+                    className="flow-card"
+                    style={{ backgroundColor: card.bgColor, color: card.textColor }}
+                  >
+                    <div className="card-title">
+                      {cardIndex === 0 ? col.title : ""}
+                    </div>
+                    <textarea
+                      className="card-value-input"
+                      value={card.value}
+                      onChange={(e) =>
+                        handleCardTextChange(colIndex, cardIndex, e.target.value)
+                      }
+                    />
+                  </div>
+
+                  {showCustomize && (
+                    <div className="customize-controls">
+                      <div>
+                        <span>Card</span>
+                        <input
+                          type="color"
+                          value={card.bgColor}
+                          onChange={(e) =>
+                            handleCardColorChange(
+                              colIndex,
+                              cardIndex,
+                              "bgColor",
+                              e.target.value
+                            )
+                          }
+                        />
+                      </div>
+                      <div>
+                        <span>Text</span>
+                        <input
+                          type="color"
+                          value={card.textColor}
+                          onChange={(e) =>
+                            handleCardColorChange(
+                              colIndex,
+                              cardIndex,
+                              "textColor",
+                              e.target.value
+                            )
+                          }
+                        />
+                      </div>
+                      {/* Remove button for extra cards */}
+                      {cardIndex > 0 && (
+                        <button
+                          className="remove-card-btn"
+                          onClick={() => handleRemoveCard(colIndex, cardIndex)}
+                        >
+                          -
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
+              ))}
+
+              {/* Add Card Button */}
+              <button
+                onClick={() => handleAddCard(colIndex)}
+                className="add-card-btn"
               >
-                <div className="card-title">{col.title}</div>
-                <div className="card-value">{valueMap[col.title] || "..."}</div>
-              </div>
-              {index < selectedTemplate.columns.length - 1 && (
-                <span className="flow-arrow">→</span>
-              )}
-            </React.Fragment>
-          );
-        })}
+                +
+              </button>
+            </div>
+
+            {/* Arrow */}
+            {colIndex < columns.length - 1 && (
+              <span className="flow-arrow">→</span>
+            )}
+          </React.Fragment>
+        ))}
       </div>
     </div>
   );

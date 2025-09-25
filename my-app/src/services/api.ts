@@ -2,21 +2,7 @@ import axios from "axios";
 
 const API_BASE = "https://nodejs-serverless-function-express-rho-ashen.vercel.app";
 
-// Forms APIs 
-export const saveFormData = async (formData: any) => {
-  const response = await axios.post(`${API_BASE}/forms`, formData);
-  return response.data;
-};
 
-export const updateFormData = async (formId: string, formData: any) => {
-  const response = await axios.put(`${API_BASE}/forms/${formId}`, formData);
-  return response.data;
-};
-
-export const fetchFormData = async (formId: string) => {
-  const response = await axios.get(`${API_BASE}/forms/${formId}`);
-  return response.data;
-};
 
 // TOC Project APIs
 
@@ -89,7 +75,7 @@ export const fetchUserTocs = async (userId: string) => {
         headers: { "Content-Type": "application/json" },
       }
     );
-    return response.data; // { success, message, data: { projects, count }, statusCode }
+    return response.data; // { success, message, data: { projects, count }, status }
   } catch (error: any) {
     console.error(
       "Error fetching user TOCs:",
