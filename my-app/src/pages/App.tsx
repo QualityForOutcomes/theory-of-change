@@ -112,7 +112,7 @@ function App() {
   ];
 
   const handleJoyrideCallback = (data: CallBackProps) => {
-    // optional: handle step changes
+   
   };
 
   return (

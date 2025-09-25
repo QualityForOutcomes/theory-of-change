@@ -52,7 +52,7 @@ const ProjectsPage: React.FC = () => {
       if (res.success && res.data) {
         const newProj: Project = {
           projectId: res.data.projectId,
-          projectName: res.data.projectTitle, // backend sends projectTitle here
+          projectName: res.data.projectTitle, 
         };
 
         localStorage.setItem("userId", userId);
