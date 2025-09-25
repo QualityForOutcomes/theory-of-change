@@ -9,19 +9,17 @@ const API_BASE =
 
 // Authentication APIs
 export const authRegister = async (payload: {
-  email: string;
-  password: string;
-  firstName?: string;
-  lastName?: string;
-  org?: string;
+  email: string; password: string; firstName?: string; lastName?: string; org?: string;
 }) => {
-  const { data } = await axios.post(`${API_BASE}/auth/register`, payload);
-  return data as { token: string; user: { id: string; email: string } };
+  const user = await createUser(payload);
+  const token = `dev-${user.id}-${Date.now()}`;   // fake token for dev
+  return { token, user };
 };
 
 export const authLogin = async (payload: { email: string; password: string }) => {
-  const { data } = await axios.post(`${API_BASE}/auth/login`, payload);
-  return data as { token: string; user: { id: string; email: string } };
+  const user = await verifyLogin(payload.email, payload.password);
+  const token = `dev-${user.id}-${Date.now()}`;   // fake token
+  return { token, user };
 };
 
 // Forms APIs 

@@ -1,5 +1,3 @@
-// src/utils/validation.js
-
 export function validateEmailDetailed(email) {
     if (!email) return "Email is required.";
   
@@ -62,6 +60,6 @@ export function validatePassword(password) {
       return "Password must have at least one special character.";
     }
   
-    return ""; // valid
+    return ""; 
   }
   

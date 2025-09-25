@@ -1,9 +1,12 @@
-import React from "react";
-import { Navigate, Outlet, useLocation } from "react-router-dom";
+import { ReactElement } from "react";
+import { Navigate } from "react-router-dom";
 import { useAuth } from "./AuthProvider";
 
-export default function PrivateRoute() {
-  const { isAuthenticated } = useAuth();
-  const loc = useLocation();
-  return isAuthenticated ? <Outlet /> : <Navigate to="/login" replace state={{ from: loc }} />;
+type Props = {
+  children: ReactElement; 
+};
+
+export default function PrivateRoute({ children }: Props) {
+  const { user } = useAuth(); 
+  return user ? children : <Navigate to="/login" replace />;
 }

@@ -6,7 +6,7 @@ import bg from "../assets/bg.jpg"
 import { signInWithPopup } from "firebase/auth";  
 import { auth, googleProvider } from "../lib/firebase"; 
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../lib/authContext";
+import { useAuth } from "../AuthProvider";
 import { authLogin, authRegister } from "../../services/api";
 // import googleIcon from "../assets/google.png";
 
@@ -64,6 +64,7 @@ export default function AuthCard() {
     });
     localStorage.setItem("token", token);
     setUser(user);
+    console.log("Redirecting to", redirectAfterAuth);
     nav(redirectAfterAuth, { replace: true });
   }
 
@@ -74,6 +75,7 @@ export default function AuthCard() {
     });
     localStorage.setItem("token", token);
     setUser(user);
+    console.log("Redirecting to", redirectAfterAuth);
     nav(redirectAfterAuth, { replace: true });
   }
 
@@ -138,6 +140,7 @@ export default function AuthCard() {
       setUser(gUser as any);
       setError("");
       setSuccess(true);
+      console.log("Redirecting to", redirectAfterAuth);
       nav(redirectAfterAuth, { replace: true });
     } catch (err) {
       console.error("Google sign-in failed:", err);
