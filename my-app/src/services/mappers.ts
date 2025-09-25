@@ -1,4 +1,4 @@
-import { Data } from "../pages/App";
+import { Data } from "../../src/pages/App";
 
 export const mapFormToTocPayload = (
   formData: Data,

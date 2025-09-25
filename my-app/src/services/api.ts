@@ -1,6 +1,28 @@
 import axios from "axios";
+import { createUser, verifyLogin, signToken } from "../mocks/service.memory";
 
-const API_BASE = "https://nodejs-serverless-function-express-rho-ashen.vercel.app";
+// const API_BASE = "https://nodejs-serverless-function-express-rho-ashen.vercel.app";
+const API_BASE =
+  process.env.NODE_ENV === "development"
+    ? "" // React dev server will proxy to Vercel
+    : "https://nodejs-serverless-function-express-rho-ashen.vercel.app";
+
+// Authentication APIs
+export const authRegister = async (payload: {
+  email: string;
+  password: string;
+  firstName?: string;
+  lastName?: string;
+  org?: string;
+}) => {
+  const { data } = await axios.post(`${API_BASE}/auth/register`, payload);
+  return data as { token: string; user: { id: string; email: string } };
+};
+
+export const authLogin = async (payload: { email: string; password: string }) => {
+  const { data } = await axios.post(`${API_BASE}/auth/login`, payload);
+  return data as { token: string; user: { id: string; email: string } };
+};
 
 // Forms APIs 
 export const saveFormData = async (formData: any) => {
