@@ -1,3 +1,5 @@
+// Ensures that the forgot password link is visible and points to the right url
+
 import { render, screen } from "@testing-library/react";
 import React from "react";
 

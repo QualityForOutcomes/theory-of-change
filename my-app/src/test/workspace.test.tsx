@@ -1,3 +1,5 @@
+//Check that the workspace page renders
+
 import { render, screen, fireEvent } from "@testing-library/react";
 import React from "react";
 

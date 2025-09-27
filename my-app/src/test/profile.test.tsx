@@ -1,3 +1,5 @@
+//Checks that profile page shows all necessary information
+
 import { render, screen } from "@testing-library/react";
 import React from "react";
 

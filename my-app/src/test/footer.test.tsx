@@ -1,3 +1,4 @@
+//Check that the footer reveals all details such as company info, contact details and social links
 import { render, screen } from "@testing-library/react";
 import React from "react";
 

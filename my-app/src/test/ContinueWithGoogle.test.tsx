@@ -1,3 +1,5 @@
+//A smoke test to make sure the google sign-in option is present
+
 import { render, screen } from "@testing-library/react";
 import React from "react";
 

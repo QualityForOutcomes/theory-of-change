@@ -1,3 +1,5 @@
+//checks that sign in button is disabled until both emails + passwords are filled in
+
 import { render, screen, fireEvent } from "@testing-library/react";
 import React from "react";
 

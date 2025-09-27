@@ -1,3 +1,5 @@
+//Types an invalid email and checks that an error message appears
+
 import { render, screen, fireEvent } from "@testing-library/react";
 import React from "react";
 

@@ -1,3 +1,5 @@
+//Checks that subscribe to newsletter check box is unchecked by default
+
 import { render, screen } from "@testing-library/react";
 import React from "react";
 

@@ -1,3 +1,5 @@
+//Ensures that the hamburger shows all the dropdown featurs
+
 import { render, screen, fireEvent } from "@testing-library/react";
 import React from "react";
 
