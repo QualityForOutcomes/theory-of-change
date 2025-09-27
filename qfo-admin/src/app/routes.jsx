@@ -4,7 +4,7 @@ import AuthLayout from "../layouts/AuthLayout.jsx";
 import ProtectedRoute from "../routes/ProtectedRoutes.jsx";
 import Login from "../pages/Login.jsx";
 import NotFound from "../pages/NotFound.jsx";
-import Dashboard from "../features/admin/Dashboard.jsx";
+import Dashboard from "../features/admin/AdminDashboard.jsx";
 
 export default function AppRoutes() {
   return (
