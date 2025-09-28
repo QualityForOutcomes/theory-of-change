@@ -57,6 +57,29 @@ export const fetchUserProfile = async () => {
   }
 };
 
+export const updateUserProfile = async (payload: {
+  firstName?: string;
+  lastName?: string;
+  organization?: string;
+  username?: string;
+}) => {
+  try {
+    const response = await axios.put(`${API_BASE}/api/user/Update`, payload, {
+      headers: {
+        "Content-Type": "application/json",
+        ...getAuthHeaders(),
+      },
+    });
+
+    const { success, data, message } = response.data;
+
+    if (!success) throw new Error(message || "Failed to update user profile");
+
+    return data; // Returns the updated user profile data
+  } catch (err: any) {
+    throw new Error(err.response?.data?.message || err.message || "Failed to update user profile");
+  }
+};
 // TOC Project APIs
 
 export const createTocProject = async (data: {
