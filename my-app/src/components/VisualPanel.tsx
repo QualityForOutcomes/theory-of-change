@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Data } from "../pages/App";
+import { exportVisualDiagram } from "../utils/exportUtils";
 import "../style/Visual.css";
 
 type VisualProps = {
@@ -36,8 +37,11 @@ export default function VisualPanel({
 }: VisualProps) {
   console.log("=== VisualPanel render ===");
   console.log("Received cloudColors prop:", cloudColors);
+  console.log("cloudColors length:", cloudColors?.length);
+  console.log("cloudColors[0]:", cloudColors?.[0]);
   
   const [showCustomize, setShowCustomize] = useState(false);
+  const exportRef = useRef<HTMLDivElement>(null);
 
   // Initialize columns with 1 card each from data
   const initialColumns: ColumnConfig[] = [
@@ -62,11 +66,15 @@ export default function VisualPanel({
 
   // Update local cloud colors when prop changes
   useEffect(() => {
-    console.log("=== CloudColors prop changed ===");
+    console.log("=== CloudColors prop useEffect ===");
     console.log("New cloudColors prop:", cloudColors);
+    console.log("cloudColors truthy?", !!cloudColors);
+    console.log("cloudColors length > 0?", cloudColors && cloudColors.length > 0);
     if (cloudColors && cloudColors.length > 0) {
-      console.log("Updating local cloud colors to match prop");
-      setLocalCloudColors(cloudColors);
+      console.log("Updating local cloud colors to match prop:", cloudColors);
+      setLocalCloudColors([...cloudColors]); // Force new array reference
+    } else {
+      console.log("Not updating local colors - prop is empty or falsy");
     }
   }, [cloudColors]);
 
@@ -277,14 +285,28 @@ export default function VisualPanel({
     console.log(`=== END CLOUD COLOR CHANGE ===`);
   };
 
+  const handleExport = async () => {
+    if (exportRef.current) {
+      try {
+        await exportVisualDiagram(exportRef.current, data.projectTitle || 'Theory-of-Change');
+      } catch (error) {
+        console.error('Export failed:', error);
+        alert('Export failed. Please try again.');
+      }
+    }
+  };
+
   return (
     <div className="right-panel-container">
       <div className="panel-buttons">
         <button className="btn customize" onClick={() => setShowCustomize(!showCustomize)}>
           {showCustomize ? "Hide Customization" : "Customize"}
         </button>
+        <button className="btn export" onClick={handleExport}>
+          Export
+        </button>
       </div>
-
+<div ref={exportRef} className="export-content">
       {/* External Influences */}
       <div className="influence-cloud-wrapper">
         <div className="influence-title">External Influences</div>
@@ -429,6 +451,7 @@ export default function VisualPanel({
           </React.Fragment>
         ))}
       </div>
+    </div>
     </div>
   );
 }
