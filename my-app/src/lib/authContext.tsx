@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
-import { authLogin, authRegister } from "../../services/api"; // adjust if needed
+import { authLogin, authRegister } from "../services/api"; // adjust if needed
 
 // Define what a user looks like
 export type User = {

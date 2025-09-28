@@ -1,13 +1,23 @@
 import React, { createContext, useContext, useMemo, useState } from "react";
 
-type User = { id: string; email: string };
+type User = {
+  userId: number;   // required
+  email: string;
+  username?: string;
+  firstName?: string;
+  lastName?: string;
+  organisation?: string;
+  avatarUrl?: string | null;
+  displayName?: string;
+};
 type Ctx = {
   user: User | null;
   token: string | null;
   isAuthenticated: boolean;
-  login: (token: string, user: User) => void;
+  login: (email: string, password: string) => Promise<void>;
   logout: () => void;
   setUser: (u: User | null) => void;
+  loading: boolean;
 };
 
 const AuthContext = createContext<Ctx | null>(null);
@@ -18,22 +28,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const raw = localStorage.getItem("user");
     return raw ? JSON.parse(raw) : null;
   });
+  const [loading, setLoading] = useState(false);
 
-  const login = (t: string, u: User) => {
-    setToken(t); setUser(u);
-    localStorage.setItem("token", t);
-    localStorage.setItem("user", JSON.stringify(u));
+  const login = async (email: string, password: string) => {
+    setLoading(true);
+    try {
+      const { authLogin } = await import("../services/api");
+      const { token, user } = await authLogin({ email, password });
+      setToken(token);
+      setUser(user);
+      localStorage.setItem("token", token);
+      localStorage.setItem("user", JSON.stringify(user));
+    } finally {
+      setLoading(false);
+    }
   };
 
   const logout = () => {
-    setToken(null); setUser(null);
+    setToken(null);
+    setUser(null);
     localStorage.removeItem("token");
     localStorage.removeItem("user");
   };
 
-  const value = useMemo(() => ({
-    user, token, isAuthenticated: !!token, login, logout, setUser
-  }), [user, token]);
+  const value = useMemo(() => ({ user, token, isAuthenticated: !!token, login, logout, setUser, loading }), [user, token, loading]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
