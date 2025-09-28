@@ -1,18 +1,9 @@
 import React from "react";
-import { render, screen } from "@testing-library/react";
+import { render, screen, fireEvent } from "@testing-library/react";
 import VisualPanel from "../components/VisualPanel";
 
-// minimal local type (so we don't need to import from pages/App)
-type Data = {
-  activities?: string;
-  objectives?: string;
-  aim?: string;
-  goal?: string;
-  externalInfluences?: string;
-};
-
-test("renders all columns and shows initial values", () => {
-  const data: Data = {
+describe("VisualPanel", () => {
+  const mockData = {
     activities: "A1",
     objectives: "O1",
     aim: "Aim text",
@@ -20,23 +11,85 @@ test("renders all columns and shows initial values", () => {
     externalInfluences: "Cloud value",
   };
 
-  render(<VisualPanel data={data as any} />);
+  test("renders all column titles and initial values", () => {
+    render(<VisualPanel data={mockData as any} />);
 
-  // Column titles
-  expect(screen.getByText(/activities/i)).toBeInTheDocument();
-  expect(screen.getByText(/objectives/i)).toBeInTheDocument();
-  expect(screen.getByText(/aim/i)).toBeInTheDocument();
-  expect(screen.getByText(/goal/i)).toBeInTheDocument();
+    // Column titles (exact match to avoid 'Aim' vs 'Aim text' collision)
+    expect(screen.getByText("Activities")).toBeInTheDocument();
+    expect(screen.getByText("Objectives")).toBeInTheDocument();
+    expect(screen.getByText("Aim")).toBeInTheDocument();
+    expect(screen.getByText("Goal")).toBeInTheDocument();
 
-  // Textareas display the initial values (use getByDisplayValue for inputs/textarea)
-  expect(screen.getByDisplayValue("A1")).toBeInTheDocument();
-  expect(screen.getByDisplayValue("O1")).toBeInTheDocument();
-  expect(screen.getByDisplayValue("Aim text")).toBeInTheDocument();
-  expect(screen.getByDisplayValue("G1")).toBeInTheDocument();
+    // Initial values in textareas
+    expect(screen.getByDisplayValue("A1")).toBeInTheDocument();
+    expect(screen.getByDisplayValue("O1")).toBeInTheDocument();
+    expect(screen.getByDisplayValue("Aim text")).toBeInTheDocument();
+    expect(screen.getByDisplayValue("G1")).toBeInTheDocument();
 
-  // Influence cloud shows value
-  expect(screen.getByText(/cloud value/i)).toBeInTheDocument();
+    // Influence cloud value
+    expect(screen.getByText("Cloud value")).toBeInTheDocument();
 
-  // There should be arrows between columns (three arrows for four columns)
-  expect(screen.getAllByText("→").length).toBe(3);
+    // Flow arrows (3 arrows for 4 columns)
+    expect(screen.getAllByText("→").length).toBe(3);
+  });
+
+  test("toggles customization panel", () => {
+    render(<VisualPanel data={mockData as any} />);
+
+    const customizeBtn = screen.getByRole("button", { name: /customize/i });
+    expect(screen.queryByText(/cloud color/i)).not.toBeInTheDocument();
+
+    fireEvent.click(customizeBtn);
+    expect(screen.getByText(/cloud color/i)).toBeInTheDocument();
+
+    fireEvent.click(customizeBtn);
+    expect(screen.queryByText(/cloud color/i)).not.toBeInTheDocument();
+  });
+
+  test("adds and removes extra cards", () => {
+    render(<VisualPanel data={mockData as any} />);
+
+    // Add a new card to the first column
+    const addButtons = screen.getAllByRole("button", { name: "+" });
+    fireEvent.click(addButtons[0]);
+
+    // New card appears
+    expect(screen.getByDisplayValue("New Card")).toBeInTheDocument();
+
+    // Enable customization to show the remove buttons
+    fireEvent.click(screen.getByRole("button", { name: /customize/i }));
+
+    // Remove the new card (main card has no '-' button)
+    const removeBtn = screen.getByRole("button", { name: "-" });
+    fireEvent.click(removeBtn);
+
+    expect(screen.queryByDisplayValue("New Card")).not.toBeInTheDocument();
+  });
+
+  test("changes cloud color", () => {
+    render(<VisualPanel data={mockData as any} />);
+
+    // Open customization panel
+    fireEvent.click(screen.getByRole("button", { name: /customize/i }));
+
+    // There is no <label> for this input; select it directly by class & type
+    const colorInput = document.querySelector(
+      ".cloud-customize input[type='color']"
+    ) as HTMLInputElement;
+
+    expect(colorInput).not.toBeNull();
+
+    // Change the color
+    fireEvent.change(colorInput, { target: { value: "#FF0000" } });
+    expect(colorInput.value.toLowerCase()).toBe("#ff0000");
+  });
+
+  test("edits a card's text", () => {
+    render(<VisualPanel data={mockData as any} />);
+
+    const textarea = screen.getByDisplayValue("A1");
+    fireEvent.change(textarea, { target: { value: "Updated Activity" } });
+
+    expect(screen.getByDisplayValue("Updated Activity")).toBeInTheDocument();
+  });
 });
