@@ -1,11 +1,13 @@
 import axios from "axios";
 import { createUser, verifyLogin, signToken } from "../mocks/service.memory";
 
-// const API_BASE = "https://nodejs-serverless-function-express-rho-ashen.vercel.app";
-const API_BASE =
-  process.env.NODE_ENV === "development"
-    ? "" // React dev server will proxy to Vercel
-    : "https://nodejs-serverless-function-express-rho-ashen.vercel.app";
+// const API_BASE = "https://toc-user-backend.vercel.app";
+const API_BASE ="https://nodejs-serverless-function-express-rho-ashen.vercel.app";
+
+const getAuthHeaders = () => {
+  const token = localStorage.getItem("token");
+  return token ? { Authorization: `Bearer ${token}` } : {};
+};
 
 // Authentication APIs
 export const authRegister = async (payload: {
@@ -17,12 +19,43 @@ export const authRegister = async (payload: {
 };
 
 export const authLogin = async (payload: { email: string; password: string }) => {
-  const user = await verifyLogin(payload.email, payload.password);
-  const token = `dev-${user.id}-${Date.now()}`;   // fake token
-  return { token, user };
+  try {
+    const response = await axios.post(
+      `${API_BASE}/api/auth/Login`,
+      payload,
+      { headers: { "Content-Type": "application/json" } }
+    );
+
+    const { success, data, message } = response.data;
+
+    if (!success) throw new Error(message || "Login failed");
+
+    return { token: data.token, user: data.user };
+  } catch (err: any) {
+    throw new Error(err.response?.data?.message || err.message || "Login failed");
+  }
 };
 
 
+// User Profile API
+export const fetchUserProfile = async () => {
+  try {
+    const response = await axios.get(`${API_BASE}/api/user/Get`, {
+      headers: {
+        "Content-Type": "application/json",
+        ...getAuthHeaders(),
+      },
+    });
+
+    const { success, data, message } = response.data;
+
+    if (!success) throw new Error(message || "Failed to fetch user profile");
+
+    return data; // Returns the user profile data
+  } catch (err: any) {
+    throw new Error(err.response?.data?.message || err.message || "Failed to fetch user profile");
+  }
+};
 
 // TOC Project APIs
 
@@ -31,76 +64,76 @@ export const createTocProject = async (data: {
   projectTitle: string;
   status: "draft" | "published";
 }) => {
-  const response = await axios.post(`${API_BASE}/api/project/toc.Create`, data);
-  return response.data;
-};
-
-export const updateToc = async (data: {
-  userId: string;
-  projectId: string;
-  projectTitle: string;
-  updateName: boolean;
-  status: "draft" | "published";
-  tocData: {
-    bigPictureGoal: string;
-    projectAim: string;
-    objectives: string[];
-    beneficiaries: {
-      description: string;
-      estimatedReach: number;
-    };
-    activities: string[];
-    outcomes: string[];
-    externalFactors: string[];
-    evidenceLinks: string[];
-  };
-}) => {
-  const response = await axios.put(`${API_BASE}/api/project/toc.Update`, data);
-  return response.data;
-};
-
-/**
- * Fetch TOC project by userId and projectId
- */
-export const fetchTocProjectById = async (userId: string, projectId: string) => {
   try {
-    const response = await axios.get(
-      `${API_BASE}/api/project/toc.Get?userId=${userId}&projectId=${projectId}`
-    );
-    return response.data; // { success, message, data }
-  } catch (error: any) {
-    console.error("Error fetching TOC project by ID", error.response?.data || error.message);
-    throw error;
-  }
-};
-/**
- * Fetch all projects for a user
- */
-export const fetchUserProjects = async (userId: string) => {
-  try {
-    const response = await axios.get(`${API_BASE}/api/project/user/${userId}`);
-    return response.data;
-  } catch (error: any) {
-    console.error("Error fetching user projects:", error.response?.data || error.message);
-    throw error;
-  }
-};
-
-export const fetchUserTocs = async (userId: string) => {
-  try {
-    const response = await axios.get(
-      `${API_BASE}/api/project/toc.GetProjectList`,
+    const response = await axios.post(
+      `${API_BASE}/api/project/Create`,
+      data,
       {
-        params: { userId },
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...getAuthHeaders(),
+        },
       }
     );
-    return response.data; // { success, message, data: { projects, count }, status }
-  } catch (error: any) {
-    console.error(
-      "Error fetching user TOCs:",
-      error.response?.data || error.message
+    return response.data; // { success, message, data, statusCode }
+  } catch (err: any) {
+    throw new Error(err.response?.data?.message || err.message || "Failed to create project");
+  }
+};
+
+export const updateToc = async (payload: any) => {
+  const token = localStorage.getItem("token"); // get the stored token
+  if (!token) throw new Error("No authentication token found");
+
+  try {
+    const response = await axios.put(
+      `${API_BASE}/api/project/Update`,
+      payload,
+      {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      }
     );
-    throw error;
+
+    return response.data; // { success, message, data, statusCode }
+  } catch (err: any) {
+    throw new Error(err.response?.data?.message || err.message || "Failed to update project");
+  }
+};
+
+
+export const fetchUserTocs = async () => {
+  try {
+    const response = await axios.get(`${API_BASE}/api/project/GetProjectList`, {
+      headers: {
+        "Content-Type": "application/json",
+        ...getAuthHeaders(), // token identifies the user
+      },
+    });
+    return response.data; // { success, data, message }
+  } catch (err: any) {
+    throw new Error(err.response?.data?.message || err.message || "Failed to fetch projects");
+  }
+};
+
+
+export const fetchTocProjectById = async (projectId: string) => {
+  if (!projectId) throw new Error("Project ID is required");
+
+  try {
+    const response = await axios.get(`${API_BASE}/api/project/Get`, {
+      params: { projectId },
+      headers: {
+        "Content-Type": "application/json",
+        ...getAuthHeaders(),
+      },
+    });
+
+    // response.data should contain your saved tocData and tocColor
+    return response.data;
+  } catch (err: any) {
+    throw new Error(err.response?.data?.message || err.message || "Failed to fetch project");
   }
 };

@@ -6,7 +6,6 @@ type FormProps = {
   updateField: (field: keyof Data, value: string) => void;
 };
 
-// Only editable fields 
 type FormField = Exclude<keyof Data, "projectTitle">;
 
 export default function FormPanel({ data, updateField }: FormProps) {
@@ -54,83 +53,110 @@ export default function FormPanel({ data, updateField }: FormProps) {
 
   const [progress, setProgress] = useState(0);
   useEffect(() => {
-    const filledFields = fields.filter((f) => data[f].trim() !== "").length;
+    const filledFields = fields.filter((f) => {
+      const values: string[] = safeParseArray(data[f]);
+      return values.some((v) => v.trim() !== "");
+    }).length;
     setProgress((filledFields / fields.length) * 100);
   }, [data]);
 
   const validateField = (field: FormField, value: string) => {
     if (!value.trim()) {
       setErrors((prev) => ({ ...prev, [field]: `${field} is required` }));
+    } else if (value.length > maxChars) {
+      setErrors((prev) => ({ ...prev, [field]: `Maximum ${maxChars} characters allowed` }));
     } else {
       setErrors((prev) => ({ ...prev, [field]: "" }));
     }
   };
 
+  // helper: safely parse string → string[]
+  const safeParseArray = (raw: string | undefined): string[] => {
+    if (!raw) return [""];
+    try {
+      const parsed = JSON.parse(raw);
+      return Array.isArray(parsed) ? parsed : [raw];
+    } catch {
+      return raw.split("|||"); // fallback legacy delimiter
+    }
+  };
+
   return (
-    <div className={`sidebar ${isOpen ? "open" : "collapsed"}`}>
+    <div
+      className={`sidebar ${isOpen ? "open" : "collapsed"}`}
+      style={{ width: isOpen ? "350px" : "60px" }}
+    >
       <button className="toggle-btn" onClick={toggleSidebar}>
         {isOpen ? "←" : "→"}
       </button>
 
       <div className="sidebar-content">
-        {/* Read-only project title */}
         <div className="form-header">
-  <h1 className="main-title">Theory of Change Form</h1>
-  <p className="project-title">{data.projectTitle || "Untitled Project"}</p>
-</div>
+          <h1 className="main-title">Theory of Change Form</h1>
+          <p className="project-title">{data.projectTitle || "Untitled Project"}</p>
+        </div>
 
-
-        {/* Progress */}
         <div className="progress-container">
           <div className="progress-bar" style={{ width: `${progress}%` }} />
         </div>
         <p className="progress-text">{Math.round(progress)}% completed</p>
 
-        {fields.map((field) => (
-          <div className="form-group" key={field} id={`step-${field}`}>
-            <label htmlFor={`field-${field}`} className="form-label">
-              {fieldLabels[field]}
-            </label>
-            <p className="helper-text">{fieldExamples[field]}</p>
+        {fields.map((field) => {
+          const cards = safeParseArray(data[field]);
 
-            {field === "beneficiaries" ? (
-              <input
-                id={`field-${field}`}
-                value={data[field]}
-                maxLength={maxChars}
-                onChange={(e) => {
-                  updateField(field, e.target.value);
-                  validateField(field, e.target.value);
-                }}
-                placeholder={`Enter ${field}...`}
-                className={errors[field] ? "error-input" : ""}
-              />
-            ) : (
-              <textarea
-                id={`field-${field}`}
-                value={data[field]}
-                maxLength={maxChars}
-                onChange={(e) => {
-                  updateField(field, e.target.value);
-                  validateField(field, e.target.value);
-                }}
-                placeholder={`Enter ${field}...`}
-                className={errors[field] ? "error-input" : ""}
-              />
-            )}
+          return (
+            <div className="form-group" key={field} id={`step-${field}`}>
+              <label htmlFor={`field-${field}`} className="form-label">
+                {fieldLabels[field]}
+              </label>
+              <p className="helper-text">{fieldExamples[field]}</p>
 
-            {/* Character limit warning */}
-            {data[field].length >= warningThreshold &&
-              data[field].length < maxChars && (
-                <span className="warning-text">
-                  Approaching character limit ({data[field].length}/{maxChars})
-                </span>
-              )}
+              {cards.map((cardValue, idx) => (
+                <div key={idx} style={{ marginBottom: "8px" }}>
+                  {field === "beneficiaries" ? (
+                    <input
+                      id={`field-${field}-${idx}`}
+                      value={cardValue}
+                      maxLength={maxChars}
+                      onChange={(e) => {
+                        const updatedCards = [...cards];
+                        updatedCards[idx] = e.target.value;
+                        updateField(field, JSON.stringify(updatedCards));
+                        validateField(field, e.target.value);
+                      }}
+                      placeholder={`Enter ${field}...`}
+                      className={errors[field] ? "error-input" : ""}
+                      style={{ width: "100%" }}
+                    />
+                  ) : (
+                    <textarea
+                      id={`field-${field}-${idx}`}
+                      value={cardValue}
+                      maxLength={maxChars}
+                      onChange={(e) => {
+                        const updatedCards = [...cards];
+                        updatedCards[idx] = e.target.value;
+                        updateField(field, JSON.stringify(updatedCards));
+                        validateField(field, e.target.value);
+                      }}
+                      placeholder={`Enter ${field}...`}
+                      className={errors[field] ? "error-input" : ""}
+                      style={{ width: "100%" }}
+                    />
+                  )}
 
-            {/* Error text */}
-            {errors[field] && <span className="error-text">{errors[field]}</span>}
-          </div>
-        ))}
+                  {cardValue.length >= warningThreshold && cardValue.length <= maxChars && (
+                    <span className="warning-text">
+                      Approaching character limit ({cardValue.length}/{maxChars})
+                    </span>
+                  )}
+                </div>
+              ))}
+
+              {errors[field] && <span className="error-text">{errors[field]}</span>}
+            </div>
+          );
+        })}
       </div>
     </div>
   );
