@@ -2,9 +2,9 @@ import React, { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 
 import { resetPassword } from "../services/api";
-import { validatePassword } from "../auth/utils/validation";
-import "../auth/stylesheet/Login.css";
-import logo from "../auth/assets/logo.png";
+import { validatePassword } from "../utils/validation";
+import "../style/Login.css";
+import logo from "../assets/logo.png";
 
 interface ResetForm {
   email: string;

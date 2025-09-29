@@ -75,7 +75,7 @@ export default function Login() {
           {loading ? "Signing in..." : "Sign In"}
         </button>
         {error && <p style={{ color: "crimson" }}>{error}</p>}
-        <p><Link to="/password">Forgot Password?</Link></p>
+        <p><Link to="/forgot-password">Forgot Password?</Link></p>
       </form>
     </div>
   );

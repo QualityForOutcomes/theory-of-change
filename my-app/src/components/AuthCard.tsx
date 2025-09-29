@@ -1,10 +1,10 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { validateEmailDetailed, validatePassword } from "../utils/validation";
 import "../style/Login.css";
 import logo from "../assets/logo.png";
 import { signInWithPopup } from "firebase/auth";
 import { auth, googleProvider } from "../lib/firebase";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../auth/AuthProvider";
 import { authLogin } from "../services/api";
 import Footer from "../components/Footer";
@@ -18,7 +18,16 @@ export default function AuthCard() {
   const [loading, setLoading] = useState(false);
 
   const nav = useNavigate();
-  const redirectAfterAuth = "/";
+  const [searchParams] = useSearchParams();
+  const redirectAfterAuth = searchParams.get("redirect") ? `/${searchParams.get("redirect")}` : "/";
+  const urlMessage = searchParams.get("message");
+
+  // Set error message from URL params on component mount
+  useEffect(() => {
+    if (urlMessage) {
+      setError(urlMessage);
+    }
+  }, [urlMessage]);
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
     const { name, value } = e.target;
@@ -45,6 +54,10 @@ export default function AuthCard() {
     const mappedUser = { ...user, userId: Number(user.userId) };
     localStorage.setItem("token", token);
     localStorage.setItem("user", JSON.stringify(mappedUser));
+    // persist numeric userId for areas that read it directly
+    if (mappedUser?.userId != null) {
+      localStorage.setItem("userId", String(mappedUser.userId));
+    }
     setUser(mappedUser);
 
     setSuccess(true); // <-- move here after API succeeds
@@ -88,6 +101,7 @@ export default function AuthCard() {
         id: result.user?.uid || "google-uid",
       };
       localStorage.setItem("token", `google-${gUser.id}`);
+      localStorage.setItem("userId", String(gUser.userId));
       setUser(gUser as any);
       setError("");
       setSuccess(true);
@@ -144,7 +158,7 @@ export default function AuthCard() {
               </label>
             </div>
             <div className="forgot-password">
-              <a href="/password">Forgot Password?</a>
+              <a href="/forgot-password">Forgot Password?</a>
             </div>
           </div>
 

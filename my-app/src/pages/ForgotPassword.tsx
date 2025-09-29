@@ -2,9 +2,9 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { forgotPassword } from "../services/api";
-import { validateEmailDetailed } from "../auth/utils/validation";
-import "../auth/stylesheet/Login.css";
-import logo from "../auth/assets/logo.png";
+import { validateEmailDetailed } from "../utils/validation";
+import "../style/Login.css";
+import logo from "../assets/logo.png";
 
 const ForgotPassword: React.FC = () => {
   const [email, setEmail] = useState<string>("");

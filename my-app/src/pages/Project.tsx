@@ -67,6 +67,17 @@ const ProjectsPage: React.FC = () => {
     <div className="projects-container">
       <h1>Workspace</h1>
 
+      {/* Quick access to subscription upgrade */}
+      <div style={{ marginBottom: 16 }}>
+        <button
+          className="create-btn"
+          onClick={() => navigate("/profile")}
+          style={{ marginRight: 12 }}
+        >
+          Upgrade Subscription
+        </button>
+      </div>
+
       {!showForm ? (
         <button className="create-btn" onClick={() => setShowForm(true)}>
           Create Project +
