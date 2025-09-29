@@ -1,12 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-
 import { createTocProject, fetchUserTocs } from "../services/api";
 import "../style/Project.css";
 
 type Project = { projectId: string; projectName: string };
-
-
 
 const ProjectsPage: React.FC = () => {
   const [projects, setProjects] = useState<Project[]>([]);
@@ -14,28 +11,26 @@ const ProjectsPage: React.FC = () => {
   const [showForm, setShowForm] = useState(false);
   const navigate = useNavigate();
 
-  const userId = localStorage.getItem("userId") || "1234";
-
+  const userId = localStorage.getItem("userId") || "";
 
   // Load user projects
   useEffect(() => {
-    const loadProjects = async () => {
-      try {
-        const res = await fetchUserTocs(userId);
-        console.log("TOCs response:", res);
-
-
-        if (res.success && res.data?.projects) {
-          setProjects(res.data.projects);
-        } else {
-          setProjects([]);
-        }
-      } catch (err) {
-        console.error("Failed to load projects", err);
+  const loadProjects = async () => {
+    try {
+      const res = await fetchUserTocs(); // token in headers identifies the user
+      if (res.success && res.data?.projects) {
+        setProjects(res.data.projects);
+      } else {
+        setProjects([]);
       }
-    };
-    loadProjects();
-  }, [userId]);
+    } catch (err: any) {
+      console.error("Failed to load projects", err);
+      alert(err.message || "Failed to load projects");
+    }
+  };
+
+  loadProjects();
+}, []); // run once on mount
 
 
   // Create new project
@@ -52,12 +47,10 @@ const ProjectsPage: React.FC = () => {
       if (res.success && res.data) {
         const newProj: Project = {
           projectId: res.data.projectId,
-          projectName: res.data.projectTitle, 
+          projectName: res.data.tocData.projectTitle,
         };
 
-        localStorage.setItem("userId", userId);
         localStorage.setItem("projectId", newProj.projectId);
-
         setProjects([newProj, ...projects]);
         setNewProjectTitle("");
         setShowForm(false);
@@ -65,12 +58,10 @@ const ProjectsPage: React.FC = () => {
       } else {
         alert(res.message || "Failed to create project");
       }
-    } catch (err) {
-      console.error("Error creating project", err);
-      alert("Error creating project");
+    } catch (err: any) {
+      alert(err.message); // e.g., duplicate project title
     }
   };
-
 
   return (
     <div className="projects-container">
@@ -97,19 +88,16 @@ const ProjectsPage: React.FC = () => {
       <ul className="projects-list">
         {projects.map((p) => (
           <li key={p.projectId} className="project-card">
-
             <h3>{p.projectName}</h3>
             <button
-  className="open-btn"
-  onClick={() => {
-    localStorage.setItem("projectId", p.projectId);
-    navigate(`/projects/${p.projectId}`);
-  }}
->
-  Open
-</button>
-
-
+              className="open-btn"
+              onClick={() => {
+                localStorage.setItem("projectId", p.projectId);
+                navigate(`/projects/${p.projectId}`);
+              }}
+            >
+              Open
+            </button>
           </li>
         ))}
       </ul>

@@ -42,18 +42,6 @@ html, body {
 }
 
 /* ---------- Left panel ---------- */
-.left-panel {
-  flex: 0 0 220px;          /* keep narrow, fixed width */
-  max-width: 220px;         
-  min-width: 180px;        
-  background-color: transparent;
-  padding: 20px 10px 20px 10px; /* less left padding */  
-   margin: 0;      
-  height: 100vh;
-  box-sizing: border-box;
-  display: flex;
-  flex-direction: column;
-}
 
 
 /* Padding between form content and scrollbar */
@@ -197,27 +185,39 @@ html, body {
 .sidebar {
   display: flex;
   flex-direction: column;
-  width: 320px;                     /* open width */
+  width: 64px;                  /* default collapsed width */
   transition: width 0.28s ease;
   background: rgba(255,255,255,0.95);
   border-right: 1px solid #e6e6e6;
   box-sizing: border-box;
-  height: calc(100vh - var(--navbar-height)); /* full height under navbar */
-  overflow: visible;               
+  height: calc(100vh - var(--navbar-height));
+  overflow: hidden;             /* hide content when collapsed */
 }
 
 /* Expanded / collapsed */
-.sidebar.open { width: 350px; }
-.sidebar.collapsed { width: 64px; }
+.sidebar.open {
+  width: 350px;                 /* expanded width */
+  overflow: visible;            /* allow scrolling/content */
+}
+
+.sidebar.collapsed {
+  width: 64px;                  /* collapsed width */
+  overflow: hidden;             /* hide inner content */
+}
 
 /* Scrollable content inside sidebar */
 .sidebar-content {
   padding: 24px;
   padding-bottom: 30px;
   height: 100%;
-  overflow-y: auto;
+  overflow-y: auto;             /* scroll if content too tall */
   transition: opacity 0.3s ease;
   box-sizing: border-box;
+}
+
+.sidebar.collapsed .sidebar-content {
+  opacity: 0;                   /* fade out content */
+  pointer-events: none;         /* disable interactions */
 }
 
 .sidebar-header {
@@ -230,10 +230,6 @@ html, body {
   flex: 0 0 auto;
 }
 
-.sidebar.collapsed .sidebar-content {
-  opacity: 0;
-  pointer-events: none;
-}
 
 /* Toggle button always visible */
 .toggle-btn {
@@ -271,57 +267,6 @@ html, body {
   background: #7030f3;
 }
 .toggle-btn:hover { background: #7030f3; }
-
-.influence-cloud {
-  --cloud-color: #cbe3ff;   /* default */
-  position: relative;
-  display: inline-block;
-  background: var(--cloud-color);
-  color: #333;
-  border-radius: 50px;
-  padding: 1rem 2rem;
-  text-align: center;
-  font-weight: 600;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-  margin: 20px auto;
-}
-
-/* Fluffy edges */
-.influence-cloud::before,
-.influence-cloud::after {
-  content: "";
-  position: absolute;
-  background: var(--cloud-color); 
-  border-radius: 50%;
-}
-
-.influence-cloud::before {
-  width: 25px;
-  height: 25px;
-  left: -15px;
-  top: 10px;
-}
-
-.influence-cloud::after {
-  width: 30px;
-  height: 30px;
-  right: -18px;
-  top: 5px;
-}
-
-/* Tail */
-.influence-cloud .cloud-value::after {
-  content: "";
-  position: absolute;
-  bottom: -12px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 20px;
-  height: 20px;
-  background: var(--cloud-color);  /* ✅ dynamic */
-  border-radius: 50%;
-}
-
 
 .btn-save {
   display: inline-flex;
@@ -404,4 +349,35 @@ html, body {
   opacity: 0.8;           /* soft, modern look */
 }
 
+/* Buttons */
+.panel-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
 
+.btn.customize {
+  padding: 8px 14px;
+  border: none;
+  border-radius: 6px;
+  background-color: #8750fd;
+  color: #fff;
+  cursor: pointer;
+}
+
+.btn.customize:hover {
+  background-color: #7030f3;
+}
+
+.btn.export {
+  padding: 8px 14px;
+  border: none;
+  border-radius: 6px;
+  background-color: #f0f0f0;
+  color: #333;
+  cursor: pointer;
+}
+
+.btn.export:hover {
+  background-color: #e0e0e0;
+}
