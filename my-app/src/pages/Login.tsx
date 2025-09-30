@@ -1,11 +1,17 @@
-// pages/Login.tsx
 import React, { useState } from "react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import { useAuth } from "../auth/AuthProvider";
 import { authLogin } from "../services/api";
 
+// Temporary placeholder for authRegister - replace with actual implementation
+const authRegister = async (data: any) => {
+  // TODO: Replace with actual API call
+  throw new Error("Registration not implemented yet");
+};
+
 export default function Login() {
-  const [form, setForm] = useState({ email: "", password: "" });
+  const [mode, setMode] = useState<"login" | "register">("login");
+  const [form, setForm] = useState({ firstName: "", lastName: "", email: "", organisation: "", password: "", confirm: "" });
   const [show, setShow] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -23,6 +29,12 @@ export default function Login() {
   function validate() {
     if (!/\S+@\S+\.\S+/.test(form.email)) return "Enter a valid email.";
     if (form.password.length < 6) return "Password must be at least 6 characters.";
+    if (mode === "register") {
+      if (!form.firstName.trim()) return "Please enter your First name.";
+      if (!form.lastName.trim()) return "Please enter your Last name.";
+      if (!form.organisation.trim()) return "Please enter your Organisation name.";
+      if (form.confirm !== form.password) return "Passwords do not match.";
+    }
     return "";
   }
 
@@ -33,17 +45,34 @@ export default function Login() {
 
     setError(""); 
     setLoading(true);
-
+    
     try {
-      const { token, user } = await authLogin({
-        email: form.email.trim(),
-        password: form.password,
-      });
-      login(token, user); // AuthProvider handles localStorage
+      let response;
+      if (mode === "register") {
+        response = await authRegister({
+          email: form.email.trim(),
+          password: form.password,
+          firstName: form.firstName,
+          lastName: form.lastName,
+          org: form.organisation,
+        });
+      } else {
+        response = await authLogin({
+          email: form.email.trim(),
+          password: form.password,
+        });
+      }
+      
+      const { token, user } = response;
+      login(token, user ? JSON.stringify(user) : '');
       nav(redirectTo, { replace: true });
     } catch (e: any) {
-      const msg = e?.response?.data?.message || e?.message || "Login failed";
-      setError(msg);
+      const errData = e?.response?.data?.error;
+      if (errData && typeof errData === "object" && "message" in errData) {
+        setError(errData.message);
+      } else {
+        setError(e?.message || "Something went wrong.");
+      }
     } finally {
       setLoading(false);
     }
@@ -51,31 +80,73 @@ export default function Login() {
 
   return (
     <div style={{ maxWidth: 420, margin: "64px auto" }}>
-      <h1>Sign In</h1>
+      <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
+        <button 
+          type="button" 
+          onClick={() => setMode("login")} 
+          disabled={mode === "login"}
+          style={{
+            padding: "8px 16px",
+            border: "1px solid #ccc",
+            backgroundColor: mode === "login" ? "#007bff" : "#fff",
+            color: mode === "login" ? "#fff" : "#333",
+            borderRadius: "4px",
+            cursor: mode === "login" ? "default" : "pointer"
+          }}
+        >
+          Sign In
+        </button>
+        <button 
+          type="button" 
+          onClick={() => setMode("register")} 
+          disabled={mode === "register"}
+          style={{
+            padding: "8px 16px",
+            border: "1px solid #ccc",
+            backgroundColor: mode === "register" ? "#007bff" : "#fff",
+            color: mode === "register" ? "#fff" : "#333",
+            borderRadius: "4px",
+            cursor: mode === "register" ? "default" : "pointer"
+          }}
+        >
+          Create Account
+        </button>
+      </div>
+
+      <h1>{mode === "login" ? "Sign In" : "Create your account"}</h1>
+
       <form onSubmit={onSubmit} style={{ display: "grid", gap: 12 }}>
-        <input 
-          name="email" 
-          type="email" 
-          placeholder="you@domain.com" 
-          value={form.email} 
-          onChange={handleChange} 
-        />
-        <input 
-          name="password" 
-          type={show ? "text" : "password"} 
-          placeholder="Password" 
-          value={form.password} 
-          onChange={handleChange} 
-        />
+        {mode === "register" && (
+          <>
+            <input name="firstName" placeholder="First name" value={form.firstName} onChange={handleChange} />
+            <input name="lastName" placeholder="Last name" value={form.lastName} onChange={handleChange} />
+          </>
+        )}
+
+        <input name="email" type="email" placeholder="you@domain.com" value={form.email} onChange={handleChange} />
+
+        {mode === "register" && (
+          <input name="organisation" placeholder="Organisation" value={form.organisation} onChange={handleChange} />
+        )}
+
+        <input name="password" type={show ? "text" : "password"} placeholder="Password" value={form.password} onChange={handleChange} />
+        
+        {mode === "register" && (
+          <input name="confirm" type={show ? "text" : "password"} placeholder="Confirm password" value={form.confirm} onChange={handleChange} />
+        )}
+
         <label style={{ display: "flex", gap: 6, alignItems: "center" }}>
-          <input type="checkbox" checked={show} onChange={e => setShow(e.target.checked)} />
+          <input type="checkbox" checked={show} onChange={(e) => setShow(e.target.checked)} />
           Show password
         </label>
+
         <button type="submit" disabled={loading}>
-          {loading ? "Signing in..." : "Sign In"}
+          {loading ? "Please wait..." : (mode === "login" ? "Sign In" : "Create Account")}
         </button>
+        
         {error && <p style={{ color: "crimson" }}>{error}</p>}
-        <p><Link to="/password">Forgot Password?</Link></p>
+
+        {mode === "login" && <p><Link to="/password">Forgot Password?</Link></p>}
       </form>
     </div>
   );
