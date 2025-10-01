@@ -1,27 +1,36 @@
 // src/test/firebase.test.tsx
 /**
  * Tests for src/lib/firebase.ts
- * Uses manual mocks in __mocks__/ to avoid "out-of-scope variables" error.
- * We also use jest.isolateModules + require() so the module-under-test loads AFTER mocks.
+ * - Uses jest.isolateModules (sync) + require() to load the module after mocks.
+ * - Works on Jest versions without isolateModulesAsync.
  */
 
 import { describe, it, expect, beforeEach, afterEach, jest } from "@jest/globals";
 
-// Tell Jest to use the manual mocks (no inline factory => no out-of-scope issue)
-jest.mock("firebase/app");
-jest.mock("firebase/auth");
+// --- Strict mocks for Firebase SDK (use a class so instanceof works) ---
+class MockGoogleAuthProvider {}
 
-// Import the mocked fns AFTER jest.mock so TypeScript knows their types
-import * as firebaseApp from "firebase/app";
-import * as firebaseAuth from "firebase/auth";
+jest.mock("firebase/app", () => ({
+  initializeApp: jest.fn(),
+}));
+
+jest.mock("firebase/auth", () => ({
+  getAuth: jest.fn(),
+  GoogleAuthProvider: MockGoogleAuthProvider,
+}));
+
+// Pull the mocked functions so we can set return values & assert calls
+import { initializeApp } from "firebase/app";
+import { getAuth, GoogleAuthProvider } from "firebase/auth";
 
 describe("firebase config (src/lib/firebase.ts)", () => {
   const mockApp = { name: "mockApp" };
 
   beforeEach(() => {
-    jest.resetModules(); // ensure fresh module instance per test
-    (firebaseApp.initializeApp as jest.Mock).mockReset().mockReturnValue(mockApp);
-    (firebaseAuth.getAuth as jest.Mock).mockReset().mockReturnValue("mockAuth");
+    // Fresh module graph each test so the module under test re-executes
+    jest.resetModules();
+    (initializeApp as jest.Mock).mockReset().mockReturnValue(mockApp);
+    (getAuth as jest.Mock).mockReset().mockReturnValue("mockAuth");
   });
 
   afterEach(() => {
@@ -33,8 +42,8 @@ describe("firebase config (src/lib/firebase.ts)", () => {
       // Import AFTER mocks are set so module init runs against mocks
       require("../lib/firebase");
 
-      expect(firebaseApp.initializeApp).toHaveBeenCalledTimes(1);
-      expect(firebaseApp.initializeApp).toHaveBeenCalledWith({
+      expect(initializeApp).toHaveBeenCalledTimes(1);
+      expect(initializeApp).toHaveBeenCalledWith({
         apiKey: "AIzaSyAJRVA9Tssggj8cOeePo9kTu4StrOfgsFs",
         authDomain: "p000315se.firebaseapp.com",
         projectId: "p000315se",
@@ -49,8 +58,8 @@ describe("firebase config (src/lib/firebase.ts)", () => {
     jest.isolateModules(() => {
       const mod = require("../lib/firebase"); // { auth, googleProvider }
 
-      expect(firebaseAuth.getAuth).toHaveBeenCalledTimes(1);
-      expect(firebaseAuth.getAuth).toHaveBeenCalledWith(mockApp);
+      expect(getAuth).toHaveBeenCalledTimes(1);
+      expect(getAuth).toHaveBeenCalledWith(mockApp);
       expect(mod.auth).toBe("mockAuth");
     });
   });
@@ -59,9 +68,9 @@ describe("firebase config (src/lib/firebase.ts)", () => {
     jest.isolateModules(() => {
       const mod = require("../lib/firebase");
 
-      // Our manual mock uses a class, so instanceof works
+      // Our mock returns a class, so instanceof works
       expect(mod.googleProvider).toBeInstanceOf(
-        (firebaseAuth.GoogleAuthProvider as unknown as { new (): any })
+        GoogleAuthProvider as unknown as Function
       );
     });
   });
