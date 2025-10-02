@@ -11,8 +11,11 @@ export default function Login() {
     lastName: "",
     email: "",
     organisation: "",
+    username: "",
     password: "",
     confirm: "",
+    acceptTandC: false,
+    newsLetterSubs: false,
   });
   const [show, setShow] = useState(false);
   const [error, setError] = useState("");
@@ -35,6 +38,8 @@ export default function Login() {
       if (!form.firstName.trim()) return "Please enter your First name.";
       if (!form.lastName.trim()) return "Please enter your Last name.";
       if (!form.organisation.trim()) return "Please enter your Organisation name.";
+      if (!form.username.trim()) return "Please choose a username.";
+      if (!form.acceptTandC) return "You must accept the Terms & Conditions.";
       if (form.confirm !== form.password) return "Passwords do not match.";
     }
     return "";
@@ -56,7 +61,10 @@ export default function Login() {
           password: form.password,
           firstName: form.firstName,
           lastName: form.lastName,
-          org: form.organisation, 
+          organisation: form.organisation,   // maps to `organization` in api.ts
+          username: form.username,
+          acceptTandC: form.acceptTandC,
+          newsLetterSubs: form.newsLetterSubs,
         });
       } else {
         response = await authLogin({
@@ -84,14 +92,8 @@ export default function Login() {
     try {
       setError("");
       setLoading(true);
-
-      // Firebase popup → returns Firebase ID token
       const { idToken } = await signInWithGooglePopup();
-
-      // Send Firebase ID token to your backend
       const { token, user } = await authGoogleLogin(idToken);
-
-      // Persist + redirect
       login(token, user ? JSON.stringify(user) : "");
       nav(redirectTo, { replace: true });
     } catch (e: any) {
@@ -165,12 +167,43 @@ export default function Login() {
         />
 
         {mode === "register" && (
-          <input
-            name="organisation"
-            placeholder="Organisation"
-            value={form.organisation}
-            onChange={handleChange}
-          />
+          <>
+            <input
+              name="username"
+              placeholder="Username"
+              value={form.username}
+              onChange={handleChange}
+            />
+            <input
+              name="organisation"
+              placeholder="Organisation"
+              value={form.organisation}
+              onChange={handleChange}
+            />
+
+            <label style={{ display: "flex", gap: 8, alignItems: "center" }}>
+              <input
+                type="checkbox"
+                name="acceptTandC"
+                checked={form.acceptTandC}
+                onChange={(e) =>
+                  setForm((p) => ({ ...p, acceptTandC: e.target.checked }))
+                }
+              />
+              I accept the Terms & Conditions
+            </label>
+            <label style={{ display: "flex", gap: 8, alignItems: "center" }}>
+              <input
+                type="checkbox"
+                name="newsLetterSubs"
+                checked={form.newsLetterSubs}
+                onChange={(e) =>
+                  setForm((p) => ({ ...p, newsLetterSubs: e.target.checked }))
+                }
+              />
+              Subscribe to newsletter
+            </label>
+          </>
         )}
 
         <input
@@ -208,7 +241,6 @@ export default function Login() {
             : "Create Account"}
         </button>
 
-        {/* Google login button */}
         {mode === "login" && (
           <button
             type="button"
