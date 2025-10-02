@@ -1,230 +1,143 @@
---data population
+-- =========================================================
+-- SAMPLE DATA
+-- =========================================================
 
+-- USERS
+insert into "USER" (email, username, password_hash, user_role)
+values
+('alice@example.com', 'alice', repeat('a', 40), 'admin'),
+('bob@example.com', 'bob', repeat('b', 40), 'user'),
+('carol@example.com', 'carol', repeat('c', 40), 'user'),
+('dave@example.com', 'dave', repeat('d', 40), 'editor'),
+('eva@example.com', 'eva', repeat('e', 40), 'user'),
+('frank@example.com', 'frank', repeat('f', 40), 'user');
 
+-- USER PROFILE
+insert into "USERPROFILE" (email, first_name, last_name, avatar_url, organisation)
+values
+('alice@example.com', 'Alice', 'Anderson', 'https://pics.example.com/alice.png', 'Acme Corp'),
+('bob@example.com', 'Bob', 'Brown', 'https://pics.example.com/bob.png', 'Beta Ltd'),
+('carol@example.com', 'Carol', 'Clark', 'https://pics.example.com/carol.png', 'Gamma Inc'),
+('dave@example.com', 'Dave', 'Davis', 'https://pics.example.com/dave.png', 'Acme Corp'),
+('eva@example.com', 'Eva', 'Edwards', 'https://pics.example.com/eva.png', 'Delta Org'),
+('frank@example.com', 'Frank', 'Foster', 'https://pics.example.com/frank.png', 'Zeta LLC');
 
-BEGIN;
+-- USER AUTH PROVIDER
+insert into "USERAUTHPROVIDER" (email, provider, provider_user_id, email_verified)
+values
+('alice@example.com', 'google', 'alice_g123', true),
+('bob@example.com', 'google', 'bob_g123', false),
+('carol@example.com', 'github', 'carol_gh123', true),
+('dave@example.com', 'facebook', 'dave_fb123', true),
+('eva@example.com', 'github', 'eva_gh123', false),
+('frank@example.com', 'google', 'frank_g123', true);
 
--- ADDING USERS 
+-- USER TERMS ACCEPTANCE
+insert into "USERTERMSACCEPTANCE" (email)
+values
+('alice@example.com'),
+('bob@example.com'),
+('carol@example.com'),
+('dave@example.com'),
+('eva@example.com'),
+('frank@example.com');
 
-INSERT INTO "User" (email_address, username, password_hash)
-VALUES
-  ('carol@demo.com',  'carol',  repeat('c', 40)),
-  ('dave@demo.com',   'dave',   repeat('d', 40)),
-  ('eva@demo.com',    'eva',    repeat('e', 40)),
-  ('farah@demo.com',  'farah',  repeat('f', 40)),
-  ('gina@demo.com',   'gina',   repeat('g', 40)),
-  ('harry@demo.com',  'harry',  repeat('h', 40))
-ON CONFLICT (email_address) DO NOTHING;
+-- USER NEWSLETTER SUBSCRIPTIONS
+insert into "USERNEWSLETTERSUBS" (email)
+values
+('alice@example.com'),
+('bob@example.com'),
+('carol@example.com'),
+('dave@example.com'),
+('eva@example.com'),
+('frank@example.com');
 
-INSERT INTO UserProfile (email_address, first_name, last_name, organisation)
-VALUES
-  ('carol@demo.com','Carol','Lee','Delta Org'),
-  ('dave@demo.com', 'Dave','Santos','Epsilon Pty'),
-  ('eva@demo.com',  'Eva','Patel','Gamma Labs'),
-  ('farah@demo.com','Farah','Iqbal','Omega Group'),
-  ('gina@demo.com', 'Gina','Tran','Lambda Inc'),
-  ('harry@demo.com','Harry','Park','Zeta Assoc')
-ON CONFLICT (email_address) DO NOTHING;
+-- USER SESSIONS
+insert into "USERSESSION" (user_id, login_at, logout_at)
+values
+(1, current_timestamp - interval '2 days', current_timestamp - interval '1 day'),
+(2, current_timestamp - interval '3 days', current_timestamp - interval '2 days'),
+(3, current_timestamp - interval '4 days', current_timestamp - interval '3 days'),
+(4, current_timestamp - interval '1 days', current_timestamp),
+(5, current_timestamp - interval '5 days', current_timestamp - interval '4 days'),
+(6, current_timestamp - interval '6 days', current_timestamp - interval '5 days');
 
-INSERT INTO UserAuthProvider (email_address, provider, provider_user_id, email_verified, linked_at)
-VALUES
-  ('carol@demo.com','google','google|carol',TRUE, NOW() - INTERVAL '18 days'),
-  ('dave@demo.com','github','github|dave',TRUE, NOW() - INTERVAL '15 days'),
-  ('eva@demo.com','google','google|eva',TRUE, NOW() - INTERVAL '12 days'),
-  ('farah@demo.com','password','local|farah',TRUE, NOW() - INTERVAL '10 days'),
-  ('gina@demo.com','password','local|gina',FALSE, NOW() - INTERVAL '7 days'),
-  ('harry@demo.com','github','github|harry',TRUE, NOW() - INTERVAL '5 days')
-ON CONFLICT (provider, provider_user_id) DO NOTHING;
+-- PASSWORD RESET TOKENS
+insert into "PASSWORDRESETTOKENS" (user_id, email, token, expires_at)
+values
+(1, 'alice@example.com', md5('alice_reset'), current_timestamp + interval '1 day'),
+(2, 'bob@example.com', md5('bob_reset'), current_timestamp + interval '1 day'),
+(3, 'carol@example.com', md5('carol_reset'), current_timestamp + interval '1 day'),
+(4, 'dave@example.com', md5('dave_reset'), current_timestamp + interval '1 day'),
+(5, 'eva@example.com', md5('eva_reset'), current_timestamp + interval '1 day'),
+(6, 'frank@example.com', md5('frank_reset'), current_timestamp + interval '1 day');
 
-INSERT INTO UserTermsAcceptance (email_address, accepted_at)
-VALUES
-  ('carol@demo.com', NOW() - INTERVAL '18 days'),
-  ('dave@demo.com',  NOW() - INTERVAL '15 days'),
-  ('eva@demo.com',   NOW() - INTERVAL '12 days'),
-  ('farah@demo.com', NOW() - INTERVAL '10 days'),
-  ('gina@demo.com',  NOW() - INTERVAL '7 days'),
-  ('harry@demo.com', NOW() - INTERVAL '5 days')
-ON CONFLICT (email_address) DO NOTHING;
+-- -- PLAN
+-- insert into "PLAN" (name, price_cents, billing_interval)
+-- values
+-- ('Basic', 1000, 'month'),
+-- ('Standard', 2000, 'month'),
+-- ('Premium', 5000, 'month'),
+-- ('Enterprise', 15000, 'year'),
+-- ('Student', 500, 'month'),
+-- ('NonProfit', 1200, 'year');
 
-INSERT INTO PasswordReset (email_address, token_hash, expires_at, created_at)
-VALUES
-  ('carol@demo.com', md5('carol-r1'||NOW()::text), NOW() + INTERVAL '1 hour', NOW()),
-  ('dave@demo.com',  md5('dave-r1'||NOW()::text),  NOW() + INTERVAL '1 hour', NOW()),
-  ('eva@demo.com',   md5('eva-r1'||NOW()::text),   NOW() + INTERVAL '1 hour', NOW())
-ON CONFLICT DO NOTHING;
+-- SUBSCRIPTION
+insert into "SUBSCRIPTION" (email, plan_id, status, start_date, auto_renew)
+values
+('alice@example.com', 1, 'active', current_timestamp - interval '30 days', true),
+('bob@example.com', 2, 'trialing', current_timestamp - interval '10 days', true),
+('carol@example.com', 3, 'past_due', current_timestamp - interval '90 days', false),
+('dave@example.com', 4, 'active', current_timestamp - interval '1 year', true),
+('eva@example.com', 5, 'canceled', current_timestamp - interval '60 days', false),
+('frank@example.com', 6, 'active', current_timestamp - interval '120 days', true);
 
--- PLAN
-INSERT INTO Plan (name, price_cents, billing_interval) VALUES
-  ('Basic Monthly',  990,  'month'),
-  ('Pro Monthly',   1990,  'month'),
-  ('Pro Yearly',   19900,  'year')
-ON CONFLICT (name) DO NOTHING;
+-- -- INVOICE
+-- insert into "INVOICE" (subscription_id, email, amount_cents, currency, status)
+-- values
+-- (1, 'alice@example.com', 1000, 'USD', 'paid'),
+-- (2, 'bob@example.com', 2000, 'USD', 'draft'),
+-- (3, 'carol@example.com', 5000, 'USD', 'open'),
+-- (4, 'dave@example.com', 15000, 'USD', 'paid'),
+-- (5, 'eva@example.com', 500, 'USD', 'void'),
+-- (6, 'frank@example.com', 1200, 'USD', 'open');
 
--- SUBSCRIPTIONS ACROSS ALL STATUS 
-INSERT INTO Subscription
-  (email_address, plan_ID, status, start_date, renewal_date, updated_at, auto_renew)
-SELECT 'carol@demo.com', p.plan_ID, 'active',
-       NOW() - INTERVAL '25 days', NOW() + INTERVAL '5 days', NOW(), TRUE
-FROM Plan p WHERE p.name = 'Pro Monthly'
-ON CONFLICT DO NOTHING;
+-- -- PAYMENT
+-- insert into "PAYMENT" (subscription_id, invoice_id, amount_cents, currency, status)
+-- values
+-- (1, 1, 1000, 'USD', 'completed'),
+-- (2, 2, 2000, 'USD', 'pending'),
+-- (3, 3, 5000, 'USD', 'failed'),
+-- (4, 4, 15000, 'USD', 'completed'),
+-- (5, 5, 500, 'USD', 'refunded'),
+-- (6, 6, 1200, 'USD', 'completed');
 
-INSERT INTO Subscription
-  (email_address, plan_ID, status, start_date, renewal_date, updated_at, auto_renew)
-SELECT 'dave@demo.com', p.plan_ID, 'past_due',
-       NOW() - INTERVAL '40 days', NOW() - INTERVAL '10 days', NOW(), TRUE
-FROM Plan p WHERE p.name = 'Pro Monthly'
-ON CONFLICT DO NOTHING;
+-- PROJECT
+insert into "PROJECT" (email, title)
+values
+('alice@example.com', 'AI Research'),
+('bob@example.com', 'Web App'),
+('carol@example.com', 'Data Pipeline'),
+('dave@example.com', 'Mobile App'),
+('eva@example.com', 'Finance Dashboard'),
+('frank@example.com', 'Healthcare System');
 
-INSERT INTO Subscription
-  (email_address, plan_ID, status, start_date, renewal_date, updated_at, expires_at, auto_renew)
-SELECT 'eva@demo.com', p.plan_ID, 'canceled',
-       NOW() - INTERVAL '90 days', NOW() - INTERVAL '60 days', NOW(),
-       NOW() - INTERVAL '30 days', FALSE
-FROM Plan p WHERE p.name = 'Basic Monthly'
-ON CONFLICT DO NOTHING;
+-- PROJECT CANVAS
+insert into "PROJECTCANVAS" (project_id, diagram_json)
+values
+(1, '{"nodes": ["start","ml_model","end"]}'),
+(2, '{"nodes": ["frontend","backend","db"]}'),
+(3, '{"nodes": ["extract","transform","load"]}'),
+(4, '{"nodes": ["ui","api","server"]}'),
+(5, '{"nodes": ["data","chart","report"]}'),
+(6, '{"nodes": ["patient","doctor","report"]}');
 
-INSERT INTO Subscription
-  (email_address, plan_ID, status, start_date, renewal_date, updated_at, auto_renew)
-SELECT 'farah@demo.com', p.plan_ID, 'trialing',
-       NOW() - INTERVAL '5 days', NOW() + INTERVAL '360 days', NOW(), TRUE
-FROM Plan p WHERE p.name = 'Pro Yearly'
-ON CONFLICT DO NOTHING;
-
-INSERT INTO Subscription
-  (email_address, plan_ID, status, start_date, updated_at, auto_renew)
-SELECT 'gina@demo.com', p.plan_ID, 'incomplete',
-       NOW() - INTERVAL '2 days', NOW(), FALSE
-FROM Plan p WHERE p.name = 'Pro Monthly'
-ON CONFLICT DO NOTHING;
-
-INSERT INTO Subscription
-  (email_address, plan_ID, status, start_date, renewal_date, updated_at, auto_renew)
-SELECT 'harry@demo.com', p.plan_ID, 'active',
-       NOW() - INTERVAL '7 days', NOW() + INTERVAL '23 days', NOW(), TRUE
-FROM Plan p WHERE p.name = 'Basic Monthly'
-ON CONFLICT DO NOTHING;
-
--- INVOICES
-WITH s AS (
-  SELECT email_address, subscription_ID
-  FROM Subscription
-  WHERE email_address IN ('carol@demo.com','dave@demo.com','eva@demo.com','farah@demo.com','gina@demo.com','harry@demo.com')
-)
-INSERT INTO Invoice
- (subscription_ID, email_address, amount_cents, currency,
-  period_start, period_end, issued_at, due_at, status, pdf_url, is_public)
-VALUES
-  ((SELECT subscription_ID FROM s WHERE email_address='carol@demo.com'),
-    'carol@demo.com', 1990, 'AUD',
-    date_trunc('month', NOW()) - INTERVAL '1 month',
-    date_trunc('month', NOW()) - INTERVAL '1 day',
-    NOW() - INTERVAL '26 days', NOW() - INTERVAL '21 days', 'paid',
-    'https://example.com/invoices/carol-paid.pdf', TRUE),
-  ((SELECT subscription_ID FROM s WHERE email_address='dave@demo.com'),
-    'dave@demo.com', 1990, 'AUD',
-    date_trunc('month', NOW()),
-    date_trunc('month', NOW()) + INTERVAL '1 month' - INTERVAL '1 day',
-    NOW() - INTERVAL '14 days', NOW() - INTERVAL '4 days', 'open',
-    NULL, FALSE),
-  ((SELECT subscription_ID FROM s WHERE email_address='eva@demo.com'),
-    'eva@demo.com', 990, 'AUD',
-    NOW() - INTERVAL '65 days', NOW() - INTERVAL '35 days',
-    NOW() - INTERVAL '64 days', NOW() - INTERVAL '60 days', 'void',
-    NULL, FALSE),
-  ((SELECT subscription_ID FROM s WHERE email_address='farah@demo.com'),
-    'farah@demo.com', 19900, 'AUD',
-    NOW(), NOW() + INTERVAL '1 year', NOW(), NOW() + INTERVAL '30 days',
-    'draft', NULL, FALSE),
-  ((SELECT subscription_ID FROM s WHERE email_address='gina@demo.com'),
-    'gina@demo.com', 1990, 'AUD',
-    NOW() - INTERVAL '40 days', NOW() - INTERVAL '10 days',
-    NOW() - INTERVAL '39 days', NOW() - INTERVAL '30 days', 'uncollectible',
-    NULL, FALSE),
-  ((SELECT subscription_ID FROM s WHERE email_address='harry@demo.com'),
-    'harry@demo.com', 990, 'AUD',
-    date_trunc('month', NOW()),
-    date_trunc('month', NOW()) + INTERVAL '1 month' - INTERVAL '1 day',
-    NOW() - INTERVAL '3 days', NOW() + INTERVAL '7 days', 'paid',
-    'https://example.com/invoices/harry-paid.pdf', TRUE),
-  ((SELECT subscription_ID FROM s WHERE email_address='harry1@demo.com'),
-    'harry1@demo.com', 990, 'AUD',
-    date_trunc('month', NOW()),
-    date_trunc('month', NOW()) + INTERVAL '1 month' - INTERVAL '1 day',
-    NOW() - INTERVAL '3 days', NOW() + INTERVAL '7 days', 'paid',
-    'https://example.com/invoices/harry-paid.pdf', TRUE)
-ON CONFLICT DO NOTHING;
-
--- PROJECT + CANVAS + EXPORT
-INSERT INTO Project (email_address, title, updated_at, created_at) VALUES
-  ('carol@demo.com','Community Health Mapping', NOW() - INTERVAL '1 day', NOW() - INTERVAL '20 days'),
-  ('carol@demo.com','Food Security Initiative', NOW() - INTERVAL '3 days', NOW() - INTERVAL '25 days'),
-  ('dave@demo.com','Youth Coding Bootcamp', NOW() - INTERVAL '2 days', NOW() - INTERVAL '18 days'),
-  ('eva@demo.com','Water Sanitation Drive', NOW() - INTERVAL '5 days', NOW() - INTERVAL '90 days'),
-  ('farah@demo.com','Road Safety Awareness', NOW() - INTERVAL '1 day', NOW() - INTERVAL '6 days'),
-  ('gina@demo.com','Mental Health Outreach', NOW() - INTERVAL '1 day', NOW() - INTERVAL '10 days'),
-  ('harry@demo.com','Local Arts Uplift', NOW() - INTERVAL '2 days', NOW() - INTERVAL '9 days')
-ON CONFLICT DO NOTHING;
-
-INSERT INTO ProjectCanvas (project_ID, diagram_json, updated_at)
-SELECT p.project_ID,
-       jsonb_build_object('nodes', jsonb_build_array(jsonb_build_object('id','root','label',p.title)), 'edges','[]'::jsonb),
-       NOW()
-FROM Project p
-LEFT JOIN ProjectCanvas c ON c.project_ID = p.project_ID
-WHERE c.project_ID IS NULL;
-
--- ExportFile with ENUM array fix
-WITH pr AS (SELECT project_ID, email_address FROM Project)
-INSERT INTO ExportFile
-  (project_ID, email_address, format, download_url, filename, status, created_at, updated_at, expires_at)
-SELECT
-  project_ID,
-  email_address,
-  (ARRAY['PDF','PNG','SVG','DOCX'])[1 + (project_ID % 4)],
-  CASE WHEN (project_ID % 3)=0 THEN NULL ELSE 'https://example.com/exports/'||project_ID||'.file' END,
-  'export-'||project_ID||'.out',
-  (ARRAY[
-      'queued'::export_status_enum,
-      'processing'::export_status_enum,
-      'ready'::export_status_enum,
-      'failed'::export_status_enum
-   ])[1 + (project_ID % 4)],
-  NOW() - (project_ID % 5) * INTERVAL '1 day',
-  NOW() - (project_ID % 3) * INTERVAL '12 hours',
-  CASE WHEN (project_ID % 4)=2 THEN NOW() + INTERVAL '10 days' ELSE NULL END
-FROM pr
-ON CONFLICT DO NOTHING;
-
--- PAYMENT POPULATION
-WITH inv AS (
-  SELECT i.invoice_ID, i.email_address, i.subscription_ID, i.status
-  FROM Invoice i
-  WHERE i.email_address IN ('carol@demo.com','dave@demo.com','eva@demo.com','farah@demo.com','gina@demo.com','harry@demo.com')
-)
-INSERT INTO Payment
- (subscription_ID, invoice_ID, amount_cents, currency,
-  provider_intent_ID, provider_method_ID, paid_at, status)
-VALUES
-  ((SELECT subscription_ID FROM inv WHERE email_address='carol@demo.com' LIMIT 1),
-   (SELECT invoice_ID FROM inv WHERE email_address='carol@demo.com' LIMIT 1),
-   1990, 'AUD', 'pi_carol_002', 'card_x_4242', NOW() - INTERVAL '2 days', 'succeeded'),
-  ((SELECT subscription_ID FROM inv WHERE email_address='dave@demo.com' LIMIT 1),
-   (SELECT invoice_ID FROM inv WHERE email_address='dave@demo.com' LIMIT 1),
-   1990, 'AUD', 'pi_dave_001', 'card_x_0002', NULL, 'requires_payment_method'),
-  ((SELECT subscription_ID FROM inv WHERE email_address='eva@demo.com' LIMIT 1),
-   (SELECT invoice_ID FROM inv WHERE email_address='eva@demo.com' LIMIT 1),
-   990, 'AUD', 'pi_eva_001', 'card_x_0000', NULL, 'failed'),
-  ((SELECT subscription_ID FROM inv WHERE email_address='farah@demo.com' LIMIT 1),
-   (SELECT invoice_ID FROM inv WHERE email_address='farah@demo.com' LIMIT 1),
-   0, 'AUD', 'pi_farah_auth', 'card_x_1111', NOW() - INTERVAL '1 day', 'succeeded'),
-  ((SELECT subscription_ID FROM inv WHERE email_address='gina@demo.com' LIMIT 1),
-   (SELECT invoice_ID FROM inv WHERE email_address='gina@demo.com' LIMIT 1),
-   1990, 'AUD', 'pi_gina_002', 'card_x_0005', NULL, 'failed'),
-  ((SELECT subscription_ID FROM inv WHERE email_address='harry@demo.com' LIMIT 1),
-   (SELECT invoice_ID FROM inv WHERE email_address='harry@demo.com' LIMIT 1),
-   990, 'AUD', 'pi_harry_001', 'card_x_4242', NOW() - INTERVAL '1 day', 'succeeded')
-ON CONFLICT DO NOTHING;
-
-COMMIT;
-
-
+-- EXPORT FILES
+insert into "EXPORTFILE" (project_id, email, format, filename, status)
+values
+(1, 'alice@example.com', 'PDF', 'ai_research.pdf', 'ready'),
+(2, 'bob@example.com', 'PNG', 'webapp.png', 'queued'),
+(3, 'carol@example.com', 'SVG', 'pipeline.svg', 'processing'),
+(4, 'dave@example.com', 'DOCX', 'mobile.docx', 'failed'),
+(5, 'eva@example.com', 'PDF', 'finance.pdf', 'ready'),
+(6, 'frank@example.com', 'PNG', 'healthcare.png', 'ready');
