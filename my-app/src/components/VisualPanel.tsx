@@ -330,10 +330,6 @@ export default function VisualPanel({
                 </div>
               </div>
               
-              {/* DEBUG: Show what color should be applied */}
-              <div style={{fontSize: '10px', color: 'red', marginTop: '2px'}}>
-                Debug: {effectiveCloudColors[idx]?.bg || "#cbe3ff"}
-              </div>
 
               {/* Only show add/remove buttons for this cloud if customization is on */}
               {showCustomize && (
