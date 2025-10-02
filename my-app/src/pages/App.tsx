@@ -108,14 +108,23 @@ function App() {
           });
 
           // Handle cloud colors
-          if (colors.externalFactors && Array.isArray(colors.externalFactors)) {
-            setCloudColors(colors.externalFactors);
-          } else {
-            // Match the number of clouds with the data
-            const cloudCount = externalInfluencesString ? 
-              JSON.parse(externalInfluencesString).length : 1;
-            setCloudColors(Array(cloudCount).fill({ bg: "#cbe3ff", text: "#333333" }));
-          }
+          // Handle cloud colors - convert object to array if needed
+   if (colors.externalFactors) {
+     if (Array.isArray(colors.externalFactors)) {
+       setCloudColors(colors.externalFactors);
+     } else if (typeof colors.externalFactors === 'object') {
+       // Backend returned object format, convert to array
+       const cloudArray = [];
+       for (let i = 0; i < 10; i++) {
+         if (colors.externalFactors[i.toString()]) {
+           cloudArray.push(colors.externalFactors[i.toString()]);
+         } else {
+           break;
+         }
+       }
+       setCloudColors(cloudArray.length > 0 ? cloudArray : [{ bg: "#cbe3ff", text: "#333333" }]);
+     }
+   }
         }
       } catch (err) {
         console.error("Failed to load project", err);

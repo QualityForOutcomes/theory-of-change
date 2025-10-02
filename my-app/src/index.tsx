@@ -6,10 +6,10 @@ import "./index.css";
 import App from "./pages/App";
 import ProfilePage from "./pages/profile";
 import Navbar from "./components/Nav";
-import Footer from "./components/Footer";
 import UserListPage from "./pages/UsersList";
 import ProjectCreate from "./pages/Project";
 import ProjectsPage from "./pages/Project";
+
 import AuthCard from "./components/AuthCard";
 import PrivateRoute from "./auth/PrivateRoute";        
 import { AuthProvider } from "./auth/AuthProvider";     
@@ -20,20 +20,27 @@ const root = ReactDOM.createRoot(
 
 root.render(
   <React.StrictMode>
-    <AuthProvider>
+    <AuthProvider>                                     
       <Router>
         <Navbar />
         <Routes>
           {/* Public */}
           <Route path="/login" element={<AuthCard />} />
 
-          {/* Protected */}
-          <Route path="/projects/:projectId" element={<App />} />
+          {/* Protected*/}
           <Route
-            path="/project"
+            path="/"
             element={
               <PrivateRoute>
-                <ProjectCreate />
+                <ProjectsPage />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/projects/:projectId"
+            element={
+              <PrivateRoute>
+                <App />
               </PrivateRoute>
             }
           />
@@ -53,12 +60,11 @@ root.render(
               </PrivateRoute>
             }
           />
-          {/* Default protected route */}
           <Route
-            path="/"
+            path="/project"
             element={
               <PrivateRoute>
-                <ProjectsPage />
+                <ProjectCreate />
               </PrivateRoute>
             }
           />

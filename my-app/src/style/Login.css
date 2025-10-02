@@ -12,7 +12,6 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: url("") no-repeat center center/cover;
     background-size: cover;
     background-position: center;
     font-family: Arial, sans-serif;
