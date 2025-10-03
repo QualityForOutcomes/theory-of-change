@@ -1,0 +1,10 @@
+{
+  "functions": {
+    "api/**/*.js": {
+      "runtime": "@vercel/node"
+    }
+  },
+  "env": {
+    "STRIPE_SECRET_KEY": "@stripe-secret-key"
+  }
+}

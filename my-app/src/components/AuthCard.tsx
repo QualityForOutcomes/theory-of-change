@@ -1,8 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { validateEmailDetailed, validatePassword } from "../utils/validation";
 import "../style/Login.css";
 import logo from "../assets/logo.png";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../auth/AuthProvider";
 import { authLogin, authRegister, authGoogleLogin } from "../services/api";
 import { signInWithGooglePopup } from "../lib/firebase";
@@ -31,7 +31,16 @@ export default function AuthCard() {
   const [loading, setLoading] = useState(false);
 
   const nav = useNavigate();
-  const redirectAfterAuth = "/";
+  const [searchParams] = useSearchParams();
+  const redirectAfterAuth = searchParams.get("redirect") ? `/${searchParams.get("redirect")}` : "/";
+  const urlMessage = searchParams.get("message");
+
+  // Set error message from URL params on component mount
+  useEffect(() => {
+    if (urlMessage) {
+      setError(urlMessage);
+    }
+  }, [urlMessage]);
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
     const { name, value } = e.target;
@@ -240,7 +249,7 @@ export default function AuthCard() {
           <div className="bottom-links">
             {mode === "login" && (
               <div className="forgot-password">
-                <a href="/password" className="forgot-password">Forgot Password?</a>
+                <a href="/forgot-password" className="forgot-password">Forgot Password?</a>
               </div>
             )}
 

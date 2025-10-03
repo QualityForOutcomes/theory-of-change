@@ -62,10 +62,9 @@
     "ts-node": "^10.9.2"
   },
   "jest": {
-  "testMatch": [
-    "<rootDir>/src/**/*.test.ts",
-    "<rootDir>/src/**/*.test.tsx"
-  ]
-}
-
+    "testMatch": [
+      "<rootDir>/src/**/*.test.ts",
+      "<rootDir>/src/**/*.test.tsx"
+    ]
+  }
 }
