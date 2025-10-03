@@ -2,7 +2,8 @@ import axios from "axios";
 import { createUser, verifyLogin, signToken } from "../mocks/service.memory";
 
 // Base URL for user auth and project APIs
-const API_BASE = process.env.REACT_APP_API_BASE || "https://toc-user-backend.vercel.app";
+const API_BASE = process.env.REACT_APP_API_BASE || "https://nodejs-serverless-function-express-rho-ashen.vercel.app";
+const PASS_API_BASE = process.env.REACT_APP_API_BASE || "https://toc-user-backend.vercel.app";
 // Separate base for payment/checkout endpoints (serverless backend)
 const PAYMENT_API_BASE = process.env.REACT_APP_PAYMENT_API_BASE || "https://nodejs-serverless-function-express-rho-ashen.vercel.app";
 
@@ -54,7 +55,7 @@ export const authLogin = async (payload: { email: string; password: string }) =>
 export const forgotPassword = async (data: {
   email: string;
 }) => {
-  const response = await axios.post(`${API_BASE}/api/auth/password.Reset`, {
+  const response = await axios.post(`${PASS_API_BASE}/api/auth/password.Reset`, {
     email: data.email,
     action: "request-reset"
   });
@@ -66,7 +67,7 @@ export const resetPassword = async (data: {
   token: string;
   newPassword: string;
 }) => {
-  const response = await axios.post(`${API_BASE}/api/auth/password.Reset`, {
+  const response = await axios.post(`${PASS_API_BASE}/api/auth/password.Reset`, {
     email: data.email,
     action: "verify-token",
     token: data.token,
