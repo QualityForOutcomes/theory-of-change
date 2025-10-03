@@ -1,5 +1,4 @@
 import axios from "axios";
-import { createUser, verifyLogin, signToken } from "../mocks/service.memory";
 
 // Base URL for user auth and project APIs
 const API_BASE = process.env.REACT_APP_API_BASE || "https://nodejs-serverless-function-express-rho-ashen.vercel.app";
@@ -16,11 +15,49 @@ const getAuthHeaders = () => {
 
 // Authentication APIs
 export const authRegister = async (payload: {
-  email: string; password: string; firstName?: string; lastName?: string; org?: string;
+  email: string;
+  password: string;
+  firstName: string;
+  lastName: string;
+  organisation: string;     // map to organization if backend expects that spelling
+  username: string;
+  acceptTandC: boolean;
+  newsLetterSubs: boolean;
 }) => {
-  const user = await createUser(payload);
-  const token = `dev-${user.id}-${Date.now()}`;   // fake token for dev
-  return { token, user };
+  try {
+    // Step 1: Create user account
+    const res = await axios.post(
+      `${API_BASE}/api/user/Create`,
+      {
+        email: payload.email,
+        password: payload.password,
+        firstName: payload.firstName,
+        lastName: payload.lastName,
+        organization: payload.organisation,   // <-- if backend uses "organisation" keep same
+        username: payload.username,
+        acceptTandC: payload.acceptTandC,
+        newsLetterSubs: payload.newsLetterSubs,
+      },
+      { headers: { "Content-Type": "application/json" } }
+    );
+
+    const { success, message } = res.data ?? {};
+    if (!success) throw new Error(message || "Registration failed");
+
+    // Step 2: Immediately login to get token
+    const loginRes = await axios.post(
+      `${API_BASE}/api/auth/Login`,
+      { email: payload.email, password: payload.password },
+      { headers: { "Content-Type": "application/json" } }
+    );
+
+    const { success: loginOk, data, message: loginMsg } = loginRes.data ?? {};
+    if (!loginOk) throw new Error(loginMsg || "Auto-login failed after registration");
+
+    return { token: data.token, user: data.user };
+  } catch (err: any) {
+    throw new Error(err.response?.data?.message || err.message || "Registration failed");
+  }
 };
 
 export const authLogin = async (payload: { email: string; password: string }) => {
@@ -52,12 +89,11 @@ export const authLogin = async (payload: { email: string; password: string }) =>
   }
 };
 
-export const forgotPassword = async (data: {
-  email: string;
-}) => {
+export const forgotPassword = async (data: { email: string }) => {
+  // Unified endpoint for requesting a password reset code
   const response = await axios.post(`${PASS_API_BASE}/api/auth/password.Reset`, {
     email: data.email,
-    action: "request-reset"
+    action: "request-reset",
   });
   return response.data;
 };
@@ -67,15 +103,36 @@ export const resetPassword = async (data: {
   token: string;
   newPassword: string;
 }) => {
+  // Unified endpoint for verifying token and resetting password
   const response = await axios.post(`${PASS_API_BASE}/api/auth/password.Reset`, {
     email: data.email,
     action: "verify-token",
     token: data.token,
-    newPassword: data.newPassword
+    newPassword: data.newPassword,
   });
   return response.data;
 };
 
+// Google login using Firebase ID token
+export const authGoogleLogin = async (idToken: string) => {
+  try {
+    const res = await axios.post(
+      `${API_BASE}/api/auth/google`,
+      { idToken },
+      { headers: { "Content-Type": "application/json" } }
+    );
+
+    const { success, data, message } = res.data ?? {};
+    if (success === false) throw new Error(message || "Google login failed");
+
+    const pack = data ?? res.data; // supports {success,data:{user,token}} or {user,token}
+    if (!pack?.token || !pack?.user) throw new Error("Invalid Google login response");
+
+    return { token: pack.token, user: pack.user };
+  } catch (err: any) {
+    throw new Error(err?.response?.data?.message || err.message || "Google login failed");
+  }
+};
 
 // User Profile API
 export const fetchUserProfile = async () => {
