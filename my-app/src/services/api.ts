@@ -118,7 +118,7 @@ export const resetPassword = async (data: {
 export const authGoogleLogin = async (idToken: string) => {
   try {
     const res = await axios.post(
-      `${API_BASE}/api/auth/google`,
+      `${API_BASE}/api/auth/Google`,
       { idToken },
       { headers: { "Content-Type": "application/json" } }
     );
@@ -386,4 +386,19 @@ export const getSubscriptionPlans = async () => {
       features: ["Everything in Starter", "Advanced customization"],
     },
   ];
+};
+
+
+export const fetchTerms = async () => {
+  const res = await axios.get(`${API_BASE}/api/terms/Get`);
+  return res.data.data; // { content, version, last_updated_at }
+};
+
+export const updateTerms = async (content: string, token: string) => {
+  const res = await axios.post(
+    `${API_BASE}/api/terms/Update`,
+    { content },
+    { headers: { Authorization: `Bearer ${token}` } }
+  );
+  return res.data;
 };
