@@ -1,5 +1,5 @@
 --Table creation
-
+--can you see this 
 -- Extensions
 create extension if not exists pgcrypto;
 
