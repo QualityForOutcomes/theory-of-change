@@ -1,4 +1,4 @@
-import { Outlet, Link, useNavigate } from "react-router-dom";
+import { Outlet, Link, useNavigate, useLocation } from "react-router-dom";
 
 const styles = {
   page: { minHeight: "100vh", padding: 24, background: "var(--bg-grad)" },
@@ -40,14 +40,36 @@ const styles = {
     background: "rgba(255,255,255,0.75)",
     borderTop: "1px solid #e5e7eb",
   },
+  nav: {
+    display: "flex",
+    gap: 24,
+    alignItems: "center",
+  },
+  navLink: {
+    textDecoration: "none",
+    color: "#6b7280",
+    fontSize: 14,
+    fontWeight: 500,
+    padding: "8px 16px",
+    borderRadius: 8,
+    transition: "all 0.2s ease",
+  },
+  navLinkActive: {
+    color: "#7c3aed",
+    background: "rgba(124, 58, 237, 0.1)",
+  },
 };
 
 export default function AdminLayout() {
   const nav = useNavigate();
+  const location = useLocation();
+  
   const logout = () => {
     localStorage.removeItem("qfo_token");
     nav("/login");
   };
+
+  const isActive = (path) => location.pathname === path;
 
   return (
     <div style={styles.page}>
@@ -69,6 +91,28 @@ export default function AdminLayout() {
               <h1 style={styles.brandTitle}>Admin Dashboard</h1>
             </div>
           </Link>
+          
+          <nav style={styles.nav}>
+            <Link
+              to="/admin"
+              style={{
+                ...styles.navLink,
+                ...(isActive("/admin") ? styles.navLinkActive : {})
+              }}
+            >
+              Dashboard
+            </Link>
+            <Link
+              to="/admin/terms"
+              style={{
+                ...styles.navLink,
+                ...(isActive("/admin/terms") ? styles.navLinkActive : {})
+              }}
+            >
+              Terms & Conditions
+            </Link>
+          </nav>
+          
           <button
             onClick={logout}
             style={{

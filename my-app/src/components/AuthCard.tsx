@@ -35,6 +35,17 @@ export default function AuthCard() {
   const redirectAfterAuth = searchParams.get("redirect") ? `/${searchParams.get("redirect")}` : "/";
   const urlMessage = searchParams.get("message");
 
+  const [errors, setErrors] = useState<{ email: string; password: string; confirm: string }>({
+    email: "",
+    password: "",
+    confirm: "",
+  });
+  const [touched, setTouched] = useState<{ email: boolean; password: boolean; confirm: boolean }>({
+    email: false,
+    password: false,
+    confirm: false,
+  });
+  
   // Set error message from URL params on component mount
   useEffect(() => {
     if (urlMessage) {
@@ -279,18 +290,34 @@ export default function AuthCard() {
           {mode === "register" && (
             <>
               {/* Terms & Conditions with hyperlink */}
-              <label className="terms" style={{ display: "flex", gap: 8, alignItems: "center" }}>
+              <label className="terms" style={{ display: "flex", gap: 8, alignItems: "flex-start", marginBottom: "12px" }}>
                 <input
                   type="checkbox"
                   name="acceptTandC"
                   checked={form.acceptTandC}
                   onChange={(e) => setForm((p) => ({ ...p, acceptTandC: e.target.checked }))}
                   required
+                  style={{ marginTop: "2px", flexShrink: 0 }}
                 />
-                I accept the{" "}
-                <a href="/terms" target="_blank" rel="noopener noreferrer">
-                  Terms &amp; Conditions
-                </a>
+                <span style={{ lineHeight: "1.4" }}>
+                  I accept the{" "}
+                  <a 
+                    href="/terms" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    style={{
+                      color: "#3498db",
+                      textDecoration: "underline",
+                      fontWeight: "500",
+                      transition: "color 0.2s ease"
+                    }}
+                    onMouseEnter={(e) => (e.target as HTMLAnchorElement).style.color = "#2980b9"}
+                    onMouseLeave={(e) => (e.target as HTMLAnchorElement).style.color = "#3498db"}
+                  >
+                    Terms &amp; Conditions
+                  </a>
+                  {" "}and acknowledge that I have read and understood them.
+                </span>
               </label>
 
               {/* Newsletter checkbox */}
