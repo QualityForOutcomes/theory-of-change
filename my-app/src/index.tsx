@@ -18,6 +18,7 @@ import ResetPassword from "./pages/ResetPassword";
 import SubscriptionPlans from "./pages/SubscriptionPlans";
 import SubscriptionSuccess from "./pages/SubscriptionSuccess";
 import Logout from "./pages/Logout";
+import Terms from "./pages/Terms";
 
 const root = ReactDOM.createRoot(
   document.getElementById("root") as HTMLElement
@@ -33,6 +34,7 @@ root.render(
           <Route path="/login" element={<AuthCard />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="/terms" element={<Terms />} />
           <Route
             path="/plans"
             element={
