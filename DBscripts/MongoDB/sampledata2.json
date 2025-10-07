@@ -1,0 +1,22 @@
+{
+  "email": "elena@example.com",
+  "projectID": "8",
+  "tocData": {
+    "projectTitle": "Youth Employment Program",
+    "bigPictureGoal": "Reduce unemployment rates",
+    "projectAim": "Offer skills training for young adults",
+    "objectives": ["Conduct 5 training camps", "Place 200 trainees in jobs"],
+    "beneficiaries": {
+      "description": "Young adults aged 18–25",
+      "estimatedReach": 200
+    },
+    "activities": ["Workshops", "Job fairs"],
+    "outcomes": ["Improved job readiness", "Increased employment"],
+    "externalFactors": ["Job market demand", "Local industry support"],
+    "evidenceLinks": ["http://example.com/report-employment"],
+    "status": "draft",
+    "type": "project",
+    "createdAt": { "$date": "2025-07-15T04:00:00Z" },
+    "updatedAt": { "$date": "2025-08-30T04:00:00Z" }
+  }
+}
