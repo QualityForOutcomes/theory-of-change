@@ -3,8 +3,8 @@ import { useParams } from "react-router-dom";
 import FormPanel from "../components/FormPanel";
 import VisualPanel from "../components/VisualPanel";
 import "../style/App.css";
-import { updateToc, fetchTocProjectById } from "../services/api";
-import Joyride, { Step, CallBackProps } from "react-joyride";
+import { updateToc, fetchTocProjectById, fetchUserTocs } from "../services/api";
+import Joyride, { Step, CallBackProps, STATUS } from "react-joyride";
 
 export type Data = {
   projectTitle: string;
@@ -21,8 +21,54 @@ export type ColumnColors = {
 
 export type CloudColor = { bg: string; text: string };
 
+const Toast = ({ message, type = "success", onClose }: { message: string; type?: "success" | "error" | "warning"; onClose: () => void }) => {
+  useEffect(() => {
+    const timer = setTimeout(onClose, 3000);
+    return () => clearTimeout(timer);
+  }, [onClose]);
+
+  const icons = {
+    success: (
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="10" cy="10" r="9" stroke="currentColor" strokeWidth="2" fill="none"/>
+        <path d="M6 10L9 13L14 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+      </svg>
+    ),
+    error: (
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="10" cy="10" r="9" stroke="currentColor" strokeWidth="2" fill="none"/>
+        <path d="M7 7L13 13M13 7L7 13" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+      </svg>
+    ),
+    warning: (
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M10 2L2 17h16L10 2z" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+        <path d="M10 8v4M10 14v.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+      </svg>
+    ),
+  };
+
+  return (
+    <div className={`toast-notification toast-${type}`}>
+      {icons[type]}
+      {message}
+    </div>
+  );
+};
+
 function App() {
   const { projectId } = useParams<{ projectId: string }>();
+  
+  const userId = localStorage.getItem("userId");
+  const currentProjectId = projectId || localStorage.getItem("projectId");
+  
+  const defaultColumnColors = {
+    activities: { bg: "#8C6BDC", text: "#ffffff" },
+    objectives: { bg: "#A07CFD", text: "#ffffff" },
+    aim: { bg: "#C074E0", text: "#ffffff" },
+    goal: { bg: "#8C6BDC", text: "#ffffff" },
+  };
+
   const [data, setData] = useState<Data>({
     projectTitle: "",
     goal: "",
@@ -35,22 +81,17 @@ function App() {
 
   const [columnColors, setColumnColors] = useState<{
     [field in keyof Data]?: { bg: string; text: string }
-  }>({
-    activities: { bg: "#8C6BDC", text: "#ffffff" },
-    objectives: { bg: "#A07CFD", text: "#ffffff" },
-    aim: { bg: "#C074E0", text: "#ffffff" },
-    goal: { bg: "#8C6BDC", text: "#ffffff" },
-  });
+  }>(defaultColumnColors);
 
   const [cloudColors, setCloudColors] = useState<{ bg: string; text: string }[]>([
     { bg: "#cbe3ff", text: "#333333" },
   ]);
 
   const [isSaving, setIsSaving] = useState(false);
-  const [runTour, setRunTour] = useState(true);
-
-  const userId = localStorage.getItem("userId");
-  const currentProjectId = projectId || localStorage.getItem("projectId");
+  const [isLoading, setIsLoading] = useState(false);
+  const [runTour, setRunTour] = useState(false);
+  const [highlightField, setHighlightField] = useState<string | null>(null);
+  const [toast, setToast] = useState<{ message: string; type: "success" | "error" | "warning" } | null>(null);
 
   const normalizeHex = (hex: string) => {
     if (/^#[0-9a-f]{3}$/i.test(hex)) {
@@ -59,12 +100,78 @@ function App() {
     return hex;
   };
 
-  // Load project
+  // Helper function to check if a field has content
+  const hasContent = (value: string): boolean => {
+    if (!value || value.trim() === '') return false;
+    
+    try {
+      const parsed = JSON.parse(value);
+      if (Array.isArray(parsed)) {
+        return parsed.some(item => item && item.trim() !== '');
+      }
+      return value.trim() !== '';
+    } catch {
+      return value.trim() !== '';
+    }
+  };
+
+  // Check if all required fields are filled
+  const isFormValid = (): boolean => {
+    return (
+      data.projectTitle.trim() !== '' &&
+      hasContent(data.goal) &&
+      hasContent(data.aim) &&
+      hasContent(data.beneficiaries) &&
+      hasContent(data.activities) &&
+      hasContent(data.objectives) &&
+      hasContent(data.externalInfluences)
+    );
+  };
+
+  // Get list of empty fields for error message
+  const getEmptyFields = (): string[] => {
+    const emptyFields: string[] = [];
+    const fieldNames: Record<string, string> = {
+      projectTitle: 'Project Title',
+      goal: 'Goal',
+      aim: 'Aim',
+      beneficiaries: 'Beneficiaries',
+      activities: 'Activities',
+      objectives: 'Objectives',
+      externalInfluences: 'External Influences'
+    };
+
+    if (data.projectTitle.trim() === '') emptyFields.push(fieldNames.projectTitle);
+    if (!hasContent(data.goal)) emptyFields.push(fieldNames.goal);
+    if (!hasContent(data.aim)) emptyFields.push(fieldNames.aim);
+    if (!hasContent(data.beneficiaries)) emptyFields.push(fieldNames.beneficiaries);
+    if (!hasContent(data.activities)) emptyFields.push(fieldNames.activities);
+    if (!hasContent(data.objectives)) emptyFields.push(fieldNames.objectives);
+    if (!hasContent(data.externalInfluences)) emptyFields.push(fieldNames.externalInfluences);
+
+    return emptyFields;
+  };
+
+  useEffect(() => {
+    const currentProjectId = projectId || localStorage.getItem("projectId");
+    const hasSeenTour = localStorage.getItem("tour-seen-project-1");
+    
+    if (currentProjectId === "1" && !hasSeenTour) {
+      setTimeout(() => setRunTour(true), 1000);
+    }
+  }, [projectId]);
+
   useEffect(() => {
     const loadProject = async () => {
       const projectIdFromParams = projectId || localStorage.getItem("projectId");
-      if (!projectIdFromParams) return;
+      
+      if (!projectIdFromParams) {
+        setColumnColors(defaultColumnColors);
+        setCloudColors([{ bg: "#cbe3ff", text: "#333333" }]);
+        return;
+      }
 
+      setIsLoading(true);
       try {
         const res = await fetchTocProjectById(projectIdFromParams);
         if (res.success && res.data?.projects?.length > 0) {
@@ -72,13 +179,11 @@ function App() {
           const toc = project.tocData;
           const colors = project.tocColor || {};
 
-          // Parse external influences properly
           let externalInfluencesString = "";
           if (toc.externalFactors && Array.isArray(toc.externalFactors)) {
             externalInfluencesString = JSON.stringify(toc.externalFactors);
           }
 
-          // Parse activities and objectives properly
           let activitiesString = "";
           if (toc.activities && Array.isArray(toc.activities)) {
             activitiesString = JSON.stringify(toc.activities);
@@ -99,35 +204,50 @@ function App() {
             externalInfluences: externalInfluencesString,
           });
 
-          // Map backend color structure to frontend structure
-          setColumnColors({
-            activities: colors.activities || { bg: "#8C6BDC", text: "#ffffff" },
-            objectives: colors.objectives || { bg: "#A07CFD", text: "#ffffff" },
-            aim: colors.projectAim || { bg: "#C074E0", text: "#ffffff" },
-            goal: colors.bigPictureGoal || { bg: "#8C6BDC", text: "#ffffff" },
-          });
+          const newColumnColors = {
+            activities: (colors.activities?.bg) 
+              ? colors.activities 
+              : defaultColumnColors.activities,
+            objectives: (colors.objectives?.bg) 
+              ? colors.objectives 
+              : defaultColumnColors.objectives,
+            aim: (colors.projectAim?.bg) 
+              ? colors.projectAim 
+              : defaultColumnColors.aim,
+            goal: (colors.bigPictureGoal?.bg) 
+              ? colors.bigPictureGoal 
+              : defaultColumnColors.goal,
+          };
+          setColumnColors(newColumnColors);
 
-          // Handle cloud colors
-          // Handle cloud colors - convert object to array if needed
-   if (colors.externalFactors) {
-     if (Array.isArray(colors.externalFactors)) {
-       setCloudColors(colors.externalFactors);
-     } else if (typeof colors.externalFactors === 'object') {
-       // Backend returned object format, convert to array
-       const cloudArray = [];
-       for (let i = 0; i < 10; i++) {
-         if (colors.externalFactors[i.toString()]) {
-           cloudArray.push(colors.externalFactors[i.toString()]);
-         } else {
-           break;
-         }
-       }
-       setCloudColors(cloudArray.length > 0 ? cloudArray : [{ bg: "#cbe3ff", text: "#333333" }]);
-     }
-   }
+          if (colors.externalFactors) {
+            if (Array.isArray(colors.externalFactors)) {
+              setCloudColors([...colors.externalFactors]);
+            } else if (typeof colors.externalFactors === 'object') {
+              const cloudArray = [];
+              for (let i = 0; i < 10; i++) {
+                if (colors.externalFactors[i.toString()]) {
+                  cloudArray.push(colors.externalFactors[i.toString()]);
+                } else {
+                  break;
+                }
+              }
+              setCloudColors(cloudArray.length > 0 ? cloudArray : [{ bg: "#cbe3ff", text: "#333333" }]);
+            }
+          } else {
+            setCloudColors([{ bg: "#cbe3ff", text: "#333333" }]);
+          }
+        } else {
+          setColumnColors({ ...defaultColumnColors });
+          setCloudColors([{ bg: "#cbe3ff", text: "#333333" }]);
         }
       } catch (err) {
         console.error("Failed to load project", err);
+        setToast({ message: "Failed to load project", type: "error" });
+        setColumnColors({ ...defaultColumnColors });
+        setCloudColors([{ bg: "#cbe3ff", text: "#333333" }]);
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -138,22 +258,36 @@ function App() {
     setData((prev) => ({ ...prev, [field]: value }));
   };
 
-  // Add functions to update colors from VisualPanel
   const updateColumnColors = (colors: { [field in keyof Data]?: { bg: string; text: string } }) => {
     setColumnColors(colors);
   };
 
   const updateCloudColors = (colors: { bg: string; text: string }[]) => {
-    console.log("=== App.tsx updateCloudColors called ===");
-    console.log("New colors received:", colors);
     setCloudColors(colors);
-    console.log("=== End updateCloudColors ===");
+  };
+
+  const handleFieldAdded = (fieldName: string) => {
+    setHighlightField(fieldName);
+    setTimeout(() => setHighlightField(null), 2100);
   };
 
   const handleSave = async () => {
+    // Validate form before saving
+    if (!isFormValid()) {
+      const emptyFields = getEmptyFields();
+      const fieldList = emptyFields.length <= 3 
+        ? emptyFields.join(', ')
+        : `${emptyFields.slice(0, 2).join(', ')}, and ${emptyFields.length - 2} more`;
+      
+      setToast({ 
+        message: `Please fill in all required fields: ${fieldList}`, 
+        type: "warning" 
+      });
+      return;
+    }
+
     setIsSaving(true);
     try {
-      // Parse arrays from JSON strings
       const parseArrayField = (value: string): string[] => {
         if (!value) return [];
         try {
@@ -164,29 +298,12 @@ function App() {
         }
       };
 
-      console.log("=== DEBUGGING CLOUD COLORS ===");
-      console.log("Raw data.externalInfluences:", data.externalInfluences);
-      console.log("Current columnColors:", columnColors);
-      console.log("Current cloudColors:", cloudColors);
-      console.log("CloudColors length:", cloudColors.length);
-      
       const externalFactorsArray = parseArrayField(data.externalInfluences);
-      console.log("Parsed external factors array:", externalFactorsArray);
-      console.log("Number of external factors:", externalFactorsArray.length);
 
-      // Ensure we have the right number of cloud colors
       const normalizedCloudColors = externalFactorsArray.map((_, index) => 
         cloudColors[index] || { bg: "#cbe3ff", text: "#333333" }
       );
 
-      console.log("Normalized cloud colors:", normalizedCloudColors);
-      console.log("Will send externalFactors colors:", normalizedCloudColors.map(c => ({
-        bg: normalizeHex(c.bg),
-        text: normalizeHex(c.text),
-      })));
-      console.log("=== END DEBUG ===");
-
-      // Create the color payload that matches backend expectations
       const tocColorPayload = {
         bigPictureGoal: {
           bg: normalizeHex(columnColors.goal?.bg || "#8C6BDC"),
@@ -232,53 +349,53 @@ function App() {
         tocColor: tocColorPayload,
       };
 
-      console.log("Saving payload:", JSON.stringify(payload, null, 2));
-
       const result = await updateToc(payload);
       if (result.success) {
-        alert("Form saved successfully!");
-        console.log("Save result:", result);
-        console.log("=== BACKEND RESPONSE ===");
-        console.log("Backend returned tocColor:", result.data?.tocColor);
-        console.log("Backend externalFactors colors:", result.data?.tocColor?.externalFactors);
-        console.log("=== END BACKEND RESPONSE ===");
+        setToast({ message: "Form saved successfully!", type: "success" });
       } else {
-        alert("Error saving form: " + result.message);
+        setToast({ message: `Error saving form: ${result.message}`, type: "error" });
         console.error("Save error:", result);
       }
     } catch (err: any) {
       console.error("Save error:", err);
-      alert(err.response?.data?.message || "Unexpected error. Check console.");
+      setToast({ message: err.response?.data?.message || "Unexpected error occurred", type: "error" });
     } finally {
       setIsSaving(false);
     }
   };
 
-  // Joyride steps
   const steps: Step[] = [
-    { target: ".progress-container", content: "Completion progress bar." },
-    { target: "#field-goal", content: "Define your long-term Goal." },
-    { target: "#field-aim", content: "Define your project Aim." },
-    { target: "#field-beneficiaries", content: "Specify the beneficiaries." },
-    { target: "#field-activities", content: "List project activities." },
-    { target: "#field-objectives", content: "Define project objectives." },
-    { target: "#field-externalInfluences", content: "Mention external influences." },
-    { target: ".btn.customize", content: "Customize the visual map." },
-    { target: ".btn.export", content: "Export the visual map." },
+    { target: ".progress-container", content: "Track your completion progress here." },
+    { target: "#step-goal", content: "Step 1: Define your long-term Goal." },
+    { target: "#step-aim", content: "Step 2: Define your project Aim." },
+    { target: "#step-beneficiaries", content: "Step 3: Specify the beneficiaries." },
+    { target: "#step-activities", content: "Step 4: List project activities." },
+    { target: "#step-objectives", content: "Step 5: Define project objectives." },
+    { target: "#step-externalInfluences", content: "Step 6: Mention external influences." },
+    { target: ".btn.customise", content: "Step 7: Customise your visual map colors." },
+    { target: ".btn.export", content: "Step 8: Export your diagram." },
+    { target: ".btn-save", content: "Step 9: Save your work." },
   ];
 
   const handleJoyrideCallback = (data: CallBackProps) => {
-    // Handle joyride callback
+    const { status } = data;
+    
+    if (status === STATUS.FINISHED || status === STATUS.SKIPPED) {
+      localStorage.setItem("tour-seen-project-1", "true");
+      setRunTour(false);
+    }
   };
+
+  const canSave = isFormValid();
 
   return (
     <div>
-      {/* Header */}
+      {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
+      
       <div className="app-header">
-        <h1>Theory of Change Visualization</h1>
+        <h1>Theory of Change Visualisation</h1>
       </div>
 
-      {/* Joyride */}
       <Joyride
         steps={steps}
         run={runTour}
@@ -292,9 +409,12 @@ function App() {
         styles={{ options: { zIndex: 10000 } }}
       />
 
-      {/* Main Container */}
       <div className="app-container">
-        <FormPanel data={data} updateField={updateField} />
+        <FormPanel 
+          data={data} 
+          updateField={updateField}
+          highlightField={highlightField}
+        />
         <div className="right-panel-wrapper">
           <VisualPanel 
             data={data} 
@@ -303,8 +423,15 @@ function App() {
             cloudColors={cloudColors}
             updateColumnColors={updateColumnColors}
             updateCloudColors={updateCloudColors}
+            onFieldAdded={handleFieldAdded}
+            isLoading={isLoading}
           />
-          <button className="btn-save" onClick={handleSave} disabled={isSaving}>
+          <button 
+            className="btn-save" 
+            onClick={handleSave} 
+            disabled={isSaving || !canSave}
+            title={!canSave ? "Please fill in all required fields" : ""}
+          >
             {isSaving ? (
               <>
                 <span className="spinner"></span> Saving...

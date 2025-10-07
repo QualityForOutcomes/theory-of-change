@@ -40,7 +40,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ subscription }) => {
   const [editForm, setEditForm] = useState({
     firstName: "",
     lastName: "",
-    organization: "",
+    organisation: "",
     username: ""
   });
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -57,7 +57,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ subscription }) => {
         setEditForm({
           firstName: profileData.firstName || "",
           lastName: profileData.lastName || "",
-          organization: profileData.organisation || "",
+          organisation: profileData.organisation || "",
           username: profileData.username || ""
         });
       } catch (err: any) {
@@ -103,7 +103,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ subscription }) => {
       setEditForm({
         firstName: userProfile?.firstName || "",
         lastName: userProfile?.lastName || "",
-        organization: userProfile?.organisation || "",
+        organisation: userProfile?.organisation || "",
         username: userProfile?.username || ""
       });
     }
@@ -128,7 +128,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ subscription }) => {
       const updatedData = await updateUserProfile({
         firstName: editForm.firstName,
         lastName: editForm.lastName,
-        organization: editForm.organization,
+        organisation: editForm.organisation,
         username: editForm.username
       });
       
@@ -251,7 +251,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ subscription }) => {
         {/* Success Message */}
         {successMessage && (
           <div className="success-message">
-            ✅ {successMessage}
+             {successMessage}
           </div>
         )}
         
@@ -331,13 +331,13 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ subscription }) => {
               </div>
               
               <div className="form-group">
-                <label className="form-label">Organization</label>
+                <label className="form-label">Organisation</label>
                 <input
                   type="text"
                   className="form-input"
-                  value={editForm.organization}
-                  onChange={(e) => handleFormChange('organization', e.target.value)}
-                  placeholder="Enter organization"
+                  value={editForm.organisation}
+                  onChange={(e) => handleFormChange('organisation', e.target.value)}
+                  placeholder="Enter organisation"
                 />
               </div>
               
@@ -446,7 +446,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ subscription }) => {
               <div className="info-item">
                 <span className="info-icon">🏢</span>
                 <div className="info-content">
-                  <span className="info-label">Organization</span>
+                  <span className="info-label">Organisation</span>
                   <span className="info-value">{userProfile.organisation}</span>
                 </div>
               </div>

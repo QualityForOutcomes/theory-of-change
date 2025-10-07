@@ -179,7 +179,7 @@ export const fetchUserProfile = async () => {
 export const updateUserProfile = async (payload: {
   firstName?: string;
   lastName?: string;
-  organization?: string;
+  organisation?: string;
   username?: string;
 }) => {
   try {
