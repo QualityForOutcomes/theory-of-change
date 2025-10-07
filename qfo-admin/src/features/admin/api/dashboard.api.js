@@ -58,51 +58,67 @@
 
 // If you have no backend yet, you can keep fetchDashboard mocked.
 // When backend is ready, switch fetchDashboard to axios.get(...) and keep adaptDashboard as-is.
+import api from "../../../services/api";
 
 export async function fetchDashboard() {
-    // Return the payload you pasted (or call your API and return res.data)
-    return {
-      success: true,
-      message: "Dashboard data retrieved successfully",
-      statusCode: 200,
-      data: {
-        overview: {
-          users: { total: 0, newThisMonth: 0 },
-          subscriptions: { total: 0, active: 0, trialing: 0, pastDue: 0, canceled: 0, incomplete: 0 },
-          revenue: {
-            amount: 0,
-            amountCents: 0,
-            count: 0,
-            period: "month",
-            growth: { currentMonth: 0, lastMonth: 0, growthPercent: "0.0" }
+  try {
+    const res = await api.get('/api/dashboard');
+    return res.data;
+  } catch (err) {
+    // Development fallback: only return demo payload when it's a NETWORK error (no response)
+    const isDev = import.meta.env.MODE !== 'production';
+    const hasNetworkError = !err?.response; // axios network errors lack a response
+    if (isDev && hasNetworkError) {
+      const months = ["Apr","May","Jun","Jul","Aug","Sep"];
+      return {
+        success: true,
+        message: "Demo dashboard (dev fallback)",
+        statusCode: 200,
+        data: {
+          overview: {
+            users: { total: 42, newThisMonth: 5 },
+            subscriptions: { total: 10, active: 7, trialing: 2, pastDue: 1, canceled: 0, incomplete: 0 },
+            revenue: {
+              amountCents: 8240000,
+              count: 12,
+              period: 'month',
+              growth: { currentMonth: 8240000, lastMonth: 7000000, growthPercent: 12.4 },
+            },
+            premiumCustomers: { total: 3, new: 1, churn: 0 },
+            proCustomers: { total: 5, new: 2, churn: 1 },
+            traffic: { today: 1280, monthly: 32140, quarterly: 91520 },
           },
-          premiumCustomers: { total: 0, new: 0, churn: 0 },
-          traffic: { today: 5, monthly: 6, quarterly: 6 }
-        },
-        charts: {
-          revenueTrend: [
-            { month: "Apr", revenue: 0 },
-            { month: "May", revenue: 0 },
-            { month: "June", revenue: 0 },
-            { month: "July", revenue: 0 },
-            { month: "Aug", revenue: 0 },
-            { month: "Sept", revenue: 0 }
+          charts: {
+            revenueTrend: months.map((m,i)=>({ month: m, revenue: 7000 + i*2000 })),
+            trafficTrend: months.map((m,i)=>({ month: m, traffic: 5000 + i*5000 })),
+          },
+          recentSubscriptions: [
+            { id: 'SUB-0012', userName: 'Olivia Rhye', tier: 'Premium', period: 'Monthly', amountCents: 2900, status: 'active' },
+            { id: 'SUB-0013', userName: 'James Doe', tier: 'Pro', period: 'Quarterly', amountCents: 5900, status: 'past_due' },
           ],
-          trafficTrend: [
-            { month: "Apr", traffic: 0 },
-            { month: "May", traffic: 0 },
-            { month: "June", traffic: 0 },
-            { month: "July", traffic: 0 },
-            { month: "Aug", traffic: 0 },
-            { month: "Sept", traffic: 6 }
-          ]
         },
-        recentSubscriptions: []
-      }
+      };
+    }
+
+    // In development, surface backend errors (e.g., 401) so the UI doesn't mask them as demo
+    return {
+      success: false,
+      statusCode: err?.response?.status || 500,
+      message: err?.response?.data?.message || err?.message || 'Failed to fetch dashboard',
+      data: null,
     };
   }
+}
   
-  // Adapter: unwraps and normalizes a few fields (e.g., growthPercent to number)
+  const detectSource = (payload) => {
+    const msg = String(payload?.message || "").toLowerCase();
+    if (msg.includes("quick stub")) return "stub";
+    if (msg.includes("retrieved successfully")) return "live";
+    if (msg.includes("dev fallback")) return "demo-frontend";
+    if (msg.includes("no stripe_secret_key")) return "demo-backend";
+    return "unknown";
+  };
+
   export function adaptDashboard(payload) {
     const d = payload?.data ?? {};
     const ov = d.overview ?? {};
@@ -110,6 +126,7 @@ export async function fetchDashboard() {
     const subs = ov.subscriptions ?? {};
     const traf = ov.traffic ?? {};
     const charts = d.charts ?? {};
+    const source = detectSource(payload);
   
     const toNumber = (v, def = 0) => {
       if (v === null || v === undefined) return def;
@@ -146,6 +163,11 @@ export async function fetchDashboard() {
           new: toNumber(ov.premiumCustomers?.new),
           churn: toNumber(ov.premiumCustomers?.churn),
         },
+        proCustomers: {
+          total: toNumber(ov.proCustomers?.total),
+          new: toNumber(ov.proCustomers?.new),
+          churn: toNumber(ov.proCustomers?.churn),
+        },
         traffic: {
           today: traf.today ?? null,
           monthly: traf.monthly ?? null,
@@ -163,6 +185,7 @@ export async function fetchDashboard() {
         })),
       },
       recentSubscriptions: d.recentSubscriptions ?? [],
+      source,
     };
   }
   

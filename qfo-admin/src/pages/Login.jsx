@@ -1,16 +1,32 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
+import { loginUser } from "../services/auth.api";
 
 export default function Login() {
   const nav = useNavigate();
+  const loc = useLocation();
+  const redirectTo = (loc.state && loc.state.from && loc.state.from.pathname) ? loc.state.from.pathname : "/admin";
   const [email, setEmail] = useState("");
   const [pass, setPass] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  function onSubmit(e) {
+  async function onSubmit(e) {
     e.preventDefault();
-    if (email && pass) {
-      localStorage.setItem("qfo_token", "dev-token");
-      nav("/admin");
+    if (!email || !pass) {
+      return setError("Please enter email and password");
+    }
+    setError("");
+    setLoading(true);
+    try {
+      const { token } = await loginUser({ email: email.trim(), password: pass });
+      localStorage.setItem("qfo_token", token);
+      nav(redirectTo, { replace: true });
+    } catch (err) {
+      const msg = err?.message || "Login failed";
+      setError(msg);
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -92,6 +108,9 @@ export default function Login() {
             Forgot Password?
           </button>
         </div>
+        {error && (
+          <div style={{ color: "crimson", fontSize: 14 }}>{error}</div>
+        )}
         <button
           type="submit"
           style={{
@@ -102,8 +121,9 @@ export default function Login() {
             borderRadius: 12,
             fontWeight: 600,
           }}
+          disabled={loading}
         >
-          Sign In
+          {loading ? "Signing in…" : "Sign In"}
         </button>
       </form>
     </div>

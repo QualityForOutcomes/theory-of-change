@@ -1,9 +1,13 @@
 import axios from "axios";
 
-// Use VITE_API_URL for all environments, fallback to local dev server
+// In development, use relative baseURL so Vite dev proxy (`/api` -> backend) applies.
+// In production builds, VITE_API_URL can point to the deployed backend.
+const baseURL = (import.meta.env.MODE !== "production")
+  ? "/"
+  : (import.meta.env.VITE_API_URL ?? "/");
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL ?? "http://localhost:4000",
-  // Remove if you don’t use cookies/sessions, keep if server sets cookies
+  baseURL,
   withCredentials: false,
 });
 
@@ -29,9 +33,10 @@ api.interceptors.response.use(
       // window.location.href = "/login";
     }
 
-    return Promise.reject(
-      error.response?.data?.message || error.message || "API Error"
-    );
+    // Reject the full error object so callers (e.g., fetchDashboard)
+    // can detect true network errors via `!error.response` and avoid
+    // incorrectly falling back to demo data on backend HTTP errors.
+    return Promise.reject(error);
   }
 );
 

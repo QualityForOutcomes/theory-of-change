@@ -122,13 +122,16 @@ export default function Dashboard() {
 
   const { overview, charts, recentSubscriptions } = data;
 
+  // Show only first 5 subscriptions by default; reveal all on "More"
+  const [showAllSubs, setShowAllSubs] = React.useState(false);
+  const visibleSubscriptions = showAllSubs ? recentSubscriptions : recentSubscriptions.slice(0, 5);
+
   return (
     <div style={S.section}>
       {/* Overview row */}
       <section style={S.grid3}>
         <Card title="Overview" subtitle="Admin name and details">
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <img style={S.avatar} src="https://i.pravatar.cc/80" alt="Admin" />
             <div>
               <p style={{ margin: 0, fontWeight: 600 }}>Divyam Juneja</p>
               <p style={{ margin: 0, fontSize: 12, color: "#6b7280" }}>
@@ -162,6 +165,14 @@ export default function Dashboard() {
             <Stat title="Total" value={overview.premiumCustomers.total.toLocaleString()} icon={<Users size={16} />} />
             <Stat title="New" value={`+${overview.premiumCustomers.new.toLocaleString()}`} muted />
             <Stat title="Churn" value={`-${overview.premiumCustomers.churn.toLocaleString()}`} muted />
+          </div>
+        </Card>
+
+        <Card title="Pro Customers" subtitle="Active">
+          <div style={S.pillRow}>
+            <Stat title="Total" value={overview.proCustomers.total.toLocaleString()} icon={<Users size={16} />} />
+            <Stat title="New" value={`+${overview.proCustomers.new.toLocaleString()}`} muted />
+            <Stat title="Churn" value={`-${overview.proCustomers.churn.toLocaleString()}`} muted />
           </div>
         </Card>
       </section>
@@ -210,7 +221,7 @@ export default function Dashboard() {
                 border: "none", borderRadius: 8, background: "#7c3aed",
                 color: "#fff", padding: "8px 12px", fontSize: 12, fontWeight: 600, cursor: "pointer",
               }}
-              onClick={() => alert("Connect to Stripe flow")}
+              onClick={() => window.open("https://dashboard.stripe.com/test/dashboard", "_blank", "noopener,noreferrer")}
             >
               Update
             </button>
@@ -236,34 +247,56 @@ export default function Dashboard() {
           {recentSubscriptions.length === 0 ? (
             <div style={S.muted}>No subscriptions yet.</div>
           ) : (
-            <div style={S.tableWrap}>
-              <table style={S.table}>
-                <thead>
-                  <tr>
-                    <th style={S.th}>ID</th>
-                    <th style={S.th}>User</th>
-                    <th style={S.th}>Tier</th>
-                    <th style={S.th}>Period</th>
-                    <th style={S.th}>Amount</th>
-                    <th style={S.th}>Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {recentSubscriptions.map((s, i) => (
-                    <tr key={s.id || i} style={{ background: i % 2 ? "#f9fafb" : "white" }}>
-                      <td style={{ ...S.td, fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace", fontSize: 12 }}>
-                        {s.id || "—"}
-                      </td>
-                      <td style={S.td}>{s.userName || s.userEmail || "—"}</td>
-                      <td style={S.td}>{s.tier || "—"}</td>
-                      <td style={S.td}>{s.period || "—"}</td>
-                      <td style={S.td}>{formatAUDFromCents(s.amountCents)}</td>
-                      <td style={S.td}><StatusPill status={s.status} /></td>
+            <>
+              <div style={S.tableWrap}>
+                <table style={S.table}>
+                  <thead>
+                    <tr>
+                      <th style={S.th}>ID</th>
+                      <th style={S.th}>User</th>
+                      <th style={S.th}>Tier</th>
+                      <th style={S.th}>Period</th>
+                      <th style={S.th}>Amount</th>
+                      <th style={S.th}>Status</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody>
+                    {visibleSubscriptions.map((s, i) => (
+                      <tr key={s.id || i} style={{ background: i % 2 ? "#f9fafb" : "white" }}>
+                        <td style={{ ...S.td, fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace", fontSize: 12 }}>
+                          {s.id || "—"}
+                        </td>
+                        <td style={S.td}>{s.userName || s.userEmail || "—"}</td>
+                        <td style={S.td}>{s.tier || "—"}</td>
+                        <td style={S.td}>{s.period || "—"}</td>
+                        <td style={S.td}>{formatAUDFromCents(s.amountCents)}</td>
+                        <td style={S.td}><StatusPill status={s.status} /></td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              {recentSubscriptions.length > 5 && !showAllSubs && (
+                <div style={{ marginTop: 8, textAlign: "right" }}>
+                  <button
+                    style={{ border: "1px solid #e5e7eb", borderRadius: 8, background: "white", padding: "8px 12px", fontSize: 12, fontWeight: 600, cursor: "pointer" }}
+                    onClick={() => setShowAllSubs(true)}
+                  >
+                    More
+                  </button>
+                </div>
+              )}
+              {recentSubscriptions.length > 5 && showAllSubs && (
+                <div style={{ marginTop: 8, textAlign: "right" }}>
+                  <button
+                    style={{ border: "1px solid #e5e7eb", borderRadius: 8, background: "white", padding: "8px 12px", fontSize: 12, fontWeight: 600, cursor: "pointer" }}
+                    onClick={() => setShowAllSubs(false)}
+                  >
+                    Less
+                  </button>
+                </div>
+              )}
+            </>
           )}
         </Card>
 

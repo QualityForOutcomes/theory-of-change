@@ -7,6 +7,9 @@ export function useDashboard() {
     queryKey: ["dashboard"],
     queryFn: async () => {
       const payload = await fetchDashboard();
+      if (!payload?.success) {
+        throw new Error(payload?.message || "Failed to load dashboard");
+      }
       return adaptDashboard(payload); // returns { overview, charts, recentSubscriptions }
     },
     staleTime: 60_000,

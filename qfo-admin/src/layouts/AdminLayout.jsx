@@ -82,6 +82,16 @@ export default function AdminLayout() {
             Logout
           </button>
         </header>
+        <nav style={{ padding: "0 24px", borderBottom: "1px solid #e5e7eb", background: "rgba(255,255,255,0.75)" }}>
+          <ul style={{ display: "flex", gap: 16, listStyle: "none", margin: 0, padding: 12 }}>
+            <li>
+              <Link to="/admin" style={{ textDecoration: "none", color: "#374151" }}>Dashboard</Link>
+            </li>
+            <li>
+              <Link to="/admin/terms" style={{ textDecoration: "none", color: "#374151" }}>Terms & Conditions</Link>
+            </li>
+          </ul>
+        </nav>
         <main>
           <Outlet />
         </main>
