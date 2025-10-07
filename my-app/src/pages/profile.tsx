@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { fetchUserProfile, updateUserProfile } from "../services/api"; // Update the import path as needed
+import { useNavigate } from "react-router-dom";
+import { fetchUserProfile, updateUserProfile, cancelSubscription } from "../services/api"; // Update the import path as needed
 import "../style/profile.css";
 
 type UserProfile = {
@@ -18,6 +19,9 @@ type Subscription = {
   plan: string;
   status: string;
   expiry: string;
+  price?: string;
+  activatedAt?: string;
+  sessionId?: string;
 };
 
 type ProfilePageProps = {
@@ -26,10 +30,13 @@ type ProfilePageProps = {
 
 const ProfilePage: React.FC<ProfilePageProps> = ({ subscription }) => {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [userSubscription, setUserSubscription] = useState<Subscription | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [updateLoading, setUpdateLoading] = useState(false);
+  const [checkoutLoading, setCheckoutLoading] = useState(false);
+  const [checkoutError, setCheckoutError] = useState<string | null>(null);
   const [editForm, setEditForm] = useState({
     firstName: "",
     lastName: "",
@@ -37,6 +44,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ subscription }) => {
     username: ""
   });
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const loadUserProfile = async () => {
@@ -60,7 +68,33 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ subscription }) => {
       }
     };
 
+    const loadSubscriptionData = () => {
+      try {
+        // Load subscription from localStorage
+        const storedSubscription = localStorage.getItem("userSubscription");
+        if (storedSubscription) {
+          const subscriptionData = JSON.parse(storedSubscription);
+          setUserSubscription(subscriptionData);
+        } else {
+          // Fallback to default free plan
+          setUserSubscription({
+            plan: "Free Plan",
+            status: "active",
+            expiry: ""
+          });
+        }
+      } catch (error) {
+        console.error("Error loading subscription data:", error);
+        setUserSubscription({
+          plan: "Free Plan",
+          status: "active",
+          expiry: ""
+        });
+      }
+    };
+
     loadUserProfile();
+    loadSubscriptionData();
   }, []);
 
   const handleEditToggle = () => {
@@ -110,6 +144,66 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ subscription }) => {
       setUpdateLoading(false);
     }
   };
+
+  async function handleUpgrade() {
+    // Redirect to local plans page instead of hitting checkout API
+    if (!userProfile?.userId) {
+      setCheckoutError("You need to be logged in to upgrade.");
+      return;
+    }
+    setCheckoutError(null);
+    navigate("/plans");
+  }
+
+  async function handleManageSubscription() {
+    // Show confirmation dialog before canceling
+    const confirmCancel = window.confirm(
+      "Are you sure you want to cancel your subscription? This action cannot be undone and you will lose access to premium features."
+    );
+    
+    if (!confirmCancel) {
+      return;
+    }
+
+    try {
+      setCheckoutLoading(true);
+      setCheckoutError(null);
+
+      // Get user ID for cancellation
+      const userId = userProfile?.userId;
+      if (!userId) {
+        setCheckoutError("Unable to cancel subscription: User not found");
+        return;
+      }
+
+      // Get subscription ID if available
+      const subscriptionId = userSubscription?.sessionId;
+
+      // Call the cancellation API
+      const result = await cancelSubscription({
+        user_id: userId,
+        subscription_id: subscriptionId,
+      });
+
+      if (result.success) {
+        // Update local state to reflect cancellation
+        setUserSubscription({
+          plan: "Free Plan",
+          status: "active",
+          expiry: ""
+        });
+
+        // Show success message
+        alert("Subscription canceled successfully. You now have access to the Free Plan.");
+      } else {
+        setCheckoutError("Failed to cancel subscription. Please try again.");
+      }
+    } catch (error: any) {
+      setCheckoutError(error.message || "Failed to cancel subscription");
+    } finally {
+      setCheckoutLoading(false);
+    }
+  }
 
   if (loading) {
     return (
@@ -282,23 +376,50 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ subscription }) => {
         <div className="subscription-card">
           <div className="subscription-header">
             <div className="plan-info">
-              <h4 className="plan-name">{subscription?.plan || "Free Plan"}</h4>
-              <span className={`status-badge status-${subscription?.status?.toLowerCase() || 'inactive'}`}>
-                {subscription?.status || "Inactive"}
+              <h4 className="plan-name">{userSubscription?.plan || "Free Plan"}</h4>
+              <span className={`status-badge status-${userSubscription?.status?.toLowerCase() || 'inactive'}`}>
+                {userSubscription?.status || "Inactive"}
               </span>
             </div>
           </div>
           
-          {subscription?.expiry && (
+          {userSubscription?.expiry && (
             <div className="expiry-info">
-              <p><strong>Valid until:</strong> {subscription.expiry}</p>
+              <p><strong>Valid until:</strong> {userSubscription.expiry}</p>
+            </div>
+          )}
+          
+          {userSubscription?.price && (
+            <div className="price-info">
+              <p><strong>Price:</strong> {userSubscription.price}</p>
+            </div>
+          )}
+          
+          {userSubscription?.activatedAt && (
+            <div className="activated-info">
+              <p><strong>Activated:</strong> {new Date(userSubscription.activatedAt).toLocaleDateString()}</p>
             </div>
           )}
           
           <div className="subscription-actions">
-            <button className="btn-primary">Upgrade Plan</button>
-            <button className="btn-secondary">Manage Subscription</button>
+            <button className="btn-primary" onClick={handleUpgrade} disabled={checkoutLoading}>
+              {checkoutLoading ? "Starting checkout..." : (userSubscription?.plan === "Free Plan" ? "Upgrade Plan" : "Change Plan")}
+            </button>
+            {userSubscription?.plan !== "Free Plan" && (
+              <button 
+                className="btn-secondary" 
+                onClick={handleManageSubscription}
+                disabled={checkoutLoading}
+              >
+                {checkoutLoading ? "Canceling..." : "Cancel"}
+              </button>
+            )}
           </div>
+          {checkoutError && (
+            <div className="error-message" style={{ marginTop: 8 }}>
+              ⚠️ {checkoutError}
+            </div>
+          )}
         </div>
         
         {/* Additional Info Section */}

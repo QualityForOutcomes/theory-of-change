@@ -1,6 +1,30 @@
-# Getting Started with Create React App
+# React Frontend Application
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+
+## Setup
+
+### Environment Variables
+
+1. Copy the example environment file:
+```bash
+cp .env.example .env
+```
+
+2. Update `.env` with your backend API URL:
+```
+# For local development
+REACT_APP_PAYMENT_API_BASE=http://localhost:3003
+
+# For production, update to your deployed backend URL
+# REACT_APP_PAYMENT_API_BASE=https://your-backend-domain.com
+```
+
+### ⚠️ Security Note
+
+- Never commit `.env` files to Git
+- Always use `.env.example` for sharing configuration templates
+- Environment variables starting with `REACT_APP_` are embedded in the build and visible to users
 
 ## Available Scripts
 

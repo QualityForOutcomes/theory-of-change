@@ -12,7 +12,13 @@ import ProjectsPage from "./pages/Project";
 
 import AuthCard from "./components/AuthCard";
 import PrivateRoute from "./auth/PrivateRoute";        
-import { AuthProvider } from "./auth/AuthProvider";     
+import { AuthProvider } from "./auth/AuthProvider";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";     
+import SubscriptionPlans from "./pages/SubscriptionPlans";
+import SubscriptionSuccess from "./pages/SubscriptionSuccess";
+import Logout from "./pages/Logout";
+import Terms from "./pages/Terms";
 
 const root = ReactDOM.createRoot(
   document.getElementById("root") as HTMLElement
@@ -26,6 +32,19 @@ root.render(
         <Routes>
           {/* Public */}
           <Route path="/login" element={<AuthCard />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="/terms" element={<Terms />} />
+          <Route
+            path="/plans"
+            element={
+              <PrivateRoute>
+                <SubscriptionPlans />
+              </PrivateRoute>
+            }
+          />
+          <Route path="/logout" element={<Logout />} />
+          <Route path="/subscription-success" element={<SubscriptionSuccess />} />
 
           {/* Protected*/}
           <Route

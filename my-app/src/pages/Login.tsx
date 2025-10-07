@@ -261,10 +261,9 @@ export default function Login() {
         )}
 
         {error && <p style={{ color: "crimson" }}>{error}</p>}
-
         {mode === "login" && (
           <p>
-            <Link to="/password">Forgot Password?</Link>
+            <Link to="/forgot-password">Forgot Password?</Link>
           </p>
         )}
       </form>
