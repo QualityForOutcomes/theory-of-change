@@ -1,15 +1,19 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Data } from "../pages/App";
 
 type FormProps = {
   data: Data;
   updateField: (field: keyof Data, value: string) => void;
+  highlightField?: string | null; // NEW: Field to highlight
 };
 
 type FormField = Exclude<keyof Data, "projectTitle">;
 
-export default function FormPanel({ data, updateField }: FormProps) {
+export default function FormPanel({ data, updateField, highlightField }: FormProps) {
   const [isOpen, setIsOpen] = useState(true);
+  const [activeHighlight, setActiveHighlight] = useState<string | null>(null);
+  const fieldRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
+  
   const toggleSidebar = () => setIsOpen(!isOpen);
 
   const fields: FormField[] = [
@@ -52,6 +56,27 @@ export default function FormPanel({ data, updateField }: FormProps) {
   const warningThreshold = 180;
 
   const [progress, setProgress] = useState(0);
+  
+  // NEW: Handle highlighting when a field is added
+  useEffect(() => {
+    if (highlightField) {
+      setActiveHighlight(highlightField);
+      
+      // Scroll to the field
+      const fieldElement = fieldRefs.current[highlightField];
+      if (fieldElement) {
+        fieldElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+      
+      // Remove highlight after animation completes
+      const timer = setTimeout(() => {
+        setActiveHighlight(null);
+      }, 2000); // 2 seconds (matches 2 animation cycles)
+      
+      return () => clearTimeout(timer);
+    }
+  }, [highlightField]);
+  
   useEffect(() => {
     const filledFields = fields.filter((f) => {
       const values: string[] = safeParseArray(data[f]);
@@ -70,14 +95,13 @@ export default function FormPanel({ data, updateField }: FormProps) {
     }
   };
 
-  // helper: safely parse string → string[]
   const safeParseArray = (raw: string | undefined): string[] => {
     if (!raw) return [""];
     try {
       const parsed = JSON.parse(raw);
       return Array.isArray(parsed) ? parsed : [raw];
     } catch {
-      return raw.split("|||"); // fallback legacy delimiter
+      return raw.split("|||");
     }
   };
 
@@ -105,7 +129,13 @@ export default function FormPanel({ data, updateField }: FormProps) {
           const cards = safeParseArray(data[field]);
 
           return (
-            <div className="form-group" key={field} id={`step-${field}`}>
+           <div
+  className="form-group"
+  key={field}
+  id={`step-${field}`}
+  ref={(el) => { fieldRefs.current[field] = el }}
+>
+
               <label htmlFor={`field-${field}`} className="form-label">
                 {fieldLabels[field]}
               </label>
@@ -125,7 +155,9 @@ export default function FormPanel({ data, updateField }: FormProps) {
                         validateField(field, e.target.value);
                       }}
                       placeholder={`Enter ${field}...`}
-                      className={errors[field] ? "error-input" : ""}
+                      className={`${errors[field] ? "error-input" : ""} ${
+                        activeHighlight === field && idx === cards.length - 1 ? "newly-added" : ""
+                      }`}
                       style={{ width: "100%" }}
                     />
                   ) : (
@@ -140,7 +172,9 @@ export default function FormPanel({ data, updateField }: FormProps) {
                         validateField(field, e.target.value);
                       }}
                       placeholder={`Enter ${field}...`}
-                      className={errors[field] ? "error-input" : ""}
+                      className={`${errors[field] ? "error-input" : ""} ${
+                        activeHighlight === field && idx === cards.length - 1 ? "newly-added" : ""
+                      }`}
                       style={{ width: "100%" }}
                     />
                   )}

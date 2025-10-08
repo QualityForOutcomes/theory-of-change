@@ -1,0 +1,1 @@
+export const exportVisualDiagram = jest.fn().mockResolvedValue(undefined);
