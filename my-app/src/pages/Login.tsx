@@ -33,11 +33,13 @@ export default function Login() {
 
   function validate() {
     if (!/\S+@\S+\.\S+/.test(form.email)) return "Enter a valid email.";
-    if (form.password.length < 6) return "Password must be at least 6 characters.";
+    if (form.password.length < 6)
+      return "Password must be at least 6 characters.";
     if (mode === "register") {
       if (!form.firstName.trim()) return "Please enter your First name.";
       if (!form.lastName.trim()) return "Please enter your Last name.";
-      if (!form.organisation.trim()) return "Please enter your Organisation name.";
+      if (!form.organisation.trim())
+        return "Please enter your Organisation name.";
       if (!form.username.trim()) return "Please choose a username.";
       if (!form.acceptTandC) return "You must accept the Terms & Conditions.";
       if (form.confirm !== form.password) return "Passwords do not match.";
@@ -61,7 +63,7 @@ export default function Login() {
           password: form.password,
           firstName: form.firstName,
           lastName: form.lastName,
-          organisation: form.organisation,   // maps to `organization` in api.ts
+          organisation: form.organisation, // maps to `organization` in api.ts
           username: form.username,
           acceptTandC: form.acceptTandC,
           newsLetterSubs: form.newsLetterSubs,
