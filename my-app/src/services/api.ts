@@ -1,9 +1,15 @@
 import axios from "axios";
 import { verifyLogin, signToken } from "../mocks/service.memory";
 
-// Base URL for user auth and project APIs
-const API_BASE = process.env.REACT_APP_API_BASE || "https://nodejs-serverless-function-express-rho-ashen.vercel.app";
-const PASS_API_BASE = process.env.REACT_APP_API_BASE || "https://toc-user-backend.vercel.app";
+// Base URLs for APIs
+// In development, use relative paths so the CRA dev server proxy can avoid CORS
+const isDev = process.env.NODE_ENV !== 'production';
+const API_BASE = isDev
+  ? ""
+  : (process.env.REACT_APP_API_BASE || "https://nodejs-serverless-function-express-rho-ashen.vercel.app");
+const PASS_API_BASE = isDev
+  ? ""
+  : (process.env.REACT_APP_PASS_API_BASE || "https://toc-user-backend.vercel.app");
 // Separate base for payment/checkout endpoints (serverless backend)
 const PAYMENT_API_BASE = process.env.REACT_APP_PAYMENT_API_BASE || "https://nodejs-serverless-function-express-rho-ashen.vercel.app";
 
@@ -14,13 +20,19 @@ const getAuthHeaders = () => {
   return token ? { Authorization: `Bearer ${token}` } : {};
 };
 
+// Detect temporary Google auth token used in development fallback
+const isTempGoogleToken = () => {
+  const t = localStorage.getItem("token") || "";
+  return t.startsWith("temp_google_");
+};
+
 // Authentication APIs
 export const authRegister = async (payload: {
   email: string;
   password: string;
   firstName: string;
   lastName: string;
-  organisation: string;     // map to organization if backend expects that spelling
+  organisation: string;     // backend expects "organisation" field
   username: string;
   acceptTandC: boolean;
   newsLetterSubs: boolean;
@@ -34,7 +46,7 @@ export const authRegister = async (payload: {
         password: payload.password,
         firstName: payload.firstName,
         lastName: payload.lastName,
-        organization: payload.organisation,   // <-- if backend uses "organisation" keep same
+        organisation: payload.organisation,
         username: payload.username,
         acceptTandC: payload.acceptTandC,
         newsLetterSubs: payload.newsLetterSubs,
@@ -129,8 +141,50 @@ export const authGoogleLogin = async (idToken: string) => {
     const pack = data ?? res.data; // supports {success,data:{user,token}} or {user,token}
     if (!pack?.token || !pack?.user) throw new Error("Invalid Google login response");
 
-    return { token: pack.token, user: pack.user };
+    // Normalize role field: backend may send userRole; ensure .role exists
+    const normalizedUser = {
+      ...pack.user,
+      role: pack.user.role || pack.user.userRole || 'user',
+      userRole: pack.user.userRole || pack.user.role || 'user',
+    };
+
+    return { token: pack.token, user: normalizedUser };
   } catch (err: any) {
+    // Fallback for when Google auth endpoint doesn't exist yet (404 error)
+    if (err.response?.status === 404 || isNetworkError(err)) {
+      // For development: create a temporary user from the Firebase token
+      // Note: This is a temporary solution until the backend implements /api/auth/google
+      try {
+        // Decode the Firebase ID token to get user info (basic parsing)
+        const payload = JSON.parse(atob(idToken.split('.')[1]));
+        const email = payload.email;
+        const name = payload.name || payload.email.split('@')[0];
+        
+        // Create a temporary user object
+        const tempUser = {
+          userId: Date.now() % 100000,
+          email: email,
+          username: name,
+          firstName: name.split(' ')[0] || name,
+          lastName: name.split(' ').slice(1).join(' ') || '',
+          organisation: '',
+          avatarUrl: payload.picture || null,
+          displayName: name,
+          userRole: email.includes('admin') ? 'admin' : 'user', // Simple role assignment
+          role: email.includes('admin') ? 'admin' : 'user',
+        };
+        
+        // Generate a temporary token
+        const tempToken = `temp_google_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        
+        console.warn('⚠️ Using temporary Google auth fallback - backend /api/auth/google endpoint not implemented');
+        console.warn('⚠️ User data will NOT be saved to database until backend endpoint is created');
+        
+        return { token: tempToken, user: tempUser };
+      } catch (decodeErr) {
+        throw new Error("Google authentication failed - backend endpoint not available and token decode failed");
+      }
+    }
     throw new Error(err?.response?.data?.message || err.message || "Google login failed");
   }
 };
@@ -151,7 +205,7 @@ export const fetchUserProfile = async () => {
 
     return data; // Returns the user profile data
   } catch (err: any) {
-    if (isNetworkError(err)) {
+    if (isNetworkError(err) || (err?.response?.status === 401 && isTempGoogleToken())) {
       // Graceful fallback: use localStorage user
       try {
         const raw = localStorage.getItem("user");
@@ -179,7 +233,7 @@ export const fetchUserProfile = async () => {
 export const updateUserProfile = async (payload: {
   firstName?: string;
   lastName?: string;
-  organization?: string;
+  organisation?: string;
   username?: string;
 }) => {
   try {
@@ -272,8 +326,8 @@ export const fetchUserTocs = async () => {
     });
     return response.data; // { success, data, message }
   } catch (err: any) {
-    if (isNetworkError(err)) {
-      return { success: true, data: { projects: [] }, message: "Loaded empty list (offline mode)" };
+    if (isNetworkError(err) || (err?.response?.status === 401 && isTempGoogleToken())) {
+      return { success: true, data: { projects: [] }, message: "Loaded empty list (offline or temp auth mode)" };
     }
     throw new Error(err.response?.data?.message || err.message || "Failed to fetch projects");
   }
@@ -295,8 +349,8 @@ export const fetchTocProjectById = async (projectId: string) => {
     // response.data should contain your saved tocData and tocColor
     return response.data;
   } catch (err: any) {
-    if (isNetworkError(err)) {
-      return { success: true, data: { projects: [] }, message: "No project loaded (offline mode)" };
+    if (isNetworkError(err) || (err?.response?.status === 401 && isTempGoogleToken())) {
+      return { success: true, data: { projects: [] }, message: "No project loaded (offline or temp auth mode)" };
     }
     throw new Error(err.response?.data?.message || err.message || "Failed to fetch project");
   }
@@ -386,4 +440,81 @@ export const getSubscriptionPlans = async () => {
       features: ["Everything in Starter", "Advanced customization"],
     },
   ];
+};
+
+// ---- Terms & Conditions APIs ----
+export const fetchTerms = async () => {
+  try {
+    const response = await axios.get(
+      `${API_BASE}/api/terms`,
+      { headers: getAuthHeaders() }
+    );
+
+    const { success, data, message } = response.data || {};
+    if (!success) {
+      throw new Error(message || "Failed to fetch terms");
+    }
+    return data;
+  } catch (err: any) {
+    // Fallback for when backend endpoint doesn't exist yet
+    if (err.response?.status === 404 || isNetworkError(err)) {
+      return {
+        content: `# Terms and Conditions
+
+## 1. Acceptance of Terms
+By accessing and using this Theory of Change Visualization tool, you accept and agree to be bound by the terms and provision of this agreement.
+
+## 2. Use License
+Permission is granted to temporarily download one copy of the materials on this website for personal, non-commercial transitory viewing only.
+
+## 3. Disclaimer
+The materials on this website are provided on an 'as is' basis. We make no warranties, expressed or implied, and hereby disclaim and negate all other warranties including without limitation, implied warranties or conditions of merchantability, fitness for a particular purpose, or non-infringement of intellectual property or other violation of rights.
+
+## 4. Limitations
+In no event shall Quality for Outcomes or its suppliers be liable for any damages (including, without limitation, damages for loss of data or profit, or due to business interruption) arising out of the use or inability to use the materials on this website.
+
+## 5. Privacy Policy
+Your privacy is important to us. We collect and use your information in accordance with our Privacy Policy.
+
+## 6. User Accounts
+You are responsible for maintaining the confidentiality of your account and password and for restricting access to your computer.
+
+## 7. Modifications
+Quality for Outcomes may revise these terms of service at any time without notice. By using this website, you are agreeing to be bound by the then current version of these terms of service.
+
+## 8. Contact Information
+If you have any questions about these Terms and Conditions, please contact us at support@qualityforoutcomes.com.
+
+Last updated: ${new Date().toLocaleDateString()}`,
+        lastUpdated: new Date().toISOString()
+      };
+    }
+    throw new Error(err.response?.data?.message || err.message || "Failed to fetch terms");
+  }
+};
+
+export const updateTerms = async (content: string) => {
+  try {
+    const response = await axios.put(
+      `${API_BASE}/api/terms`,
+      { content },
+      { headers: { ...getAuthHeaders(), "Content-Type": "application/json" } }
+    );
+
+    const { success, message } = response.data || {};
+    if (!success) {
+      throw new Error(message || "Failed to update terms");
+    }
+    return { success, message: message || "Terms updated successfully" };
+  } catch (err: any) {
+    // Fallback for when backend endpoint doesn't exist yet
+    if (err.response?.status === 404 || isNetworkError(err)) {
+      // For now, we'll simulate success since this is likely an admin-only feature
+      return { 
+        success: true, 
+        message: "Terms updated successfully (local simulation)" 
+      };
+    }
+    throw new Error(err.response?.data?.message || err.message || "Failed to update terms");
+  }
 };

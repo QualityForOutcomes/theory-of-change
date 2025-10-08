@@ -40,7 +40,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ subscription }) => {
   const [editForm, setEditForm] = useState({
     firstName: "",
     lastName: "",
-    organization: "",
+    organisation: "",
     username: ""
   });
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -57,7 +57,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ subscription }) => {
         setEditForm({
           firstName: profileData.firstName || "",
           lastName: profileData.lastName || "",
-          organization: profileData.organisation || "",
+          organisation: profileData.organisation || "",
           username: profileData.username || ""
         });
       } catch (err: any) {
@@ -103,7 +103,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ subscription }) => {
       setEditForm({
         firstName: userProfile?.firstName || "",
         lastName: userProfile?.lastName || "",
-        organization: userProfile?.organisation || "",
+        organisation: userProfile?.organisation || "",
         username: userProfile?.username || ""
       });
     }
@@ -128,7 +128,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ subscription }) => {
       const updatedData = await updateUserProfile({
         firstName: editForm.firstName,
         lastName: editForm.lastName,
-        organization: editForm.organization,
+        organisation: editForm.organisation,
         username: editForm.username
       });
       
@@ -331,14 +331,14 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ subscription }) => {
               </div>
               
               <div className="form-group">
-                <label className="form-label">Organization</label>
-                <input
-                  type="text"
-                  className="form-input"
-                  value={editForm.organization}
-                  onChange={(e) => handleFormChange('organization', e.target.value)}
-                  placeholder="Enter organization"
-                />
+              <label className="form-label">Organization</label>
+              <input
+                type="text"
+                className="form-input"
+                value={editForm.organisation}
+                onChange={(e) => handleFormChange('organisation', e.target.value)}
+                placeholder="Enter organization"
+              />
               </div>
               
               {error && (

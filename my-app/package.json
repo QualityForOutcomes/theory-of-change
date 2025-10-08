@@ -66,5 +66,6 @@
       "<rootDir>/src/**/*.test.ts",
       "<rootDir>/src/**/*.test.tsx"
     ]
-  }
+  },
+  "proxy": "https://toc-user-backend.vercel.app"
 }
