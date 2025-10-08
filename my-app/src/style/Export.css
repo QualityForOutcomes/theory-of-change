@@ -1,0 +1,147 @@
+/* Modern Export Modal */
+.export-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  backdrop-filter: blur(4px);
+}
+
+.export-modal {
+  background: white;
+  padding: 32px;
+  border-radius: 16px;
+  max-width: 400px;
+  width: 90%;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  animation: modalSlideIn 0.3s ease-out;
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.export-modal h3 {
+  margin: 0 0 12px 0;
+  font-size: 20px;
+  color: #333;
+  font-weight: 600;
+}
+
+.export-modal p {
+  margin: 0 0 24px 0;
+  color: #666;
+  font-size: 14px;
+}
+
+.export-format-buttons {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.export-format-btn {
+  flex: 1;
+  padding: 16px;
+  border: 2px solid #e0e0e0;
+  border-radius: 12px;
+  background: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+}
+
+.export-format-btn:hover {
+  border-color: #874bfd;
+  background: #f8f5ff;
+}
+
+.export-format-btn.selected {
+  border-color: #874bfd;
+  background: linear-gradient(135deg, #cb6ce6, #874bfd);
+  color: white;
+}
+
+.export-modal-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.export-modal-btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.export-modal-btn.cancel {
+  background: #f0f0f0;
+  color: #333;
+}
+
+.export-modal-btn.cancel:hover {
+  background: #e0e0e0;
+}
+
+.export-modal-btn.export {
+  background: linear-gradient(135deg, #cb6ce6, #874bfd);
+  color: white;
+}
+
+.export-modal-btn.export:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(135, 75, 253, 0.3);
+}
+
+.export-modal-btn.export:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Export Mode - Make all cards expand to show full content */
+.export-mode .card,
+.export-mode .cloud-card {
+  height: auto !important;
+  min-height: auto !important;
+  max-height: none !important;
+  overflow: visible !important;
+}
+
+.export-mode .card-content {
+  height: auto !important;
+  max-height: none !important;
+  overflow: visible !important;
+}
+
+.export-mode {
+  overflow: visible !important;
+  text-overflow: clip !important;
+  white-space: normal !important;
+  display: block !important;
+}
+
+.export-modal,
+.export-modal button,
+.btn.export {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+}

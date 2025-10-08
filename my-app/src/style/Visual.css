@@ -1,45 +1,82 @@
 .visual-flow {
   display: flex;
-  flex-direction: column; /* stack cards vertically */
+  flex-direction: column;
   align-items: flex-start;
-  padding: 15px;          /* reduced padding */
-  gap: 10px;              /* reduced space between cards */
+  padding: 15px;
+  gap: 10px;
 }
 
 .flow-card-wrapper {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;               /* smaller gap */
+  gap: 6px;
 }
 
+/* FIXED: Auto-adjusting cards */
 .flow-card {
   flex: 1 1 auto;
-  min-width: 100px;       /* can keep */
-  max-width: 140px;       /* can keep */
+  min-width: 100px;
+  max-width: 140px;
+  min-height: 120px;
+  height: auto;
   border-radius: 10px;
   text-align: center;
   padding: 10px;
-  background-color: rgba(255, 255, 255, 0.9);
+  background-color: inherit; /* Changed - will use the inline style color */
   box-shadow: 0 3px 8px rgba(0,0,0,0.12);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
-
   display: flex;
   flex-direction: column;
   align-items: center;
+  position: relative;
 }
 
-.flow-card input {
+/* FIXED: Textarea instead of input */
+.flow-card textarea {
   background: transparent;
   border: none;
   outline: none;
-  color: inherit;      /* match the text color of the card */
+  color: inherit;
   width: 100%;
-  font-size: inherit;  /* match card font size */
-  padding: 0;          /* remove extra spacing */
+  font-size: inherit;
+  padding: 0;
   margin: 0;
+  min-height: 40px;
+  height: auto;
+  resize: none;
+  overflow: hidden;
+  text-align: center;
+  font-family: inherit;
+  line-height: 1.4;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  white-space: pre-wrap;
 }
 
+/* Gradient accent on top edge of cards only */
+.flow-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, rgba(255,255,255,0.4), rgba(255,255,255,0.1));
+  border-radius: 10px 10px 0 0;
+}
+
+/* Gradient accent on bottom edge of cards only */
+.flow-card::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, rgba(0,0,0,0.15), rgba(0,0,0,0.05));
+  border-radius: 0 0 10px 10px;
+}
 
 .flow-card:hover {
   transform: translateY(-2px);
@@ -49,43 +86,55 @@
 .card-title {
   font-weight: bold;
   margin-bottom: 6px;
-  font-size: 13px;        /* smaller font */
+  font-size: 13px;
 }
 
+/* FIXED: Card value container */
 .card-value {
-  white-space: pre-wrap;    /* preserves line breaks */
+  white-space: pre-wrap;
   word-break: break-word;
   width: 100%;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
 }
 
 .flow-arrow {
-  font-size: 22px;
-  margin: 0 4px;          /* smaller spacing */
-  color: #555;
+  font-size: 32px; /* Modern, balanced size */
+  font-weight: 600;
+  margin: 0 15px;
+  color: #0d0c0f; /* Match your theme color */
+  align-self: center;
+  opacity: 0.8;
+  transition: opacity 0.2s ease;
+}
+
+.flow-arrow:hover {
+  opacity: 1;
 }
 
 .right-panel {
   display: flex;
   justify-content: center;
-  align-items: flex-start;
-  gap: 12px; 
+  align-items: stretch;
+  gap: 0; /* Remove gap, arrows provide spacing */
   padding: 20px;
   flex: 1;
   box-sizing: border-box;
   overflow-x: auto;
   overflow-y: hidden;
   height: 100%;
-  transition: all 0.3s ease;
+  background: transparent;
 }
 
 .right-panel-container {
-  background-color: #f2eeee;
-  border-radius: 12px;  
+  background: #ffffff; /* Clean white instead of grey */
+  border-radius: 0;
   display: flex;
   justify-content: flex-start;
-  gap: 12px;              /* smaller gap between columns */
-  padding: 10px 15px;     /* smaller padding */
-  box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+  gap: 12px;
+  padding: 10px 15px;
+  box-shadow: none;
   flex-direction: column;
   width: 100%;
   box-sizing: border-box;
@@ -95,7 +144,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  flex: 0 0 120px;        /* narrower columns */
+  flex: 0 0 120px;
 }
 
 .column-title {
@@ -103,13 +152,13 @@
   margin-bottom: 6px;
   text-align: center;
   color: #0d0c0d;
-  font-size: 13px;        /* smaller font */
+  font-size: 13px;
 }
 
 .column-card {
-  width: 120px;            /* smaller width */
-  min-height: 90px;        /* smaller height */
-  padding: 10px;           /* reduced padding */
+  width: 120px;
+  min-height: 90px;
+  padding: 10px;
   border-radius: 8px;
   text-align: center;
   background-color: rgba(255, 255, 255, 0.9);
@@ -127,58 +176,68 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 10px;               /* smaller gap */
+  gap: 10px;
   margin-left: 15px;
   box-sizing: border-box;
   padding-right: 15px;
-  overflow-y: visible;
+  padding-bottom: 100px; /* Space for save button */
+  overflow-y: auto;
+  max-height: calc(100vh - 100px); /* Prevent overflow */
 }
+
 
 .outer-card {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;               /* smaller internal gap */
-  background: #fff;
-  padding: 12px;           /* reduced padding */
+  justify-content: center; /* Center cards in the column */
+  gap: 8px;
+  background: transparent;
+  padding: 12px;
   border-radius: 10px;
-  box-shadow: 0 3px 8px rgba(0,0,0,0.1);
-  min-width: 140px;        /* smaller min-width */
+  box-shadow: none;
+  min-width: 140px;
+  flex: 1; /* Allow to grow and match other columns */
   position: relative;
 }
 
+/* FIXED: Card container auto-adjust */
 .card-container {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;                /* smaller gap */
+  gap: 4px;
+  height: auto; /* Allow container to grow */
+  width: 100%;
 }
 
-.flow-card {
-  width: 150px;
-  min-height: 120px;
-  padding: 12px;
-  transition: all 0.3s ease;
-}
-
-.influence-cloud input {
+.influence-cloud textarea {
   background: transparent;
   border: none;
   outline: none;
-  color: inherit;      /* match the text color of the card */
+  color: inherit;
   width: 100%;
-  font-size: inherit;  /* match card font size */
-  padding: 0;          /* remove extra spacing */
+  font-size: inherit;
+  padding: 0;
   margin: 0;
+  min-height: 24px;
+  height: auto;
+  resize: none;
+  overflow: hidden;
+  text-align: center;
+  font-family: inherit;
+  line-height: 1.4;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  white-space: pre-wrap;
 }
-
 
 .card-value-input {
   width: 100%;
   border: none;
   background: transparent;
   text-align: center;
-  font-size: 13px;          /* smaller font */
+  font-size: 13px;
   resize: none;
   color: inherit;
   outline: none;
@@ -199,7 +258,7 @@
 
 .customize-controls {
   display: flex;
-  gap: 8px;                 /* smaller gap */
+  gap: 8px;
   font-size: 12px;
   align-items: center;
   justify-content: center;
@@ -212,12 +271,16 @@
   border-radius: 50%;
   cursor: pointer;
 }
+
 .add-remove-wrapper {
   display: flex;
   gap: 8px;
   justify-content: center;
   margin-top: 8px;
+  position: relative;
+  z-index: 1;
 }
+
 .add-card-btn,
 .remove-card-btn {
   width: 32px;
@@ -253,39 +316,37 @@
   transform: scale(1.1);
 }
 
-/* Wrapper for the whole influence cloud section */
 .influence-cloud-wrapper {
   display: flex;
   flex-direction: column;
-  align-items: center; /* center the first cloud */
+  align-items: center;
   gap: 12px;
   margin-bottom: 20px;
 }
 
-/* Title on top */
 .influence-title {
   font-weight: 700;
   font-size: 1rem;
 }
 
-/* Row of clouds */
 .influence-cloud-row {
   display: flex;
-  flex-wrap: wrap;       /* wrap to next line if needed */
-  justify-content: center; /* center all clouds */
+  flex-wrap: wrap;
+  justify-content: center;
   gap: 10px;
   align-items: center;
 }
 
-/* Individual cloud */
+/* FIXED: Cloud auto-adjust */
 .influence-cloud {
   display: flex;
   justify-content: center;
   align-items: center;
   color: #333;
-  width: 100px;           /* smaller width */
-  height: 50px;           /* smaller height */
-  border-radius: 50px / 25px; /* oval shape */
+  min-width: 100px;
+  min-height: 50px;
+  height: auto; /* Allow cloud to grow */
+  border-radius: 50px / 25px;
   font-weight: 600;
   text-align: center;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
@@ -295,20 +356,23 @@
 
 .cloud-buttons {
   display: flex;
-  gap: 6px;               /* space between + and − */
+  gap: 6px;
   margin-top: 4px;
-  justify-content: center; /* center buttons under the cloud */
+  justify-content: center;
+  position: relative;
+  z-index: 1;
 }
 
-/* Text inside the cloud */
 .cloud-value {
   font-size: 0.85rem;
   word-break: break-word;
   text-align: center;
   width: 90%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-/* + Button for adding new cloud */
 .add-cloud-btn {
   display: flex;
   justify-content: center;
@@ -330,12 +394,11 @@
   transform: scale(1.1);
 }
 
-/* - Button for removing a cloud */
 .remove-cloud-btn {
   display: flex;
   justify-content: center;
   align-items: center;
-  width: 36px;           /* match + button size for symmetry */
+  width: 36px;
   height: 36px;
   border-radius: 50%;
   background: #f44336;
@@ -351,9 +414,7 @@
   transform: scale(1.1);
 }
 
-
-
-.customize-controls {
+.customize-controls-column {
   display: flex;
   gap: 8px;
   margin-top: 6px;
@@ -370,9 +431,9 @@
 }
 
 .color-picker-circle {
-  -webkit-appearance: none; /* remove default style */
+  -webkit-appearance: none;
   border: 1px solid #ccc;
-  border-radius: 50%; /* make it circular */
+  border-radius: 50%;
   width: 24px;
   height: 24px;
   padding: 0;
@@ -391,46 +452,139 @@
   border-radius: 50%;
 }
 
-
 .cloud-color-picker {
   -webkit-appearance: none;
   -moz-appearance: none;
   appearance: none;
-
   width: 20px;
   height: 20px;
   border: none;
   border-radius: 50%;
   cursor: pointer;
-
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
   transition: transform 0.2s ease;
   padding: 0;
 }
 
-/* Ensures the swatch itself is round */
 .cloud-color-picker::-webkit-color-swatch-wrapper {
   padding: 0;
   border-radius: 50%;
 }
+
 .cloud-color-picker::-webkit-color-swatch {
   border: none;
   border-radius: 50%;
 }
+
 .cloud-color-picker::-moz-color-swatch {
   border: none;
   border-radius: 50%;
 }
 
-/* Hover effect */
 .cloud-color-picker:hover {
   transform: scale(1.15);
 }
 
-/* Controls wrapper */
 .cloud-customize-controls {
   display: flex;
   gap: 8px;
   margin-top: 6px;
   justify-content: center;
+}
+
+.influence-cloud-wrapper-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Toast Notification Styles - Replace the existing toast styles with these */
+.toast-notification {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  padding: 16px 24px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 14px;
+  font-weight: 500;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  z-index: 10000;
+  animation: slideIn 0.3s ease-out;
+  max-width: 400px;
+  backdrop-filter: blur(10px);
+}
+
+.toast-success {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+}
+
+.toast-error {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: white;
+}
+
+.toast-warning {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  color: white;
+}
+
+.toast-notification svg {
+  flex-shrink: 0;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(400px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* Loading Spinner Styles */
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  gap: 1rem;
+}
+
+.loading-spinner {
+  width: 50px;
+  height: 50px;
+  border: 4px solid rgba(140, 107, 220, 0.2);
+  border-top-color: #8C6BDC;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes highlight {
+  0%, 100% {
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  }
+  50% {
+    box-shadow: 0 8px 32px rgba(59, 130, 246, 0.6), 0 0 20px rgba(59, 130, 246, 0.4);
+    transform: scale(1.02);
+  }
+}
+
+.loading-text {
+  color: #666;
+  font-size: 16px;
+  margin: 0;
 }
