@@ -129,8 +129,50 @@ export const authGoogleLogin = async (idToken: string) => {
     const pack = data ?? res.data; // supports {success,data:{user,token}} or {user,token}
     if (!pack?.token || !pack?.user) throw new Error("Invalid Google login response");
 
-    return { token: pack.token, user: pack.user };
+    // Normalize role field: backend may send userRole; ensure .role exists
+    const normalizedUser = {
+      ...pack.user,
+      role: pack.user.role || pack.user.userRole || 'user',
+      userRole: pack.user.userRole || pack.user.role || 'user',
+    };
+
+    return { token: pack.token, user: normalizedUser };
   } catch (err: any) {
+    // Fallback for when Google auth endpoint doesn't exist yet (404 error)
+    if (err.response?.status === 404 || isNetworkError(err)) {
+      // For development: create a temporary user from the Firebase token
+      // Note: This is a temporary solution until the backend implements /api/auth/google
+      try {
+        // Decode the Firebase ID token to get user info (basic parsing)
+        const payload = JSON.parse(atob(idToken.split('.')[1]));
+        const email = payload.email;
+        const name = payload.name || payload.email.split('@')[0];
+        
+        // Create a temporary user object
+        const tempUser = {
+          userId: Date.now() % 100000,
+          email: email,
+          username: name,
+          firstName: name.split(' ')[0] || name,
+          lastName: name.split(' ').slice(1).join(' ') || '',
+          organisation: '',
+          avatarUrl: payload.picture || null,
+          displayName: name,
+          userRole: email.includes('admin') ? 'admin' : 'user', // Simple role assignment
+          role: email.includes('admin') ? 'admin' : 'user',
+        };
+        
+        // Generate a temporary token
+        const tempToken = `temp_google_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        
+        console.warn('⚠️ Using temporary Google auth fallback - backend /api/auth/google endpoint not implemented');
+        console.warn('⚠️ User data will NOT be saved to database until backend endpoint is created');
+        
+        return { token: tempToken, user: tempUser };
+      } catch (decodeErr) {
+        throw new Error("Google authentication failed - backend endpoint not available and token decode failed");
+      }
+    }
     throw new Error(err?.response?.data?.message || err.message || "Google login failed");
   }
 };

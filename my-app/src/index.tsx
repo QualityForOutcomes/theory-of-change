@@ -11,6 +11,7 @@ import ProjectCreate from "./pages/Project";
 import ProjectsPage from "./pages/Project";
 
 import AuthCard from "./components/AuthCard";
+import LandingPage from "./components/LandingPage";
 import PrivateRoute from "./auth/PrivateRoute";        
 import { AuthProvider } from "./auth/AuthProvider";
 import ForgotPassword from "./pages/ForgotPassword";
@@ -26,29 +27,25 @@ const root = ReactDOM.createRoot(
 
 root.render(
   <React.StrictMode>
-    <AuthProvider>                                     
-      <Router>
+    <Router>
+      <AuthProvider>                                     
         <Navbar />
         <Routes>
-          {/* Public */}
+          {/* Landing page - Login/Registration */}
+          <Route path="/" element={<AuthCard />} />
           <Route path="/login" element={<AuthCard />} />
+          
+          {/* Other public routes */}
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/terms" element={<Terms />} />
-          <Route
-            path="/plans"
-            element={
-              <PrivateRoute>
-                <SubscriptionPlans />
-              </PrivateRoute>
-            }
-          />
+          <Route path="/plans" element={<SubscriptionPlans />} />
           <Route path="/logout" element={<Logout />} />
           <Route path="/subscription-success" element={<SubscriptionSuccess />} />
 
-          {/* Protected*/}
+          {/* Protected routes - User Dashboard */}
           <Route
-            path="/"
+            path="/dashboard"
             element={
               <PrivateRoute>
                 <ProjectsPage />
@@ -88,7 +85,7 @@ root.render(
             }
           />
         </Routes>
-      </Router>
-    </AuthProvider>
+      </AuthProvider>
+    </Router>
   </React.StrictMode>
 );
