@@ -3,9 +3,9 @@ import { verifyLogin, signToken } from "../mocks/service.memory";
 
 // Base URL for user auth and project APIs
 const API_BASE = process.env.REACT_APP_API_BASE || "https://nodejs-serverless-function-express-rho-ashen.vercel.app";
-const PASS_API_BASE = process.env.REACT_APP_API_BASE || "https://toc-user-backend.vercel.app";
+const PASS_API_BASE = process.env.REACT_APP_API_BASE || "https://nodejs-serverless-function-express-rho-ashen.vercel.app";
 // Separate base for payment/checkout endpoints (serverless backend)
-const PAYMENT_API_BASE = process.env.REACT_APP_PAYMENT_API_BASE || "https://nodejs-serverless-function-express-rho-ashen.vercel.app";
+const PAYMENT_API_BASE = process.env.REACT_APP_PAYMENT_API_BASE || "http://localhost:3001";
 
 const isNetworkError = (err: any) => !err?.response || err?.message === "Network Error";
 
@@ -118,7 +118,7 @@ export const resetPassword = async (data: {
 export const authGoogleLogin = async (idToken: string) => {
   try {
     const res = await axios.post(
-      `${API_BASE}/api/auth/google`,
+      `${API_BASE}/api/auth/Google`,
       { idToken },
       { headers: { "Content-Type": "application/json" } }
     );
@@ -361,6 +361,77 @@ export const cancelSubscription = async (data: {
       };
     }
     throw new Error(err.response?.data?.message || err.message || "Failed to cancel subscription");
+  }
+};
+
+export const getStripeSubscription = async (params: { subscription_id?: string; session_id?: string }) => {
+  try {
+    const url = `${PAYMENT_API_BASE}/api/payment/get-subscription`;
+    const response = await axios.get(url, {
+      params,
+      headers: { "Content-Type": "application/json" },
+    });
+
+    const { success, data, message } = response.data || {};
+    if (!success) throw new Error(message || 'Failed to fetch Stripe subscription');
+    return data;
+  } catch (err: any) {
+    console.error('Get Stripe subscription error', {
+      status: err?.response?.status,
+      response: err?.response?.data,
+    });
+    throw new Error(err.response?.data?.message || err.message || 'Failed to fetch Stripe subscription');
+  }
+};
+export const updateSubscription = async (data: {
+  subscriptionId: string;
+  email: string;
+  planId: string;
+  status: string;
+  startDate: string;
+  renewalDate: string;
+  expiresAt: string;
+  autoRenew: boolean;
+}) => {
+  try {
+    // Backend expects EXACT camelCase keys as below
+    const payload = {
+      subscriptionId: data.subscriptionId,
+      email: data.email,
+      planId: data.planId,
+      status: data.status,
+      startDate: data.startDate,
+      renewalDate: data.renewalDate,
+      expiresAt: data.expiresAt,
+      autoRenew: data.autoRenew,
+    };
+
+    const url = `${API_BASE}/api/subscription/Create`;
+    const response = await axios.post(url, payload, {
+      headers: {
+        "Content-Type": "application/json",
+        ...getAuthHeaders(),
+      },
+    });
+
+    const { success, message } = response.data || {};
+    if (!success) {
+      throw new Error(message || "Failed to update subscription");
+    }
+    return { success, message };
+  } catch (err: any) {
+    // Enhanced logging for easier debugging
+    const status = err?.response?.status;
+    const data = err?.response?.data;
+    console.error(
+      "Subscription update error",
+      {
+        status,
+        message: err?.message,
+        response: data,
+      }
+    );
+    throw new Error(err.response?.data?.message || err.message || "Failed to update subscription");
   }
 };
 

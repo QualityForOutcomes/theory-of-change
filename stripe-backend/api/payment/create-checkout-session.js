@@ -28,6 +28,11 @@ module.exports = async (req, res) => {
       });
     }
 
+    // Derive frontend origin (prefer request Origin header, fallback to env FRONTEND_ORIGIN, then localhost:3000)
+    const frontendOrigin = (req.headers && req.headers.origin)
+      ? req.headers.origin
+      : (process.env.FRONTEND_ORIGIN || 'http://localhost:3000');
+
     // Create checkout session
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
@@ -38,8 +43,8 @@ module.exports = async (req, res) => {
         },
       ],
       mode: 'subscription',
-      success_url: success_url || `${req.headers.origin}/subscription-success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: cancel_url || `${req.headers.origin}/plans?status=cancelled`,
+      success_url: success_url || `${frontendOrigin}/subscription-success?session_id={CHECKOUT_SESSION_ID}&subscription_id={CHECKOUT_SESSION_SUBSCRIPTION_ID}`,
+      cancel_url: cancel_url || `${frontendOrigin}/plans?status=cancelled`,
       metadata: {
         user_id: user_id.toString()
       },
@@ -48,7 +53,6 @@ module.exports = async (req, res) => {
           user_id: user_id.toString()
         }
       },
-      customer_creation: 'always',
     });
 
     return res.status(200).json({

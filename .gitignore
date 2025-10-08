@@ -1,0 +1,9 @@
+.vs/
+*.vsidx
+*.vscode/*
+node_modules/
+dist/
+build/
+.DS_Store
+coverage/
+*.log
