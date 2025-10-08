@@ -5,7 +5,7 @@ import { verifyLogin, signToken } from "../mocks/service.memory";
 const API_BASE = process.env.REACT_APP_API_BASE || "https://nodejs-serverless-function-express-rho-ashen.vercel.app";
 const PASS_API_BASE = process.env.REACT_APP_API_BASE || "https://nodejs-serverless-function-express-rho-ashen.vercel.app";
 // Separate base for payment/checkout endpoints (serverless backend)
-const PAYMENT_API_BASE = process.env.REACT_APP_PAYMENT_API_BASE || "http://localhost:3001";
+const PAYMENT_API_BASE = process.env.REACT_APP_PAYMENT_API_BASE || "https://admin-backend-two-flame.vercel.app";
 
 const isNetworkError = (err: any) => !err?.response || err?.message === "Network Error";
 
