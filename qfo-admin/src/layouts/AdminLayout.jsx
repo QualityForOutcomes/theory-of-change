@@ -64,9 +64,15 @@ export default function AdminLayout() {
   const nav = useNavigate();
   const location = useLocation();
   
+  const getMyAppLoginUrl = () => {
+    const envUrl = (import.meta.env.VITE_USER_APP_URL || "").trim();
+    const base = envUrl || (import.meta.env.DEV ? "http://localhost:3000" : "https://toc-user-frontend.vercel.app");
+    return base.endsWith("/login") ? base : `${base}/login`;
+  };
+
   const logout = () => {
     localStorage.removeItem("qfo_token");
-    nav("/login");
+    window.location.href = getMyAppLoginUrl();
   };
 
   const isActive = (path) => location.pathname === path;
@@ -110,6 +116,15 @@ export default function AdminLayout() {
               }}
             >
               Terms & Conditions
+            </Link>
+            <Link
+              to="/admin/newsletter"
+              style={{
+                ...styles.navLink,
+                ...(isActive("/admin/newsletter") ? styles.navLinkActive : {})
+              }}
+            >
+              Newsletter
             </Link>
           </nav>
           

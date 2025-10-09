@@ -9,6 +9,7 @@ import { createClient } from '@supabase/supabase-js';
 const app = express();
 const PORT = process.env.PORT || 4000;
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret';
+const ALLOW_DEV_TOKEN = process.env.ALLOW_DEV_TOKEN === 'true';
 const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY;
 const NEWSLETTER_FROM_EMAIL = process.env.NEWSLETTER_FROM_EMAIL;
 const NEWSLETTER_FROM_NAME = process.env.NEWSLETTER_FROM_NAME || 'Newsletter';
@@ -23,6 +24,8 @@ const TOC_SUPABASE_URL = process.env.TOC_SUPABASE_URL;
 const TOC_SUPABASE_SERVICE_ROLE_KEY = process.env.TOC_SUPABASE_SERVICE_ROLE_KEY;
 
 app.use(cors());
+// Handle CORS preflight for all routes
+app.options('*', cors());
 app.use(express.json());
 
 if (SENDGRID_API_KEY) {
@@ -70,6 +73,55 @@ app.get('/api/health', (req, res) => {
   res.json({ success: true, message: 'ok', data: { timestamp: new Date().toISOString() } });
 });
 
+// In-memory Terms & Conditions state
+let TERMS_STATE = {
+  content: 'Default Terms & Conditions for QFO — replace via Admin.',
+  updatedAt: new Date().toISOString(),
+  version: 1,
+};
+let TERMS_HISTORY = [];
+
+// Fetch Terms
+app.get('/api/terms', (req, res) => {
+  res.json({ content: TERMS_STATE.content, updatedAt: TERMS_STATE.updatedAt, version: TERMS_STATE.version });
+});
+
+// Update Terms (requires auth)
+app.put('/api/terms', (req, res) => {
+  const auth = req.headers['authorization'] || '';
+  const token = auth.startsWith('Bearer ') ? auth.slice('Bearer '.length) : null;
+  if (!token) {
+    return res.status(401).json({ success: false, message: 'Unauthorized: missing Bearer token' });
+  }
+  try {
+    jwt.verify(token, JWT_SECRET);
+  } catch (err) {
+    if (!(ALLOW_DEV_TOKEN && token === 'dev-token')) {
+      return res.status(401).json({ success: false, message: 'Unauthorized: invalid token' });
+    }
+  }
+
+  const { content } = req.body || {};
+  if (!content || typeof content !== 'string' || content.trim().length === 0) {
+    return res.status(400).json({ success: false, message: 'Validation failed', errors: ['Content is required'] });
+  }
+
+  // Push current state to history before updating
+  TERMS_HISTORY.unshift({ ...TERMS_STATE });
+  TERMS_STATE = {
+    content,
+    updatedAt: new Date().toISOString(),
+    version: TERMS_STATE.version + 1,
+  };
+
+  return res.json({ content: TERMS_STATE.content, updatedAt: TERMS_STATE.updatedAt, version: TERMS_STATE.version });
+});
+
+// Terms history
+app.get('/api/terms/history', (req, res) => {
+  return res.json({ history: TERMS_HISTORY });
+});
+
 // Mock SendCampaign endpoint
 app.post('/api/newsletter/SendCampaign', (req, res) => {
   try {
@@ -80,11 +132,13 @@ app.post('/api/newsletter/SendCampaign', (req, res) => {
       return res.status(401).json({ success: false, message: 'Unauthorized: missing Bearer token' });
     }
 
-    try {
-      jwt.verify(token, JWT_SECRET);
-    } catch (err) {
-      return res.status(401).json({ success: false, message: 'Unauthorized: invalid token' });
-    }
+  try {
+    jwt.verify(token, JWT_SECRET);
+  } catch (err) {
+      if (!(ALLOW_DEV_TOKEN && token === 'dev-token')) {
+        return res.status(401).json({ success: false, message: 'Unauthorized: invalid token' });
+      }
+  }
 
     const { subject, html } = req.body || {};
     if (!subject || !html) {
