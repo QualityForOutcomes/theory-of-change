@@ -1,0 +1,21 @@
+# Ignore environment files and local-only artifacts
+.env
+.env.local
+.env.*.local
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Node modules
+node_modules/
+
+# Build output
+.vercel/
+dist/
+
+# Editor/OS
+.DS_Store
+.idea/
+.vscode/
