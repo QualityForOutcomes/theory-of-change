@@ -4,7 +4,7 @@ const cors = require('cors');
 const path = require('path');
 
 const app = express();
-const PORT = process.env.PORT || 3003;
+const PORT = process.env.PORT || 3001;
 
 // Middleware
 app.use(cors());
@@ -13,6 +13,8 @@ app.use(express.json());
 // Import and mount the serverless functions
 const createCheckoutSession = require('./api/payment/create-checkout-session');
 const cancelSubscription = require('./api/payment/cancel-subscription');
+const getSubscription = require('./api/payment/get-subscription');
+//const updateSubscription = require('./api/payment/update-subscription');
 
 // Route handlers that mimic Vercel's serverless function behavior
 app.post('/api/payment/create-checkout-session', (req, res) => {
@@ -22,6 +24,17 @@ app.post('/api/payment/create-checkout-session', (req, res) => {
 app.post('/api/payment/cancel-subscription', (req, res) => {
   cancelSubscription(req, res);
 });
+
+app.get('/api/payment/get-subscription', (req, res) => {
+  getSubscription(req, res);
+});
+app.post('/api/payment/get-subscription', (req, res) => {
+  getSubscription(req, res);
+});
+
+// app.post('/api/payment/update-subscription', (req, res) => {
+//   updateSubscription(req, res);
+// });
 
 // Health check endpoint
 app.get('/health', (req, res) => {
@@ -33,5 +46,7 @@ app.listen(PORT, () => {
   console.log(`📋 Available endpoints:`);
   console.log(`   POST http://localhost:${PORT}/api/payment/create-checkout-session`);
   console.log(`   POST http://localhost:${PORT}/api/payment/cancel-subscription`);
+  console.log(`   GET  http://localhost:${PORT}/api/payment/get-subscription`);
+  console.log(`   POST http://localhost:${PORT}/api/payment/get-subscription`);
   console.log(`   GET  http://localhost:${PORT}/health`);
 });

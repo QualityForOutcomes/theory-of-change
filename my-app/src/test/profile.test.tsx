@@ -137,7 +137,7 @@ describe("ProfilePage Component", () => {
         expiry: "2025-12-31",
         price: "$10/month",
         activatedAt: "2024-01-01T00:00:00.000Z",
-        sessionId: "session_123",
+        subscriptionId: "sub_123",
       };
       localStorage.setItem("userSubscription", JSON.stringify(subscription));
       
@@ -473,7 +473,7 @@ describe("ProfilePage Component", () => {
         plan: "Pro Plan",
         status: "active",
         expiry: "2025-12-31",
-        sessionId: "session_123",
+        subscriptionId: "sub_123",
       }));
       
       render(<ProfilePage />);
@@ -485,7 +485,7 @@ describe("ProfilePage Component", () => {
       await waitFor(() => {
         expect(mockCancelSubscription).toHaveBeenCalledWith({
           user_id: 123,
-          subscription_id: "session_123",
+          subscription_id: "sub_123",
         });
       });
       

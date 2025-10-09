@@ -45,10 +45,12 @@ export default function SubscriptionPlans() {
     setActivePlan(plan.id);
     
     try {
-      // Construct success and cancel URLs
-      const baseSuccessUrl = `${window.location.origin}/subscription-success?status=success`;
-      const cancelUrl = `${window.location.origin}/plans?status=cancelled`;
-      const successUrl = `${baseSuccessUrl}&plan=${plan.id}&price=${encodeURIComponent(plan.price || '')}`;
+      // Construct success and cancel URLs using dynamic origin
+      // Include Checkout Session ID placeholder so Stripe injects actual session_id
+       const frontendOrigin = process.env.FRONTEND_ORIGIN || 'http://localhost:3000';
+      const baseSuccessUrl = `${frontendOrigin}/subscription-success?status=success`;
+      const cancelUrl = `${frontendOrigin}/profile?subscription=cancelled`;
+      const successUrl = `${baseSuccessUrl}&plan=${plan.id}&price=${encodeURIComponent(plan.price || '')}&session_id={CHECKOUT_SESSION_ID}`;
       
       console.log("Attempting to create checkout session for:", {
         plan: plan.id,
@@ -73,8 +75,10 @@ export default function SubscriptionPlans() {
       console.error("API checkout failed, falling back to direct Stripe links:", err);
       
       // Construct success and cancel URLs for fallback
-      const baseSuccessUrl = `${window.location.origin}/subscription-success?status=success`;
-      const cancelUrl = `${window.location.origin}/plans?status=cancelled`;
+      // Redirect to profile page with subscription status (same as main flow)
+      const frontendOrigin = process.env.FRONTEND_ORIGIN || 'http://localhost:3000';
+      const baseSuccessUrl = `${frontendOrigin}/subscription-success?status=success`;
+      const cancelUrl = `${frontendOrigin}/profile?subscription=cancelled`;
       const successUrl = `${baseSuccessUrl}&plan=${plan.id}&price=${encodeURIComponent(plan.price || '')}`;
       
       // Fallback to direct Stripe hosted checkout links with proper redirect URLs

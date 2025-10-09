@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { fetchUserProfile, updateUserProfile, cancelSubscription } from "../services/api"; // Update the import path as needed
+import { fetchUserProfile, updateUserProfile, cancelSubscription, updateSubscription, getStripeSubscription } from "../services/api"; // Update the import path as needed
 import "../style/profile.css";
 
 type UserProfile = {
@@ -22,6 +22,7 @@ type Subscription = {
   price?: string;
   activatedAt?: string;
   sessionId?: string;
+  subscriptionId?: string;
 };
 
 type ProfilePageProps = {
@@ -156,54 +157,75 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ subscription }) => {
   }
 
   async function handleManageSubscription() {
-    // Show confirmation dialog before canceling
-    const confirmCancel = window.confirm(
-      "Are you sure you want to cancel your subscription? This action cannot be undone and you will lose access to premium features."
-    );
-    
-    if (!confirmCancel) {
-      return;
-    }
+   // Show confirmation dialog before canceling
+   const confirmCancel = window.confirm(
+     "Are you sure you want to cancel your subscription? This action cannot be undone and you will lose access to premium features."
+   );
+   
+   if (!confirmCancel) {
+     return;
+   }
 
-    try {
-      setCheckoutLoading(true);
-      setCheckoutError(null);
+   try {
+     setCheckoutLoading(true);
+     setCheckoutError(null);
 
-      // Get user ID for cancellation
-      const userId = userProfile?.userId;
-      if (!userId) {
-        setCheckoutError("Unable to cancel subscription: User not found");
-        return;
-      }
+     // Get user ID for cancellation
+     const userId = userProfile?.userId;
+     if (!userId) {
+       setCheckoutError("Unable to cancel subscription: User not found");
+       return;
+     }
 
-      // Get subscription ID if available
-      const subscriptionId = userSubscription?.sessionId;
+     // Get the actual subscription ID from stored subscription data
+     const subscriptionId = userSubscription?.subscriptionId;
 
-      // Call the cancellation API
-      const result = await cancelSubscription({
-        user_id: userId,
-        subscription_id: subscriptionId,
-      });
+     // Call the cancellation API
+     const result = await cancelSubscription({
+       user_id: userId,
+       subscription_id: subscriptionId,
+     });
 
-      if (result.success) {
-        // Update local state to reflect cancellation
-        setUserSubscription({
-          plan: "Free Plan",
-          status: "active",
-          expiry: ""
-        });
+     if (result.success) {
+       // Sync cancellation to subscription service
+       try {
+         const email = userProfile?.email || "";
+         const now = new Date();
 
-        // Show success message
-        alert("Subscription canceled successfully. You now have access to the Free Plan.");
-      } else {
-        setCheckoutError("Failed to cancel subscription. Please try again.");
-      }
-    } catch (error: any) {
-      setCheckoutError(error.message || "Failed to cancel subscription");
-    } finally {
-      setCheckoutLoading(false);
-    }
-  }
+
+         const payload = {
+           subscriptionId: subscriptionId || `${userId}-${now.getTime()}`,
+           email,
+           planId: (userSubscription?.plan || "free").toLowerCase(),
+           status: "canceled",
+           startDate: userSubscription?.activatedAt || now.toISOString(),
+           renewalDate: now.toISOString(),
+           expiresAt: now.toISOString(),
+           autoRenew: false,
+         };
+         await updateSubscription(payload);
+       } catch (e) {
+         console.warn("Failed to sync cancellation:", e);
+       }
+
+       // Update local state to reflect cancellation
+       setUserSubscription({
+         plan: "Free Plan",
+         status: "active",
+         expiry: ""
+       });
+
+       // Show success message
+       alert("Subscription canceled successfully. You now have access to the Free Plan.");
+     } else {
+       setCheckoutError("Failed to cancel subscription. Please try again.");
+     }
+   } catch (error: any) {
+     setCheckoutError(error.message || "Failed to cancel subscription");
+   } finally {
+     setCheckoutLoading(false);
+   }
+ }
 
   if (loading) {
     return (
