@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, Legend
@@ -105,6 +105,7 @@ function Tile({ label, value }) {
 }
 
 export default function Dashboard() {
+  const [showAllSubs, setShowAllSubs] = useState(false);
   const { data, isLoading, isError, refetch } = useDashboard();
 
   if (isLoading) return <div style={{ padding: 24 }}>Loading dashboard…</div>;
@@ -128,11 +129,10 @@ export default function Dashboard() {
       <section style={S.grid3}>
         <Card title="Overview" subtitle="Admin name and details">
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <img style={S.avatar} src="https://i.pravatar.cc/80" alt="Admin" />
             <div>
               <p style={{ margin: 0, fontWeight: 600 }}>Divyam Juneja</p>
               <p style={{ margin: 0, fontSize: 12, color: "#6b7280" }}>
-                Super Admin · divyam@qfo.org
+                Admin · divyam@qfo.org
               </p>
             </div>
           </div>
@@ -154,6 +154,14 @@ export default function Dashboard() {
                 </LineChart>
               </ResponsiveContainer>
             )}
+          </div>
+        </Card>
+
+        <Card title="Pro Customers" subtitle="Active">
+          <div style={S.pillRow}>
+            <Stat title="Total" value={overview.proCustomers.total.toLocaleString()} icon={<Users size={16} />} />
+            <Stat title="New" value={`+${overview.proCustomers.new.toLocaleString()}`} muted />
+            <Stat title="Churn" value={`-${overview.proCustomers.churn.toLocaleString()}`} muted />
           </div>
         </Card>
 
@@ -210,7 +218,11 @@ export default function Dashboard() {
                 border: "none", borderRadius: 8, background: "#7c3aed",
                 color: "#fff", padding: "8px 12px", fontSize: 12, fontWeight: 600, cursor: "pointer",
               }}
-              onClick={() => alert("Connect to Stripe flow")}
+              onClick={() => {
+                const url = import.meta.env.VITE_STRIPE_DASHBOARD_PAYOUT_URL ||
+                  "https://dashboard.stripe.com/test/settings/payouts";
+                window.open(url, "_blank", "noopener");
+              }}
             >
               Update
             </button>
@@ -237,6 +249,17 @@ export default function Dashboard() {
             <div style={S.muted}>No subscriptions yet.</div>
           ) : (
             <div style={S.tableWrap}>
+              {/* More/Less toggle */}
+              {recentSubscriptions.length > 5 && (
+                <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 8 }}>
+                  <button
+                    onClick={() => setShowAllSubs(prev => !prev)}
+                    style={{ border: "1px solid #ddd", borderRadius: 8, background: "white", padding: "6px 10px", fontSize: 12, fontWeight: 600, cursor: "pointer" }}
+                  >
+                    {showAllSubs ? "Less" : "More"}
+                  </button>
+                </div>
+              )}
               <table style={S.table}>
                 <thead>
                   <tr>
@@ -249,7 +272,7 @@ export default function Dashboard() {
                   </tr>
                 </thead>
                 <tbody>
-                  {recentSubscriptions.map((s, i) => (
+                  {(showAllSubs ? recentSubscriptions : recentSubscriptions.slice(0, 5)).map((s, i) => (
                     <tr key={s.id || i} style={{ background: i % 2 ? "#f9fafb" : "white" }}>
                       <td style={{ ...S.td, fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace", fontSize: 12 }}>
                         {s.id || "—"}
