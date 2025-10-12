@@ -2,7 +2,8 @@ import axios from "axios";
 
 // Use VITE_API_URL for all environments, fallback to local dev server
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL ?? "http://localhost:4000",
+  // Prefer explicit VITE_API_URL; fallback to local dev server on 4001
+  baseURL: import.meta.env.VITE_API_URL ?? "http://localhost:4001",
   // Remove if you don’t use cookies/sessions, keep if server sets cookies
   withCredentials: false,
 });
@@ -36,3 +37,14 @@ api.interceptors.response.use(
 );
 
 export default api;
+
+// Newsletter API helpers
+export const newsletterSubscribe = async (email) => {
+  const res = await api.post('/api/newsletter/subscribe', { email });
+  return res.data;
+};
+
+export const newsletterSend = async ({ subject, html }) => {
+  const res = await api.post('/api/newsletter/send', { subject, html });
+  return res.data;
+};

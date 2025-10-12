@@ -18,6 +18,10 @@ REACT_APP_PAYMENT_API_BASE=http://localhost:3003
 
 # For production, update to your deployed backend URL
 # REACT_APP_PAYMENT_API_BASE=https://your-backend-domain.com
+ 
+ # Supabase
+ REACT_APP_SUPABASE_URL=https://YOUR-PROJECT.supabase.co
+ REACT_APP_SUPABASE_ANON_KEY=YOUR-ANON-KEY
 ```
 
 ### ⚠️ Security Note

@@ -111,6 +111,15 @@ export default function AdminLayout() {
             >
               Terms & Conditions
             </Link>
+            <Link
+              to="/admin/newsletter"
+              style={{
+                ...styles.navLink,
+                ...(isActive("/admin/newsletter") ? styles.navLinkActive : {})
+              }}
+            >
+              Newsletter
+            </Link>
           </nav>
           
           <button

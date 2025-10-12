@@ -9,7 +9,8 @@ export default function Login() {
   function onSubmit(e) {
     e.preventDefault();
     if (email && pass) {
-      localStorage.setItem("qfo_token", "dev-token");
+      // Match backend dev server expected token for Authorization
+      localStorage.setItem("qfo_token", "local-dev-jwt");
       nav("/admin");
     }
   }
