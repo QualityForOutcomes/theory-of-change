@@ -320,6 +320,36 @@ app.get('/api/dashboard', async (req, res) => {
   }
 })
 
+// --- Project APIs (dev stubs) ---
+// Returns the current user's project list
+app.get('/api/project/GetProjectList', (req, res) => {
+  // Dev stub: return a small static list so UI can render
+  const projects = [
+    { id: 'P-001', name: 'Community Health Initiative', description: 'Improving local health outcomes', createdAt: new Date().toISOString() },
+    { id: 'P-002', name: 'Education Access Program', description: 'Expanding access to education', createdAt: new Date().toISOString() },
+  ]
+  res.status(200).json({ success: true, statusCode: 200, message: 'OK', data: { projects } })
+})
+
+// --- Subscription APIs (dev stubs) ---
+// Returns the current user's subscription; null indicates free tier
+app.get('/api/subscription/Get', (req, res) => {
+  // Dev stub: treat users as free unless configured otherwise
+  const subscription = null
+  // Example structure if needed:
+  // const subscription = {
+  //   subscriptionId: 'sub_dev_123',
+  //   email: 'demo@example.com',
+  //   planId: 'starter',
+  //   status: 'active',
+  //   startDate: new Date().toISOString(),
+  //   renewalDate: new Date(Date.now() + 30*24*60*60*1000).toISOString(),
+  //   expiresAt: null,
+  //   autoRenew: true,
+  // }
+  res.status(200).json({ success: true, statusCode: 200, message: 'OK', data: subscription })
+})
+
 // Bind to default interface to support both IPv4 and IPv6 localhost resolutions
 app.listen(PORT, () => {
   console.log(`Dev server listening on http://localhost:${PORT}`)

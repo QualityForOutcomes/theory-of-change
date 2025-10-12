@@ -1,4 +1,5 @@
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+const stripeSecret = process.env.STRIPE_SECRET_KEY;
+const stripe = require('stripe')(stripeSecret);
 
 module.exports = async (req, res) => {
   // Set CORS headers
@@ -20,6 +21,13 @@ module.exports = async (req, res) => {
 
   try {
     const { user_id, subscription_id } = req.body;
+
+    if (!stripeSecret) {
+      return res.status(500).json({
+        success: false,
+        message: 'Payment server is not configured. Missing STRIPE_SECRET_KEY.',
+      });
+    }
 
     if (!user_id) {
       return res.status(400).json({
@@ -69,8 +77,20 @@ module.exports = async (req, res) => {
           });
         }
         
-        // Cancel the subscription if it's still active
+        // Cancel behavior: immediate only — remove scheduling
         const subscription = await stripe.subscriptions.cancel(actualSubscriptionId);
+
+        // Tag customer metadata to indicate canceled by user
+        try {
+          const custId = subscription.customer;
+          if (custId) {
+            const cust = await stripe.customers.retrieve(custId);
+            const meta = (cust && cust.metadata) || {};
+            await stripe.customers.update(custId, { metadata: { ...meta, canceled_by_user: 'true', canceled_at: String(subscription.canceled_at || Math.floor(Date.now()/1000)) } });
+          }
+        } catch (metaErr) {
+          console.warn('Failed to tag customer as canceled:', metaErr.message);
+        }
         
         return res.status(200).json({
           success: true,
@@ -79,6 +99,7 @@ module.exports = async (req, res) => {
             subscription_id: subscription.id,
             status: subscription.status,
             canceled_at: subscription.canceled_at,
+            cancel_at_period_end: false,
             checkout_session_id: subscription_id.startsWith('cs_') ? subscription_id : null,
             already_canceled: false
           }
@@ -115,15 +136,29 @@ module.exports = async (req, res) => {
         });
       }
 
-      // Cancel all user subscriptions
+      // Cancel all user subscriptions immediately
       const canceledSubscriptions = [];
       for (const subscription of userSubscriptions) {
         try {
           const canceled = await stripe.subscriptions.cancel(subscription.id);
+
+          // Tag customer metadata
+          try {
+            const custId = canceled.customer;
+            if (custId) {
+              const cust = await stripe.customers.retrieve(custId);
+              const meta = (cust && cust.metadata) || {};
+              await stripe.customers.update(custId, { metadata: { ...meta, canceled_by_user: 'true', canceled_at: String(canceled.canceled_at || Math.floor(Date.now()/1000)) } });
+            }
+          } catch (metaErr) {
+            console.warn('Failed to tag customer as canceled:', metaErr.message);
+          }
+
           canceledSubscriptions.push({
             subscription_id: canceled.id,
             status: canceled.status,
-            canceled_at: canceled.canceled_at
+            canceled_at: canceled.canceled_at,
+            cancel_at_period_end: false
           });
         } catch (cancelError) {
           console.error(`Failed to cancel subscription ${subscription.id}:`, cancelError);
