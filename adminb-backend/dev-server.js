@@ -1,11 +1,52 @@
-require('dotenv').config()
+const path = require('path')
+require('dotenv').config({ path: path.resolve(__dirname, '.env') })
 const express = require('express')
 const cors = require('cors')
 const Stripe = require('stripe')
+const { createClient } = require('@supabase/supabase-js')
+const nodemailer = require('nodemailer')
 
 const app = express()
 const PORT = Number(process.env.PORT || 4001)
 app.use(express.json())
+
+// Initialize Supabase client for dev server
+const SUPABASE_URL = process.env.SUPABASE_URL;
+const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+let supabase = null;
+if (SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY) {
+  try {
+    supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+  } catch (e) {
+    console.warn('[dev] Supabase init failed:', e?.message || e);
+  }
+} else {
+  console.warn('[dev] Missing Supabase env; newsletter send will use mock recipients');
+}
+
+// Email transport configuration (SMTP preferred, SendGrid optional)
+const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY || ''
+const NEWSLETTER_FROM_EMAIL = process.env.NEWSLETTER_FROM_EMAIL || ''
+const NEWSLETTER_FROM_NAME = process.env.NEWSLETTER_FROM_NAME || 'Quality for Outcomes'
+const SMTP_HOST = process.env.SMTP_HOST || ''
+const SMTP_PORT = Number(process.env.SMTP_PORT || 0)
+const SMTP_USER = process.env.SMTP_USER || ''
+const SMTP_PASS = process.env.SMTP_PASS || ''
+
+const smtpTransport = (SMTP_HOST && SMTP_PORT && SMTP_USER && SMTP_PASS)
+  ? nodemailer.createTransport({ host: SMTP_HOST, port: SMTP_PORT, secure: SMTP_PORT === 465, auth: { user: SMTP_USER, pass: SMTP_PASS } })
+  : null
+
+let sgMail = null
+if (SENDGRID_API_KEY) {
+  try {
+    sgMail = require('@sendgrid/mail')
+    sgMail.setApiKey(SENDGRID_API_KEY)
+  } catch (e) {
+    console.warn('[dev] SendGrid import failed, continuing without it')
+    sgMail = null
+  }
+}
 
 // Allow local dev origins flexibly (5173/5174/5175 or any localhost)
 const corsOptions = {
@@ -319,6 +360,86 @@ app.get('/api/dashboard', async (req, res) => {
     res.status(500).json({ success: false, message: err.message || 'Stripe aggregation failed', statusCode: 500 })
   }
 })
+
+// --- Newsletter: subscribe ---
+app.post('/api/newsletter/subscribe', async (req, res) => {
+  const { email } = req.body || {};
+  if (!email || typeof email !== 'string' || !email.includes('@')) {
+    return res.status(400).json({ success: false, message: 'Missing or invalid email', statusCode: 400 });
+  }
+  // Dev-only: simulate subscription success
+  return res.status(200).json({ success: true, message: 'Subscribed to newsletter', statusCode: 200, data: { email, accepted_at: new Date().toISOString() } });
+});
+
+// --- Newsletter: send campaign ---
+app.post('/api/newsletter/send', async (req, res) => {
+  const auth = req.headers['authorization'] || '';
+  const token = auth.startsWith('Bearer ') ? auth.slice(7) : null;
+  if (token !== 'local-dev-jwt') {
+    return res.status(401).json({ success: false, message: 'Unauthorized', statusCode: 401 });
+  }
+  const { subject, html } = req.body || {};
+  if (!subject || !html) {
+    return res.status(400).json({ success: false, message: 'Subject and html are required', statusCode: 400 });
+  }
+  try {
+    let recipients = [];
+    if (supabase) {
+      const { data, error } = await supabase
+        .from('UserNewsLetterSubs')
+        .select('email')
+        .order('email', { ascending: true });
+      if (error) {
+        console.error('[dev] Supabase subscribers fetch error:', error);
+      } else {
+        recipients = (data || []).map(r => r.email).filter(Boolean);
+      }
+    }
+    // Fallback to 3 mock recipients if Supabase unavailable or empty
+    if (!recipients.length) {
+      recipients = ['alice@example.com', 'bob@example.com', 'carol@example.com'];
+    }
+    // Prefer SMTP when configured
+    if (smtpTransport && NEWSLETTER_FROM_EMAIL) {
+      const failures = []
+      let sent = 0
+      for (const email of recipients) {
+        try {
+          const info = await smtpTransport.sendMail({
+            from: `${NEWSLETTER_FROM_NAME} <${NEWSLETTER_FROM_EMAIL}>`,
+            to: email,
+            subject,
+            html,
+          })
+          const accepted = Array.isArray(info.accepted) ? info.accepted.includes(email) : !!info.accepted
+          if (accepted) sent += 1; else failures.push(email)
+        } catch (err) {
+          failures.push(email)
+        }
+      }
+      return res.status(200).json({ success: true, message: 'Campaign dispatched', statusCode: 200, data: { total: recipients.length, sent, failed: failures.length, failures } })
+    }
+
+    // Then SendGrid when configured
+    if (sgMail && NEWSLETTER_FROM_EMAIL) {
+      try {
+        const from = { email: NEWSLETTER_FROM_EMAIL, name: NEWSLETTER_FROM_NAME }
+        const msg = { from, subject, html, personalizations: recipients.map((email) => ({ to: [{ email }] })) }
+        await sgMail.send(msg, true)
+        return res.status(200).json({ success: true, message: 'Campaign dispatched', statusCode: 200, data: { total: recipients.length, sent: recipients.length, failed: 0, failures: [] } })
+      } catch (e) {
+        console.error('[dev] SendGrid batch send failed:', e)
+        return res.status(200).json({ success: true, message: 'Campaign dispatched', statusCode: 200, data: { total: recipients.length, sent: 0, failed: recipients.length, failures: recipients } })
+      }
+    }
+
+    // Fallback simulation if no transport configured
+    return res.json({ success: true, message: 'Campaign dispatched (simulation)', statusCode: 200, data: { total: recipients.length, sent: recipients.length, failed: 0, failures: [] } });
+  } catch (err) {
+    console.error('[dev] Unexpected error in newsletter send:', err);
+    return res.status(500).json({ success: false, message: err?.message || 'Unexpected server error', statusCode: 500 });
+  }
+});
 
 // Bind to default interface to support both IPv4 and IPv6 localhost resolutions
 app.listen(PORT, () => {
