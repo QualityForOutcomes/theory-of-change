@@ -1,9 +1,7 @@
-import { Navigate, useLocation } from "react-router-dom";
-
-const isAuthed = () => Boolean(localStorage.getItem("qfo_token"));
+import { useLocation } from "react-router-dom";
 
 export default function ProtectedRoute({ children }) {
-  const loc = useLocation();
-  if (!isAuthed()) return <Navigate to="/login" replace state={{ from: loc }} />;
+  // Auth is not enforced; admin is accessible without login.
+  useLocation();
   return children;
 }
