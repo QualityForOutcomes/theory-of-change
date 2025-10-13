@@ -1,45 +1,48 @@
+import { NavigateFunction } from "react-router-dom";
+
 export type UserRole = "admin" | "user";
 
-// Base user shape used across auth flows
 export type User = {
-  userId?: string | number;
-  id?: string | number;
-  email?: string | null;
-  username?: string | null;
-  firstName?: string | null;
-  lastName?: string | null;
-  organisation?: string | null;
-  avatarUrl?: string | null;
-  displayName?: string | null;
-  // Role can be provided by backend as either `userRole` or `role`
-  user_role?: string | null; // legacy/camel variants
-  userRole?: string | null;
-  role?: string | null;
+  role?: UserRole | string;
+  userRole?: UserRole | string;
+  user_role?: UserRole | string;
+  email?: string;
+  [key: string]: any;
 };
 
-// Normalize role value into a strict union
-export function determineUserRole(user: User | null | undefined): UserRole {
-  const raw = (user?.userRole ?? user?.user_role ?? user?.role ?? "")
-    .toString()
-    .trim()
-    .toLowerCase();
-  return raw === "admin" ? "admin" : "user";
+export function determineUserRole(user: User): UserRole {
+  const r = (user?.role ?? user?.userRole ?? user?.user_role ?? "user").toString().toLowerCase();
+  return r === "admin" ? "admin" : "user";
 }
 
-// Redirect based on user role. Admin goes to admin app; others to the user app.
-export function handleRoleBasedRedirect(user: User | null | undefined, nav: (path: string, opts?: any) => void) {
+function getAdminUrl(): string {
+  // CRA-style env for my-app
+  const envUrl = process.env.REACT_APP_ADMIN_URL;
+  // Default to Vite dev port used by qfo-admin
+  return envUrl || "http://localhost:5174/admin";
+}
+
+function getMyAppDashboardUrl(): string {
+  // Default to projects dashboard root
+  const envUrl = process.env.REACT_APP_USER_DASHBOARD_URL;
+  return envUrl || "/";
+}
+
+export function handleRoleBasedRedirect(user: User, navigate: NavigateFunction) {
   const role = determineUserRole(user);
 
-  // Admins: send to admin dashboard running on Vite dev server
   if (role === "admin") {
-    const envAdmin = (process?.env?.REACT_APP_ADMIN_URL || "http://localhost:5174").trim();
-    const base = envAdmin.replace(/\/$/, "");
-    const target = `${base}/admin`;
-    // Cross-origin redirect to admin app
-    window.location.assign(target);
+    const adminBase = getAdminUrl();
+    const token = localStorage.getItem("token") || "";
+    const url = new URL(adminBase);
+    if (token) {
+      url.searchParams.set("token", token);
+    }
+    // Full page redirect to admin app
+    window.location.assign(url.toString());
     return;
   }
 
-  // Default: go to user app home
-  nav("/", { replace: true });
+  // Regular user: navigate within my-app
+  navigate(getMyAppDashboardUrl(), { replace: true });
 }

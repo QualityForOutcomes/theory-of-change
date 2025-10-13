@@ -25,8 +25,8 @@ const root = ReactDOM.createRoot(
 
 root.render(
   <React.StrictMode>
-    <AuthProvider>                                     
-      <Router>
+    <Router>
+      <AuthProvider>                                     
         <Navbar />
         <Routes>
           {/* Public */}
@@ -80,7 +80,7 @@ root.render(
             }
           />
         </Routes>
-      </Router>
-    </AuthProvider>
+      </AuthProvider>
+    </Router>
   </React.StrictMode>
 );
