@@ -726,14 +726,29 @@ export const fetchSubscription = async () => {
     if (!success) {
       // User might not have a subscription yet (free user)
       if (response.data.statusCode === 404) {
-        // Fallback to localStorage if available
+        // Fallback to localStorage: prefer unified 'subscriptionData' first
+        try {
+          const unifiedRaw = localStorage.getItem('subscriptionData');
+          if (unifiedRaw) {
+            const unified = JSON.parse(unifiedRaw);
+            if (unified && unified.status === 'active') {
+              return { success: true, data: unified, message: 'Loaded subscription from local storage' };
+            }
+          }
+        } catch {}
+        // Legacy fallback: 'userSubscription'
         try {
           const localRaw = localStorage.getItem('userSubscription');
           if (localRaw) {
             const localSub = JSON.parse(localRaw);
             if (localSub && localSub.status === 'active') {
               const planName = String(localSub.plan || '').toLowerCase();
-              const planId = planName.includes('premium') ? 'premium' : (planName.includes('pro') ? 'pro' : 'free');
+              const envPro = process.env.REACT_APP_STRIPE_PRICE_PRO || '';
+              const envPremium = process.env.REACT_APP_STRIPE_PRICE_PREMIUM || '';
+              let planId = '';
+              if (planName.includes('premium')) planId = envPremium || 'premium';
+              else if (planName.includes('pro')) planId = envPro || 'pro';
+              else planId = 'free';
               const userRaw = localStorage.getItem('user');
               const email = userRaw ? (JSON.parse(userRaw)?.email || '') : '';
               const nowISO = new Date().toISOString();
@@ -750,7 +765,7 @@ export const fetchSubscription = async () => {
                   autoRenew: true,
                   updatedAt: nowISO,
                 },
-                message: "Loaded subscription from local storage",
+                message: 'Loaded subscription from local storage',
               };
             }
           }
@@ -758,21 +773,37 @@ export const fetchSubscription = async () => {
         return {
           success: true,
           data: null, // No subscription = free user
-          message: "No active subscription",
+          message: 'No active subscription',
         };
       }
-      throw new Error(message || "Failed to fetch subscription");
+      throw new Error(message || 'Failed to fetch subscription');
     }
 
     // If backend returns no subscription, try localStorage fallback
     if (!data) {
+      // Prefer unified key first
+      try {
+        const unifiedRaw = localStorage.getItem('subscriptionData');
+        if (unifiedRaw) {
+          const unified = JSON.parse(unifiedRaw);
+          if (unified && unified.status === 'active') {
+            return { success: true, data: unified, message: 'Loaded subscription from local storage' };
+          }
+        }
+      } catch {}
+      // Legacy fallback
       try {
         const localRaw = localStorage.getItem('userSubscription');
         if (localRaw) {
           const localSub = JSON.parse(localRaw);
           if (localSub && localSub.status === 'active') {
             const planName = String(localSub.plan || '').toLowerCase();
-            const planId = planName.includes('premium') ? 'premium' : (planName.includes('pro') ? 'pro' : 'free');
+            const envPro = process.env.REACT_APP_STRIPE_PRICE_PRO || '';
+            const envPremium = process.env.REACT_APP_STRIPE_PRICE_PREMIUM || '';
+            let planId = '';
+            if (planName.includes('premium')) planId = envPremium || 'premium';
+            else if (planName.includes('pro')) planId = envPro || 'pro';
+            else planId = 'free';
             const userRaw = localStorage.getItem('user');
             const email = userRaw ? (JSON.parse(userRaw)?.email || '') : '';
             const nowISO = new Date().toISOString();
@@ -789,7 +820,7 @@ export const fetchSubscription = async () => {
                 autoRenew: true,
                 updatedAt: nowISO,
               },
-              message: "Loaded subscription from local storage",
+              message: 'Loaded subscription from local storage',
             };
           }
         }
@@ -800,14 +831,29 @@ export const fetchSubscription = async () => {
   } catch (err: any) {
     // Handle network errors or when backend is unreachable
     if (isNetworkError(err)) {
-      // Try localStorage fallback first
+      // Prefer unified key first
+      try {
+        const unifiedRaw = localStorage.getItem('subscriptionData');
+        if (unifiedRaw) {
+          const unified = JSON.parse(unifiedRaw);
+          if (unified && unified.status === 'active') {
+            return { success: true, data: unified, message: 'Loaded subscription from local storage' };
+          }
+        }
+      } catch {}
+      // Legacy fallback
       try {
         const localRaw = localStorage.getItem('userSubscription');
         if (localRaw) {
           const localSub = JSON.parse(localRaw);
           if (localSub && localSub.status === 'active') {
             const planName = String(localSub.plan || '').toLowerCase();
-            const planId = planName.includes('premium') ? 'premium' : (planName.includes('pro') ? 'pro' : 'free');
+            const envPro = process.env.REACT_APP_STRIPE_PRICE_PRO || '';
+            const envPremium = process.env.REACT_APP_STRIPE_PRICE_PREMIUM || '';
+            let planId = '';
+            if (planName.includes('premium')) planId = envPremium || 'premium';
+            else if (planName.includes('pro')) planId = envPro || 'pro';
+            else planId = 'free';
             const userRaw = localStorage.getItem('user');
             const email = userRaw ? (JSON.parse(userRaw)?.email || '') : '';
             const nowISO = new Date().toISOString();
@@ -824,7 +870,7 @@ export const fetchSubscription = async () => {
                 autoRenew: true,
                 updatedAt: nowISO,
               },
-              message: "Loaded subscription from local storage",
+              message: 'Loaded subscription from local storage',
             };
           }
         }
@@ -832,7 +878,7 @@ export const fetchSubscription = async () => {
       return {
         success: true,
         data: null, // Treat as free user when offline
-        message: "No subscription data available (offline mode)",
+        message: 'No subscription data available (offline mode)',
       };
     }
 

@@ -44,24 +44,52 @@ export default function SubscriptionSuccess() {
   useEffect(() => {
     // Store subscription information in localStorage
     if (status === "success" && plan) {
-      const subscriptionData = {
-        plan: tierToDisplayName(detectTierFromPlanId(plan)),
+      const now = new Date();
+      const expiryISO = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000).toISOString();
+      const tier = detectTierFromPlanId(plan);
+      const displayPlan = tierToDisplayName(tier);
+
+      // Legacy shape used by Profile page (keep for compatibility)
+      const legacySubscription = {
+        plan: displayPlan,
         price: price || "",
         status: "active",
-        subscriptionId:subscriptionId,
-        expiry: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toLocaleDateString(), // 30 days from now
+        subscriptionId: subscriptionId,
+        expiry: expiryISO, // store ISO for reliable parsing everywhere
         sessionId: sessionId,
-        activatedAt: new Date().toISOString()
+        activatedAt: now.toISOString()
       };
-      
-      localStorage.setItem("userSubscription", JSON.stringify(subscriptionData));
-      
-      // Update user data with subscription info
+      try { localStorage.setItem("userSubscription", JSON.stringify(legacySubscription)); } catch {}
+
+      // Unified subscription data used by Dashboard/Nav gating
+      const unified = {
+        subscriptionId: subscriptionId || sessionId || `${(user as any)?.userId ?? "unknown"}-${now.getTime()}`,
+        email: ((): string => {
+          try {
+            const raw = localStorage.getItem("user");
+            return raw ? JSON.parse(raw)?.email || "" : user?.email || "";
+          } catch { return user?.email || ""; }
+        })(),
+        planId: plan,
+        status: "active",
+        startDate: now.toISOString(),
+        renewalDate: expiryISO,
+        expiresAt: expiryISO,
+        autoRenew: true,
+        updatedAt: now.toISOString(),
+      };
+      try {
+        localStorage.setItem('subscriptionData', JSON.stringify(unified));
+        localStorage.setItem('userPlan', tier);
+        localStorage.setItem('planId', plan);
+      } catch {}
+
+      // Update user object snapshot
       const existingUser = localStorage.getItem("user");
       if (existingUser) {
         try {
           const userData = JSON.parse(existingUser);
-          userData.subscription = subscriptionData;
+          userData.subscription = legacySubscription;
           localStorage.setItem("user", JSON.stringify(userData));
         } catch (error) {
           console.error("Error updating user data:", error);

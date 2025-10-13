@@ -480,11 +480,15 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ subscription }) => {
             </div>
           </div>
           
-          {userSubscription?.expiry && (
-            <div className="expiry-info">
-              <p><strong>Valid until:</strong> {userSubscription.expiry}</p>
-            </div>
-          )}
+          {(() => {
+            const isCancellationScheduled = Boolean(userSubscription?.cancellationScheduledUntil);
+            const isCancelled = String(userSubscription?.status || '').toLowerCase() === 'canceled' || isCancellationScheduled;
+            return (userSubscription?.expiry && !isCancelled) ? (
+              <div className="expiry-info">
+                <p><strong>Valid until:</strong> {userSubscription.expiry}</p>
+              </div>
+            ) : null;
+          })()}
           
           {userSubscription?.price && (
             <div className="price-info">

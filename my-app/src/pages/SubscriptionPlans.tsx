@@ -23,8 +23,8 @@ export default function SubscriptionPlans() {
   // Read Stripe price IDs from environment with sensible defaults
   const PRO_PRICE_ID = process.env.REACT_APP_STRIPE_PRICE_PRO || "price_1S8tsnQTtrbKnENdYfv6azfr";
   const PREMIUM_PRICE_ID = process.env.REACT_APP_STRIPE_PRICE_PREMIUM || "price_1SB17tQTtrbKnENdT7aClaEe";
-  // Force frontend origin for Stripe redirects (defaults to CRA dev on 3000)
-  const FRONTEND_ORIGIN = process.env.REACT_APP_FRONTEND_ORIGIN || "http://localhost:3000";
+  // Force frontend origin for Stripe redirects – prefer actual runtime origin
+  const FRONTEND_ORIGIN = (typeof window !== 'undefined' && window.location.origin) || process.env.REACT_APP_FRONTEND_ORIGIN || "http://localhost:3000";
 
   useEffect(() => {
     // Build plans with Stripe price IDs for proper checkout session creation

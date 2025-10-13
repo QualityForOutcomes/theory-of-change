@@ -1,8 +1,8 @@
 import axios from "axios";
 
-// Use VITE_API_URL for all environments, fallback to local dev server
+// Use VITE_API_URL for all environments, fallback to local admin backend
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL ?? "http://localhost:4000",
+  baseURL: import.meta.env.VITE_API_URL ?? "http://localhost:4001",
   // Remove if you don’t use cookies/sessions, keep if server sets cookies
   withCredentials: false,
 });

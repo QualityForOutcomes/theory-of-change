@@ -47,20 +47,24 @@ module.exports = async (req, res) => {
       });
     }
 
-    // Derive frontend origin (prefer success_url host, then FRONTEND_ORIGIN, then request Origin header, finally localhost:3000)
+    // Derive frontend origin (prefer request Origin header, then FRONTEND_ORIGIN, then success_url host, finally localhost:3000)
     let frontendOrigin = 'http://localhost:3000';
     try {
-      if (success_url) {
-        const su = new URL(success_url);
-        frontendOrigin = `${su.protocol}//${su.host}`; // e.g., http://localhost:3000
+      if (req.headers && req.headers.origin) {
+        frontendOrigin = req.headers.origin;
       } else if (process.env.FRONTEND_ORIGIN) {
         frontendOrigin = process.env.FRONTEND_ORIGIN;
-      } else if (req.headers && req.headers.origin) {
-        frontendOrigin = req.headers.origin;
+      } else if (success_url) {
+        const su = new URL(success_url);
+        frontendOrigin = `${su.protocol}//${su.host}`; // e.g., http://localhost:3000
       }
     } catch (e) {
       // If parsing fails, fall back to env or origin header
-      frontendOrigin = (process.env.FRONTEND_ORIGIN || (req.headers && req.headers.origin) || 'http://localhost:3000');
+      frontendOrigin = (req.headers && req.headers.origin) || process.env.FRONTEND_ORIGIN || 'http://localhost:3000';
+    }
+    // Avoid accidentally targeting backend port when origin is the backend (e.g., localhost:3001)
+    if (/^http:\/\/localhost:3001$/.test(frontendOrigin)) {
+      frontendOrigin = process.env.FRONTEND_ORIGIN || 'http://localhost:3000';
     }
     console.log('🔗 Resolved frontendOrigin for redirects:', frontendOrigin);
 

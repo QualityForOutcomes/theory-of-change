@@ -106,7 +106,37 @@ app.get('/api/auth/verify', (req, res) => {
 app.get('/api/dashboard', async (req, res) => {
   console.log('[dev] GET /api/dashboard', { ip: req.ip, ua: req.headers['user-agent'] })
   if (req.query.quick === '1') {
-    return res.status(200).json({ success: true, statusCode: 200, message: 'quick stub', data: { overview: { revenue: { amountCents: 0, count: 0, period: 'month', growth: { currentMonth: 0, lastMonth: 0, growthPercent: 0 } } } } })
+    const months = ['Apr','May','Jun','Jul','Aug','Sep']
+    return res.status(200).json({
+      success: true,
+      statusCode: 200,
+      message: 'quick stub',
+      data: {
+        overview: {
+          users: { total: 42, newThisMonth: 5 },
+          subscriptions: {
+            total: 10, active: 7, trialing: 2, pastDue: 1, canceled: 0, incomplete: 0,
+          },
+          revenue: {
+            amountCents: 8240000,
+            count: 12,
+            period: 'month',
+            growth: { currentMonth: 8240000, lastMonth: 7000000, growthPercent: 12.4 },
+          },
+          premiumCustomers: { total: 3, new: 1, churn: 0 },
+          proCustomers: { total: 5, new: 2, churn: 1 },
+          traffic: { today: 1280, monthly: 32140, quarterly: 91520 },
+        },
+        charts: {
+          revenueTrend: months.map((m,i)=>({ month: m, revenue: 7000 + i*2000 })),
+          trafficTrend: months.map((m,i)=>({ month: m, traffic: 5000 + i*5000 })),
+        },
+        recentSubscriptions: [
+          { id: 'SUB-0012', userName: 'Olivia Rhye', tier: 'Premium', period: 'Monthly', amountCents: 2900, status: 'active' },
+          { id: 'SUB-0013', userName: 'James Doe', tier: 'Pro', period: 'Quarterly', amountCents: 5900, status: 'past_due' },
+        ],
+      },
+    })
   }
   const stripeSecretKey = process.env.STRIPE_SECRET_KEY
   const PRO_PRICE_ID = process.env.STRIPE_PRO_PRICE_ID
