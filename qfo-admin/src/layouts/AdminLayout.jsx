@@ -66,7 +66,9 @@ export default function AdminLayout() {
   
   const logout = () => {
     localStorage.removeItem("qfo_token");
-    nav("/login");
+    const appLogin = import.meta.env.VITE_MYAPP_LOGIN_URL || "http://localhost:3000/login";
+    // Full redirect to unified login page in my-app
+    window.location.assign(appLogin);
   };
 
   const isActive = (path) => location.pathname === path;
