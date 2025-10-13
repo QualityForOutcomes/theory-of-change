@@ -6,6 +6,7 @@ import Login from "../pages/Login.jsx";
 import NotFound from "../pages/NotFound.jsx";
 import Dashboard from "../features/admin/AdminDashboard.jsx";
 import TermsManagement from "../features/admin/TermsManagement.jsx";
+import Newsletter from "../features/admin/Newsletter.jsx";
 
 export default function AppRoutes() {
   return (
@@ -18,6 +19,7 @@ export default function AppRoutes() {
         <Route path="/" element={<Navigate to="/admin" replace />} />
         <Route path="/admin" element={<Dashboard />} />
         <Route path="/admin/terms" element={<TermsManagement />} />
+        <Route path="/admin/newsletter" element={<Newsletter />} />
       </Route>
 
       <Route path="*" element={<NotFound />} />
