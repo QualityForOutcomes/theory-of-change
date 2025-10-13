@@ -25,8 +25,9 @@ api.interceptors.response.use(
     // Handle expired/invalid token
     if (error.response?.status === 401) {
       localStorage.removeItem("qfo_token");
-      // Optional: redirect to login if you want automatic logout
-      // window.location.href = "/login";
+      const appLogin = import.meta.env.VITE_MYAPP_LOGIN_URL || "http://localhost:3000/login";
+      // Redirect to unified login page in my-app
+      window.location.assign(appLogin);
     }
 
     return Promise.reject(
