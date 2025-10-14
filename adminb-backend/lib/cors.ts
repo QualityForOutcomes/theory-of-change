@@ -1,82 +1,177 @@
-import { VercelRequest, VercelResponse } from '@vercel/node';
+import { VercelRequest, VercelResponse } from '@vercel/node'
 
-// CORS configuration
-const CORS_OPTIONS = {
-  origin: [
-    'http://localhost:5173', // Vite dev server
-    'http://localhost:5174', // Vite dev server (alternate port)
-    'http://localhost:3000', // React dev server
-    'https://qfo-admin.vercel.app', // Production admin frontend
-    'https://qfo-admin-*.vercel.app', // Preview deployments
-  ],
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: [
-    'Content-Type',
-    'Authorization',
-    'X-Requested-With',
-    'Accept',
-    'Origin'
-  ],
-  credentials: true,
-  maxAge: 86400 // 24 hours
-};
+type Handler = (req: VercelRequest, res: VercelResponse) => Promise<void> | void
 
-// Apply CORS headers to response
+// ============================================================================
+// CORS Configuration
+// ============================================================================
+
+interface CorsOptions {
+    origin: string[]
+    methods: string[]
+    allowedHeaders: string[]
+    credentials: boolean
+    maxAge: number
+}
+
+// Get allowed origins from environment or use defaults
+function getAllowedOrigins(): string[] {
+    const envOrigins = process.env.ALLOWED_ORIGINS
+    if (envOrigins) {
+        return envOrigins.split(',').map(o => o.trim()).filter(Boolean)
+    }
+
+    // Default origins
+    return [
+        'http://localhost:5173',      // Vite dev server
+        'http://localhost:5174',      // Vite dev server (alternate port)
+        'http://localhost:3000',      // React dev server
+        'https://qfo-admin.vercel.app', // Production admin frontend
+        'https://qfo-admin-*.vercel.app' // Preview deployments (wildcard)
+    ]
+}
+
+const CORS_OPTIONS: CorsOptions = {
+    origin: getAllowedOrigins(),
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+    allowedHeaders: [
+        'Content-Type',
+        'Authorization',
+        'X-Requested-With',
+        'Accept',
+        'Origin'
+    ],
+    credentials: true,
+    maxAge: 86400 // 24 hours
+}
+
+// ============================================================================
+// Origin Validation
+// ============================================================================
+
+function isOriginAllowed(origin: string | undefined): boolean {
+    if (!origin) return false
+
+    return CORS_OPTIONS.origin.some(allowedOrigin => {
+        // Exact match
+        if (allowedOrigin === origin) return true
+
+        // Wildcard pattern matching
+        if (allowedOrigin.includes('*')) {
+            const pattern = allowedOrigin
+                .replace(/[.+?^${}()|[\]\\]/g, '\\$&') // Escape special regex chars
+                .replace(/\*/g, '.*') // Convert * to .*
+            const regex = new RegExp(`^${pattern}$`)
+            return regex.test(origin)
+        }
+
+        return false
+    })
+}
+
+// ============================================================================
+// Apply CORS Headers
+// ============================================================================
+
 export function applyCors(req: VercelRequest, res: VercelResponse): boolean {
-  const origin = req.headers.origin;
-  
-  // Check if origin is allowed
-  if (origin && isOriginAllowed(origin)) {
-    res.setHeader('Access-Control-Allow-Origin', origin);
-  }
-  
-  res.setHeader('Access-Control-Allow-Methods', CORS_OPTIONS.methods.join(', '));
-  res.setHeader('Access-Control-Allow-Headers', CORS_OPTIONS.allowedHeaders.join(', '));
-  res.setHeader('Access-Control-Allow-Credentials', 'true');
-  res.setHeader('Access-Control-Max-Age', CORS_OPTIONS.maxAge.toString());
-  
-  // Handle preflight requests
-  if (req.method === 'OPTIONS') {
-    res.status(200).end();
-    return true; // Indicates preflight was handled
-  }
-  
-  return false; // Continue with normal request processing
+    const origin = req.headers.origin
+
+    // Set appropriate origin header
+    if (origin && isOriginAllowed(origin)) {
+        res.setHeader('Access-Control-Allow-Origin', origin)
+    } else if (!CORS_OPTIONS.credentials) {
+        // Only use '*' if credentials are not required
+        res.setHeader('Access-Control-Allow-Origin', '*')
+    }
+    // If origin is not allowed and credentials are true, don't set the header
+    // This will cause the browser to block the request
+
+    // Set other CORS headers
+    res.setHeader('Access-Control-Allow-Methods', CORS_OPTIONS.methods.join(', '))
+    res.setHeader('Access-Control-Allow-Headers', CORS_OPTIONS.allowedHeaders.join(', '))
+
+    if (CORS_OPTIONS.credentials) {
+        res.setHeader('Access-Control-Allow-Credentials', 'true')
+    }
+
+    res.setHeader('Access-Control-Max-Age', CORS_OPTIONS.maxAge.toString())
+
+    // Handle preflight (OPTIONS) requests
+    if (req.method === 'OPTIONS') {
+        res.status(204).end()
+        return true // Indicates preflight was handled
+    }
+
+    return false // Continue with normal request processing
 }
 
-// Check if origin is allowed
-function isOriginAllowed(origin: string): boolean {
-  return CORS_OPTIONS.origin.some(allowedOrigin => {
-    if (allowedOrigin.includes('*')) {
-      // Handle wildcard patterns
-      const pattern = allowedOrigin.replace(/\*/g, '.*');
-      const regex = new RegExp(`^${pattern}$`);
-      return regex.test(origin);
+// ============================================================================
+// CORS Middleware Wrapper
+// ============================================================================
+
+export function withCors(handler: Handler) {
+    return async (req: VercelRequest, res: VercelResponse) => {
+        const preflightHandled = applyCors(req, res)
+
+        // If preflight was handled, don't call the handler
+        if (preflightHandled) {
+            return
+        }
+
+        // Origin validation for non-preflight requests
+        const origin = req.headers.origin
+        if (CORS_OPTIONS.credentials && origin && !isOriginAllowed(origin)) {
+            res.status(403).json({
+                success: false,
+                message: 'CORS: Origin not allowed',
+                statusCode: 403
+            })
+            return
+        }
+
+        // Call the actual handler
+        try {
+            await handler(req, res)
+        } catch (error: any) {
+            console.error('Handler error:', error)
+
+            // Only send error response if headers haven't been sent yet
+            if (!res.headersSent) {
+                res.status(500).json({
+                    success: false,
+                    message: error.message || 'Internal server error',
+                    statusCode: 500
+                })
+            }
+        }
     }
-    return allowedOrigin === origin;
-  });
 }
 
-// Wrapper function for API handlers with CORS
-export function withCors(handler: (req: VercelRequest, res: VercelResponse) => Promise<void>) {
-  return async (req: VercelRequest, res: VercelResponse) => {
-    // Apply CORS headers
-    const preflightHandled = applyCors(req, res);
-    
-    // If preflight was handled, don't continue
-    if (preflightHandled) {
-      return;
+// ============================================================================
+// Development Helper
+// ============================================================================
+
+export function allowAllOrigins() {
+    return (req: VercelRequest, res: VercelResponse) => {
+        res.setHeader('Access-Control-Allow-Origin', '*')
+        res.setHeader('Access-Control-Allow-Methods', CORS_OPTIONS.methods.join(', '))
+        res.setHeader('Access-Control-Allow-Headers', CORS_OPTIONS.allowedHeaders.join(', '))
+
+        if (req.method === 'OPTIONS') {
+            res.status(204).end()
+            return true
+        }
+        return false
     }
-    
-    try {
-      await handler(req, res);
-    } catch (error) {
-      console.error('API Error:', error);
-      res.status(500).json({
-        success: false,
-        message: 'Internal server error',
-        statusCode: 500
-      });
-    }
-  };
+}
+
+// ============================================================================
+// Export Configuration (for debugging)
+// ============================================================================
+
+export const CORS_CONFIG = {
+    allowedOrigins: CORS_OPTIONS.origin,
+    methods: CORS_OPTIONS.methods,
+    credentials: CORS_OPTIONS.credentials,
+    maxAge: CORS_OPTIONS.maxAge
 }
