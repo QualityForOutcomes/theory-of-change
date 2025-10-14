@@ -1,7 +1,25 @@
 import React, { useState, useEffect } from "react";
+import ConfirmModal from "../components/ConfirmModal";
+import Toast from "../components/Toast";
 import { useNavigate } from "react-router-dom";
-import { fetchUserProfile, updateUserProfile, cancelSubscription, updateSubscription, getStripeSubscription } from "../services/api"; // Update the import path as needed
+import { fetchUserProfile, updateUserProfile, cancelSubscription, updateSubscription, fetchSubscription } from "../services/api"; // Update the import path as needed
 import "../style/profile.css";
+// Local plan helpers (removed shared planMapping)
+const detectTierFromPlanId = (planId?: string | null): 'free' | 'pro' | 'premium' => {
+  const id = String(planId || '').toLowerCase();
+  if (!id || id.includes('free') || id === 'price_free') return 'free';
+  const PRO_ID = (process.env.REACT_APP_STRIPE_PRICE_PRO || 'price_1S8tsnQTtrbKnENdYfv6azfr').toLowerCase();
+  const PREMIUM_ID = (process.env.REACT_APP_STRIPE_PRICE_PREMIUM || 'price_1SB17tQTtrbKnENdT7aClaEe').toLowerCase();
+  if (id === PRO_ID || id.includes('pro')) return 'pro';
+  if (id === PREMIUM_ID || id.includes('premium')) return 'premium';
+  return 'free';
+};
+
+const tierToDisplayName = (tier: 'free' | 'pro' | 'premium'): string => {
+  if (tier === 'premium') return 'Premium Plan';
+  if (tier === 'pro') return 'Pro Plan';
+  return 'Free Plan';
+};
 
 type UserProfile = {
   userId: number;
@@ -23,6 +41,7 @@ type Subscription = {
   activatedAt?: string;
   sessionId?: string;
   subscriptionId?: string;
+  cancellationScheduledUntil?: string;
 };
 
 type ProfilePageProps = {
@@ -156,76 +175,129 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ subscription }) => {
     navigate("/plans");
   }
 
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [toast, setToast] = useState<{ message: string; type: "success" | "error" | "warning" | "info" } | null>(null);
+
   async function handleManageSubscription() {
-   // Show confirmation dialog before canceling
-   const confirmCancel = window.confirm(
-     "Are you sure you want to cancel your subscription? This action cannot be undone and you will lose access to premium features."
-   );
-   
-   if (!confirmCancel) {
-     return;
-   }
+    setShowCancelModal(true);
+  }
 
-   try {
-     setCheckoutLoading(true);
-     setCheckoutError(null);
+  async function confirmCancelSubscription() {
+    try {
+      setCheckoutLoading(true);
+      setCheckoutError(null);
 
-     // Get user ID for cancellation
-     const userId = userProfile?.userId;
-     if (!userId) {
-       setCheckoutError("Unable to cancel subscription: User not found");
-       return;
-     }
+      const userId = userProfile?.userId;
+      if (!userId) {
+        setCheckoutError("Unable to cancel subscription: User not found");
+        setToast({ message: "Unable to cancel: user not found", type: "error" });
+        return;
+      }
 
-     // Get the actual subscription ID from stored subscription data
-     const subscriptionId = userSubscription?.subscriptionId;
+      const subscriptionId = (() => {
+        const subId = userSubscription?.subscriptionId;
+        if (subId && (subId.startsWith('sub_') || subId.startsWith('cs_'))) return subId;
+        const csId = (userSubscription as any)?.sessionId;
+        if (csId && typeof csId === 'string' && csId.startsWith('cs_')) return csId;
+        return undefined;
+      })();
 
-     // Call the cancellation API
-     const result = await cancelSubscription({
-       user_id: userId,
-       subscription_id: subscriptionId,
-     });
+      const result = await cancelSubscription({
+        user_id: userId,
+        subscription_id: subscriptionId,
+      });
 
-     if (result.success) {
-       // Sync cancellation to subscription service
-       try {
-         const email = userProfile?.email || "";
-         const now = new Date();
+      if (result.success) {
+        try {
+          const email = userProfile?.email || "";
+          const now = new Date();
+          const payload = {
+            subscriptionId: subscriptionId || `${userId}-${now.getTime()}`,
+            email,
+            planId: (userSubscription?.plan || "free").toLowerCase(),
+            status: "canceled",
+            startDate: userSubscription?.activatedAt || now.toISOString(),
+            renewalDate: now.toISOString(),
+            expiresAt: now.toISOString(),
+            autoRenew: false,
+          };
+          await updateSubscription(payload);
+        } catch (e) {
+          console.warn("Failed to sync cancellation:", e);
+        }
+        // Refresh subscription details from backend and update local state
+        try {
+          const resp = await fetchSubscription();
+          const data = resp?.data || null;
+          if (data) {
+            const tier = detectTierFromPlanId(data.planId);
+            const displayPlan = tierToDisplayName(tier);
+            const periodEnd = data.expiresAt ? new Date(data.expiresAt).toLocaleDateString() : (userSubscription?.expiry || "");
+            const updated = {
+              plan: displayPlan,
+              status: (data.status || 'active'),
+              expiry: periodEnd,
+              price: userSubscription?.price,
+              activatedAt: data.startDate || userSubscription?.activatedAt,
+              sessionId: userSubscription?.sessionId,
+              subscriptionId: data.subscriptionId || userSubscription?.subscriptionId,
+              cancellationScheduledUntil: periodEnd,
+            };
+            setUserSubscription(updated);
+            try { localStorage.setItem("userSubscription", JSON.stringify(updated)); } catch {}
+          } else {
+            const updated = {
+              plan: userSubscription?.plan || "Pro Plan",
+              status: "active",
+              expiry: userSubscription?.expiry || "",
+              price: userSubscription?.price,
+              activatedAt: userSubscription?.activatedAt,
+              cancellationScheduledUntil: userSubscription?.expiry || "",
+            };
+            setUserSubscription(updated);
+            try { localStorage.setItem("userSubscription", JSON.stringify(updated)); } catch {}
+          }
+        } catch {
+          const updated = {
+            plan: userSubscription?.plan || "Pro Plan",
+            status: "active",
+            expiry: userSubscription?.expiry || "",
+            price: userSubscription?.price,
+            activatedAt: userSubscription?.activatedAt,
+            cancellationScheduledUntil: userSubscription?.expiry || "",
+          };
+          setUserSubscription(updated);
+          try { localStorage.setItem("userSubscription", JSON.stringify(updated)); } catch {}
+        }
 
-
-         const payload = {
-           subscriptionId: subscriptionId || `${userId}-${now.getTime()}`,
-           email,
-           planId: (userSubscription?.plan || "free").toLowerCase(),
-           status: "canceled",
-           startDate: userSubscription?.activatedAt || now.toISOString(),
-           renewalDate: now.toISOString(),
-           expiresAt: now.toISOString(),
-           autoRenew: false,
-         };
-         await updateSubscription(payload);
-       } catch (e) {
-         console.warn("Failed to sync cancellation:", e);
-       }
-
-       // Update local state to reflect cancellation
-       setUserSubscription({
-         plan: "Free Plan",
-         status: "active",
-         expiry: ""
-       });
-
-       // Show success message
-       alert("Subscription canceled successfully. You now have access to the Free Plan.");
-     } else {
-       setCheckoutError("Failed to cancel subscription. Please try again.");
-     }
-   } catch (error: any) {
-     setCheckoutError(error.message || "Failed to cancel subscription");
-   } finally {
-     setCheckoutLoading(false);
-   }
- }
+        // Immediately move user to Free plan locally
+        const now = new Date();
+        const updated = {
+          plan: "Free Plan",
+          status: "canceled",
+          expiry: now.toLocaleDateString(),
+          price: undefined,
+          activatedAt: userSubscription?.activatedAt,
+          sessionId: undefined,
+          subscriptionId: undefined,
+          cancellationScheduledUntil: undefined,
+        };
+        setUserSubscription(updated);
+        try { localStorage.setItem("userSubscription", JSON.stringify(updated)); } catch {}
+        setToast({ message: "Subscription canceled. You have been moved to Free plan.", type: "success" });
+        try { window.alert("Subscription canceled successfully"); } catch {}
+      } else {
+        setCheckoutError("Failed to cancel subscription. Please try again.");
+        setToast({ message: "Failed to cancel subscription. Please try again.", type: "error" });
+      }
+    } catch (error: any) {
+      setCheckoutError(error.message || "Failed to cancel subscription");
+      setToast({ message: error.message || "Failed to cancel subscription", type: "error" });
+    } finally {
+      setCheckoutLoading(false);
+      setShowCancelModal(false);
+    }
+  }
 
   if (loading) {
     return (
@@ -258,6 +330,9 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ subscription }) => {
 
   return (
     <div className="profile-container">
+      {toast && (
+        <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />
+      )}
       {/* Left panel: user details */}
       <div className="profile-left">
         <div className="avatar">
@@ -405,11 +480,15 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ subscription }) => {
             </div>
           </div>
           
-          {userSubscription?.expiry && (
-            <div className="expiry-info">
-              <p><strong>Valid until:</strong> {userSubscription.expiry}</p>
-            </div>
-          )}
+          {(() => {
+            const isCancellationScheduled = Boolean(userSubscription?.cancellationScheduledUntil);
+            const isCancelled = String(userSubscription?.status || '').toLowerCase() === 'canceled' || isCancellationScheduled;
+            return (userSubscription?.expiry && !isCancelled) ? (
+              <div className="expiry-info">
+                <p><strong>Valid until:</strong> {userSubscription.expiry}</p>
+              </div>
+            ) : null;
+          })()}
           
           {userSubscription?.price && (
             <div className="price-info">
@@ -419,7 +498,14 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ subscription }) => {
           
           {userSubscription?.activatedAt && (
             <div className="activated-info">
-              <p><strong>Activated:</strong> {new Date(userSubscription.activatedAt).toLocaleDateString()}</p>
+              <p>
+                <strong>Activated:</strong> {new Date(userSubscription.activatedAt).toLocaleDateString()}
+                {userSubscription?.cancellationScheduledUntil && (
+                  <span style={{ marginLeft: 8, color: "#e67e22", fontWeight: 500 }}>
+                    Cancellation scheduled — valid until {userSubscription.cancellationScheduledUntil}
+                  </span>
+                )}
+              </p>
             </div>
           )}
           
@@ -427,7 +513,10 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ subscription }) => {
             <button className="btn-primary" onClick={handleUpgrade} disabled={checkoutLoading}>
               {checkoutLoading ? "Starting checkout..." : (userSubscription?.plan === "Free Plan" ? "Upgrade Plan" : "Change Plan")}
             </button>
-            {userSubscription?.plan !== "Free Plan" && (
+            {userSubscription?.plan !== "Free Plan" &&
+             // Show Cancel button only if cancellation is NOT already scheduled and status remains active
+             !userSubscription?.cancellationScheduledUntil &&
+             ((userSubscription?.status || 'active').toLowerCase() === 'active') && (
               <button 
                 className="btn-secondary" 
                 onClick={handleManageSubscription}
@@ -476,6 +565,16 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ subscription }) => {
           </div>
         </div>
       </div>
+      {showCancelModal && (
+        <ConfirmModal
+          title="Cancel Subscription"
+          message="Cancel your subscription immediately? Your account will switch to Free plan now."
+          confirmText="Yes, cancel"
+          cancelText="Keep subscription"
+          onConfirm={confirmCancelSubscription}
+          onCancel={() => setShowCancelModal(false)}
+        />
+      )}
     </div>
   );
 };

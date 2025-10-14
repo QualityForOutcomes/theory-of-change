@@ -1,4 +1,4 @@
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+const Stripe = require('stripe');
 
 module.exports = async (req, res) => {
   // CORS headers
@@ -9,6 +9,17 @@ module.exports = async (req, res) => {
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
   }
+
+  // Ensure Stripe is configured before proceeding
+  const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
+  if (!stripeSecretKey || !String(stripeSecretKey).trim()) {
+    return res.status(500).json({
+      success: false,
+      message: 'Payment server is not configured. Missing STRIPE_SECRET_KEY.'
+    });
+  }
+  // Initialize Stripe client only after validating the secret key
+  const stripe = Stripe(stripeSecretKey);
 
   try {
     const { subscription_id, session_id } = req.method === 'GET' ? req.query : req.body;

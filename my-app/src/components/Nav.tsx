@@ -6,6 +6,17 @@ import SupportPanel from "../components/SupportPanel";
 import "../style/Nav.css";
 import logo from "../assets/logo.png";
 
+// Local plan helper (removed shared planMapping)
+const detectTierFromPlanId = (planId?: string | null): 'free' | 'pro' | 'premium' => {
+  const id = String(planId || '').toLowerCase();
+  if (!id || id.includes('free') || id === 'price_free') return 'free';
+  const PRO_ID = (process.env.REACT_APP_STRIPE_PRICE_PRO || 'price_1S8tsnQTtrbKnENdYfv6azfr').toLowerCase();
+  const PREMIUM_ID = (process.env.REACT_APP_STRIPE_PRICE_PREMIUM || 'price_1SB17tQTtrbKnENdT7aClaEe').toLowerCase();
+  if (id === PRO_ID || id.includes('pro')) return 'pro';
+  if (id === PREMIUM_ID || id.includes('premium')) return 'premium';
+  return 'free';
+};
+
 const Navbar = () => {
   const [menuOpen, setMenuOpen] = useState(false);
   const [supportOpen, setSupportOpen] = useState(false);
@@ -30,14 +41,7 @@ const Navbar = () => {
 
         if (result.success && result.data) {
           const planId = result.data.planId || '';
-          
-          // Determine plan type from planId
-          let plan: 'free' | 'pro' | 'premium' = 'free';
-          if (planId.toLowerCase().includes('premium')) {
-            plan = 'premium';
-          } else if (planId.toLowerCase().includes('pro')) {
-            plan = 'pro';
-          }
+          const plan = detectTierFromPlanId(planId);
 
           console.log('📍 Navbar - Loaded subscription:', {
             planId,

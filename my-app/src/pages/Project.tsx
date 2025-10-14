@@ -3,6 +3,22 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { createTocProject, fetchUserTocs, fetchSubscription } from "../services/api";
 import "../style/Project.css";
+// Local plan helpers (removed shared planMapping)
+const detectTierFromPlanId = (planId?: string | null): 'free' | 'pro' | 'premium' => {
+  const id = String(planId || '').toLowerCase();
+  if (!id || id.includes('free') || id === 'price_free') return 'free';
+  const PRO_ID = (process.env.REACT_APP_STRIPE_PRICE_PRO || 'price_1S8tsnQTtrbKnENdYfv6azfr').toLowerCase();
+  const PREMIUM_ID = (process.env.REACT_APP_STRIPE_PRICE_PREMIUM || 'price_1SB17tQTtrbKnENdT7aClaEe').toLowerCase();
+  if (id === PRO_ID || id.includes('pro')) return 'pro';
+  if (id === PREMIUM_ID || id.includes('premium')) return 'premium';
+  return 'free';
+};
+
+const tierToDisplayName = (tier: 'free' | 'pro' | 'premium'): string => {
+  if (tier === 'premium') return 'Premium Plan';
+  if (tier === 'pro') return 'Pro Plan';
+  return 'Free Plan';
+};
 
 type Project = { projectId: string; projectName: string };
 
@@ -35,34 +51,27 @@ const ProjectsPage: React.FC = () => {
   // Helper to determine plan tier
   const getPlanTier = (subscriptionData: SubscriptionData | null): 'free' | 'pro' | 'premium' => {
     if (!subscriptionData) return 'free';
-    
     if (subscriptionData.status !== 'active') return 'free';
-    
     if (subscriptionData.expiresAt) {
       const expiryDate = new Date(subscriptionData.expiresAt);
       if (expiryDate < new Date()) return 'free';
     }
-    
-    const planId = subscriptionData.planId?.toLowerCase() || '';
-    if (planId.includes('premium')) return 'premium';
-    if (planId.includes('pro')) return 'pro';
-    return 'free';
+    return detectTierFromPlanId(subscriptionData.planId);
   };
 
   // Project limits based on plan
   const getProjectLimit = (planId: string): number => {
-    if (planId.includes("free") || !planId) return 3;
-    if (planId.includes("pro")) return 7;
-    if (planId.includes("premium")) return Infinity;
+    const tier = detectTierFromPlanId(planId);
+    if (tier === 'free') return 3;
+    if (tier === 'pro') return 7;
+    if (tier === 'premium') return Infinity;
     return 3;
   };
 
   // Get current plan name
   const getPlanName = (planId?: string): string => {
-    if (!planId || planId.includes("free")) return "Free";
-    if (planId.includes("pro")) return "Pro";
-    if (planId.includes("premium")) return "Premium";
-    return "Free";
+    const tier = detectTierFromPlanId(planId || '');
+    return tierToDisplayName(tier).replace(' Plan', '');
   };
 
   // Fetch subscription details using API service and STORE in localStorage

@@ -5,7 +5,10 @@ import api from '../../../services/api'; // Adjust the path to where your axios 
 */
 export async function fetchDashboard() {
   try {
-    const response = await api.get('/api/dashboard');
+    // Use quick stub only if explicitly enabled via env
+    const useQuick = String(import.meta.env.VITE_USE_DASHBOARD_QUICK_STUB || '').toLowerCase();
+    const quickEnabled = ['1','true','yes'].includes(useQuick);
+    const response = await api.get(quickEnabled ? '/api/dashboard?quick=1' : '/api/dashboard');
     return response.data; // This returns the payload from your backend
   } catch (error) {
     console.error('Failed to fetch dashboard:', error);
