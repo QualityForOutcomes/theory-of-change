@@ -16,7 +16,7 @@ import { supabase } from '../../lib/supabase';
 // We store terms under key = 'terms_content'. If you already have a different
 // table for terms, adjust TABLE_NAME and selectors accordingly.
 
-const TABLE_NAME = 'AppSettings';
+const TABLE_NAME = 'TermsAndCondition';
 const TERMS_KEY = 'terms_content';
 
 export default withCors(async function handler(req: VercelRequest, res: VercelResponse) {
