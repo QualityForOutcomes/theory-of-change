@@ -22,7 +22,6 @@ yarn-debug.log*
 yarn-error.log*
 
 # Local ENV files
-.env
 .env.local
 .env.development.local
 .env.test.local
@@ -30,9 +29,11 @@ yarn-error.log*
 
 # Vercel
 .vercel
+.vs
 
 # Turborepo
 .turbo
 
 # typescript
 *.tsbuildinfo
+.env*.local
