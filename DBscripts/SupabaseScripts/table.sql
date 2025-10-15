@@ -15,7 +15,7 @@ create table if not exists "User" (
   user_id       serial primary key,
   email         varchar(255) not null unique check (position('@' in email) > 1),
   username      varchar(100),
-  password_hash varchar(255) not null check (length(password_hash) >= 20),
+  password_hash varchar(255) check (password_hash is null or length(password_hash) >= 20),
   created_at    timestamp not null default current_timestamp,
   user_role     varchar(50)
 );

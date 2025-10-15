@@ -1,9 +1,8 @@
 import axios from "axios";
 
-// Use VITE_API_URL for all environments, fallback to local admin backend
+// Use env-driven base URL, with production fallback
 const api = axios.create({
-    //baseURL: import.meta.env.VITE_API_URL ?? "http://localhost:4001",
-    baseURL: "https://toc-admin-backend.vercel.app",
+  baseURL: import.meta.env.VITE_API_URL ?? "https://toc-adminbackend.vercel.app",
   // Remove if you don’t use cookies/sessions, keep if server sets cookies
   withCredentials: false,
 });
