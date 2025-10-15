@@ -1,17 +1,16 @@
 import axios from "axios";
 import { verifyLogin, signToken, createUser } from "../mocks/service.memory";
 
-// Base URL for user auth and project APIs
-const DEFAULT_API_BASE = "https://nodejs-serverless-function-express-rho-ashen.vercel.app";
-const API_BASE = process.env.REACT_APP_API_BASE || DEFAULT_API_BASE;
-const PASS_API_BASE = process.env.REACT_APP_API_BASE || DEFAULT_API_BASE;
-// Separate base for payment/checkout endpoints (serverless backend)
-// Prefer local backend when running on localhost unless explicitly overridden
-const PAYMENT_API_BASE = process.env.REACT_APP_PAYMENT_API_BASE || (
-  (typeof window !== 'undefined' && window.location.origin.startsWith('http://localhost'))
-    ? 'http://localhost:3001'
-    : 'https://admin-backend-two-flame.vercel.app'
-);
+// Base URLs are driven by env vars with sensible local/production fallbacks
+const isLocalhost = typeof window !== 'undefined' && window.location.origin.startsWith('http://localhost');
+
+// User backend (auth, user, project)
+const API_BASE = process.env.REACT_APP_API_BASE || (isLocalhost ? 'http://localhost:4001' : 'https://toc-userbackend.vercel.app');
+// Password reset endpoints share the same user backend base
+const PASS_API_BASE = API_BASE;
+
+// Payment / Stripe backend
+const PAYMENT_API_BASE = process.env.REACT_APP_PAYMENT_API_BASE || (isLocalhost ? 'http://localhost:3001' : 'https://toc-stripebackend.vercel.app');
 
 const isNetworkError = (err: any) => !err?.response || err?.message === "Network Error";
 
@@ -907,17 +906,6 @@ const postApi = async (path: string, data: any, headers: any = {}) => {
       const alt = altCasePath(path);
       if (alt !== path) {
         try { return await axios.post(`${API_BASE}${alt}`, data, { headers }); } catch (_) {}
-        try { return await axios.post(`${DEFAULT_API_BASE}${alt}`, data, { headers }); } catch (_) {}
-      }
-    }
-    // Network fallback to remote backend
-    if (isNetworkError(err) && API_BASE.startsWith("http://localhost")) {
-      try { return await axios.post(`${DEFAULT_API_BASE}${path}`, data, { headers }); } catch (e: any) {
-        const alt = altCasePath(path);
-        if (alt !== path) {
-          return await axios.post(`${DEFAULT_API_BASE}${alt}`, data, { headers });
-        }
-        throw e;
       }
     }
     throw err;
@@ -932,16 +920,6 @@ const getApi = async (path: string, headers: any = {}) => {
       const alt = altCasePath(path);
       if (alt !== path) {
         try { return await axios.get(`${API_BASE}${alt}`, { headers }); } catch (_) {}
-        try { return await axios.get(`${DEFAULT_API_BASE}${alt}`, { headers }); } catch (_) {}
-      }
-    }
-    if (isNetworkError(err) && API_BASE.startsWith("http://localhost")) {
-      try { return await axios.get(`${DEFAULT_API_BASE}${path}`, { headers }); } catch (e: any) {
-        const alt = altCasePath(path);
-        if (alt !== path) {
-          return await axios.get(`${DEFAULT_API_BASE}${alt}`, { headers });
-        }
-        throw e;
       }
     }
     throw err;
