@@ -636,7 +636,7 @@ export const updateSubscription = async (data: {
 export const fetchTerms = async () => {
   try {
     const response = await axios.get(
-      `${API_BASE}/api/terms`,
+      `${API_BASE}/api/admin/terms`,
       { headers: getAuthHeaders() }
     );
 
@@ -686,7 +686,7 @@ Last updated: ${new Date().toLocaleDateString()}`,
 export const updateTerms = async (content: string) => {
   try {
     const response = await axios.put(
-      `${API_BASE}/api/terms`,
+      `${API_BASE}/api/admin/terms`,
       { content },
       { headers: { ...getAuthHeaders(), "Content-Type": "application/json" } }
     );
