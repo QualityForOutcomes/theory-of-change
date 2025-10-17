@@ -66,7 +66,10 @@ export default function AdminLayout() {
   
   const logout = () => {
     localStorage.removeItem("qfo_token");
-    const appLogin = import.meta.env.VITE_MYAPP_LOGIN_URL || "http://localhost:3000/login";
+    const appLogin = import.meta.env.VITE_MYAPP_LOGIN_URL;
+    if (!appLogin) {
+    throw new Error('VITE_MYAPP_LOGIN_URL is not set in .env');
+  }
     // Full redirect to unified login page in my-app
     window.location.assign(appLogin);
   };

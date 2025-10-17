@@ -11,7 +11,8 @@ export default function AppRoutes() {
     <Routes>
       <Route element={<ProtectedRoute><AdminLayout /></ProtectedRoute>}>
         <Route path="/" element={<Navigate to="/admin" replace />} />
-        <Route path="/admin" element={<Dashboard />} />
+        <Route path="/admin" element={<Dashboard />}/>
+        <Route path="/admin/dashboard" element={<Dashboard />} />
         <Route path="/admin/terms" element={<TermsManagement />} />
         <Route path="/admin/newsletter" element={<Newsletter />} />
       </Route>
