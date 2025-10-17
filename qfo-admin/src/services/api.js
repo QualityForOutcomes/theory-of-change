@@ -2,7 +2,7 @@ import axios from "axios";
 
 // Use env-driven base URL, with production fallback
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL ?? "https://toc-adminbackend.vercel.app",
+  baseURL: import.meta.env.VITE_API_URL,
   // Remove if you don’t use cookies/sessions, keep if server sets cookies
   withCredentials: false,
 });
@@ -25,7 +25,7 @@ api.interceptors.response.use(
     // Handle expired/invalid token
     if (error.response?.status === 401) {
       localStorage.removeItem("qfo_token");
-      const appLogin = import.meta.env.VITE_MYAPP_LOGIN_URL || "http://localhost:3000/login";
+      const appLogin = import.meta.env.VITE_MYAPP_LOGIN_URL;
       // Redirect to unified login page in my-app
       window.location.assign(appLogin);
     }

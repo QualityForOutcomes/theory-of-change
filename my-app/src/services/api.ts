@@ -2,15 +2,15 @@ import axios from "axios";
 import { verifyLogin, signToken, createUser } from "../mocks/service.memory";
 
 // Base URLs are driven by env vars with sensible local/production fallbacks
-const isLocalhost = typeof window !== 'undefined' && window.location.origin.startsWith('http://localhost');
+//const isLocalhost = typeof window !== 'undefined' && window.location.origin.startsWith('http://localhost');
 
 // User backend (auth, user, project)
-const API_BASE = process.env.REACT_APP_API_BASE || (isLocalhost ? 'http://localhost:4001' : 'https://toc-userbackend.vercel.app');
+const API_BASE = process.env.REACT_APP_API_BASE;
 // Password reset endpoints share the same user backend base
 const PASS_API_BASE = API_BASE;
 
 // Payment / Stripe backend
-const PAYMENT_API_BASE = process.env.REACT_APP_PAYMENT_API_BASE || (isLocalhost ? 'http://localhost:3001' : 'https://toc-stripebackend.vercel.app');
+const PAYMENT_API_BASE = process.env.REACT_APP_PAYMENT_API_BASE || "REACT_APP_PAYMENT_API_BASE Not defined in env";
 
 const isNetworkError = (err: any) => !err?.response || err?.message === "Network Error";
 
@@ -387,12 +387,12 @@ export const createCheckoutSession = async (data: {
       message: err?.message,
     });
     const primaryMsg = err.response?.data?.message || err.message || "Failed to create checkout session";
-    const isLocal = typeof window !== 'undefined' && window.location.origin.startsWith('http://localhost');
-    const triedLocalAlready = PAYMENT_API_BASE.startsWith('http://localhost:3001');
-    const shouldTryLocal = isLocal && !triedLocalAlready;
-    if (shouldTryLocal) {
+    //const isLocal = typeof window !== 'undefined' && window.location.origin.startsWith('http://localhost');
+    //const triedLocalAlready = PAYMENT_API_BASE.startsWith('http://localhost:3001');
+    //const shouldTryLocal = isLocal && !triedLocalAlready;
+    /*if (shouldTryLocal) {
       try {
-        const altBase = 'http://localhost:3001';
+        //const altBase = 'http://localhost:3001';
         console.debug('API:createCheckoutSession ↻ retrying against local backend', { altBase });
         const retry = await axios.post(
           `${altBase}/api/payment/create-checkout-session`,
@@ -416,7 +416,7 @@ export const createCheckoutSession = async (data: {
         });
         throw new Error(retryErr.response?.data?.message || retryErr.message || primaryMsg);
       }
-    }
+    }*/
     throw new Error(primaryMsg);
   }
 };
@@ -445,7 +445,7 @@ export const cancelSubscription = async (data: {
   } catch (err: any) {
     // If local dev points to an unavailable port (e.g., 3003), retry on 3001
     const msg = err.response?.data?.message || err.message || "Failed to cancel subscription";
-    const isLocal = PAYMENT_API_BASE.startsWith("http://localhost");
+    /*const isLocal = PAYMENT_API_BASE.startsWith("http://localhost");
     const needsPortRetry = isNetworkError(err) && isLocal && /:3003\b/.test(PAYMENT_API_BASE);
     if (needsPortRetry) {
       try {
@@ -465,7 +465,7 @@ export const cancelSubscription = async (data: {
       } catch (retryErr: any) {
         throw new Error(retryErr.response?.data?.message || retryErr.message || msg);
       }
-    }
+    }*/
     throw new Error(msg);
   }
 };
@@ -509,7 +509,7 @@ export const syncStripeSubscription = async (data: {
     };
   } catch (err: any) {
     const primaryMsg = err.response?.data?.message || err.message || "Failed to sync subscription from Stripe";
-    const isLocal = typeof window !== 'undefined' && window.location.origin.startsWith('http://localhost');
+    /*const isLocal = typeof window !== 'undefined' && window.location.origin.startsWith('http://localhost');
     const triedLocalAlready = PAYMENT_API_BASE.startsWith('http://localhost:3001');
     const shouldTryLocal = isLocal && !triedLocalAlready;
     if (shouldTryLocal) {
@@ -545,7 +545,7 @@ export const syncStripeSubscription = async (data: {
       } catch (retryErr: any) {
         throw new Error(retryErr.response?.data?.message || retryErr.message || primaryMsg);
       }
-    }
+    }*/
     throw new Error(primaryMsg);
   }
 };
@@ -562,6 +562,7 @@ export const updateSubscription = async (data: {
 }) => {
   try {
     // Backend expects EXACT camelCase keys as below
+    debugger;
     const payload = {
       subscriptionId: data.subscriptionId,
       email: data.email,
@@ -606,7 +607,7 @@ export const updateSubscription = async (data: {
   }
 };
 
-export const getSubscriptionPlans = async () => {
+/*export const getSubscriptionPlans = async () => {
   // Temporary: return hardcoded plans until backend endpoint is available
   return [
     {
@@ -629,6 +630,7 @@ export const getSubscriptionPlans = async () => {
     },
   ];
 };
+*/
 
 // ---- Terms & Conditions APIs ----
 export const fetchTerms = async () => {
@@ -645,7 +647,7 @@ export const fetchTerms = async () => {
     return data;
   } catch (err: any) {
     // Fallback for when backend endpoint doesn't exist yet
-    if (err.response?.status === 404 || isNetworkError(err)) {
+    /*if (err.response?.status === 404 || isNetworkError(err)) {
       return {
         content: `# Terms and Conditions
 
@@ -676,7 +678,7 @@ If you have any questions about these Terms and Conditions, please contact us at
 Last updated: ${new Date().toLocaleDateString()}`,
         lastUpdated: new Date().toISOString()
       };
-    }
+    }*/
     throw new Error(err.response?.data?.message || err.message || "Failed to fetch terms");
   }
 };

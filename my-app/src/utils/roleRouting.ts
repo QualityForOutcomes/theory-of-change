@@ -18,19 +18,25 @@ export function determineUserRole(user: User): UserRole {
 function getAdminUrl(): string {
   // CRA-style env for my-app
   const envUrl = process.env.REACT_APP_ADMIN_URL;
+  if (!envUrl) {
+    throw new Error('REACT_APP_ADMIN_URL is not defined');
+  }
   // Default to Vite dev port used by qfo-admin
-  return envUrl || "http://localhost:5174/admin";
+  return envUrl;
 }
 
 function getMyAppDashboardUrl(): string {
   // Default to projects dashboard root
-  const envUrl = process.env.REACT_APP_USER_DASHBOARD_URL;
-  return envUrl || "/";
+  //const envUrl = process.env.REACT_APP_USER_DASHBOARD_URL;
+  //if (!envUrl) {
+   // throw new Error('REACT_APP_ADMIN_URL is not defined');
+  //}
+  const envUrl = "/";
+  return envUrl;
 }
 
 export function handleRoleBasedRedirect(user: User, navigate: NavigateFunction) {
   const role = determineUserRole(user);
-
   if (role === "admin") {
     const adminBase = getAdminUrl();
     const token = localStorage.getItem("token") || "";
@@ -42,7 +48,7 @@ export function handleRoleBasedRedirect(user: User, navigate: NavigateFunction) 
     window.location.assign(url.toString());
     return;
   }
-
+  debugger;
   // Regular user: navigate within my-app
   navigate(getMyAppDashboardUrl(), { replace: true });
 }
