@@ -6,7 +6,7 @@ import api from "../../../services/api";
  */
 export const fetchTerms = async () => {
   try {
-    const response = await api.get("/api/terms");
+    const response = await api.get("/api/admin/terms");
     return {
       content: response.data.content || "",
       updatedAt: response.data.updatedAt || new Date().toISOString(),
@@ -25,7 +25,7 @@ export const fetchTerms = async () => {
  */
 export const updateTerms = async (content) => {
   try {
-    const response = await api.put("/api/terms", { 
+    const response = await api.put("/api/admin/terms", { 
       content,
       updatedAt: new Date().toISOString()
     });
