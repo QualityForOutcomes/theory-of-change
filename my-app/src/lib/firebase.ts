@@ -2,14 +2,14 @@
 import { initializeApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 
-// Your Firebase config (the one you pasted)
+// Firebase config sourced from environment variables for easy project switching
 const firebaseConfig = {
-  apiKey: "AIzaSyAJRVA9Tssggj8cOeePo9kTu4StrOfgsFs",
-  authDomain: "p000315se.firebaseapp.com",
-  projectId: "p000315se",
-  storageBucket: "p000315se.firebasestorage.app",
-  messagingSenderId: "113828877811",
-  appId: "1:113828877811:web:049557794f2e9718bd6e86",
+  apiKey: process.env.REACT_APP_FIREBASE_API_KEY || "",
+  authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN || "",
+  projectId: process.env.REACT_APP_FIREBASE_PROJECT_ID || "",
+  storageBucket: process.env.REACT_APP_FIREBASE_STORAGE_BUCKET || "",
+  messagingSenderId: process.env.REACT_APP_FIREBASE_MESSAGING_SENDER_ID || "",
+  appId: process.env.REACT_APP_FIREBASE_APP_ID || "",
 };
 
 // Initialize Firebase
