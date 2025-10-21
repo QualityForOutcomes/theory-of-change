@@ -261,7 +261,6 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ subscription }) => {
         // Refresh subscription details from backend and update local state
         try {
           const resp = await fetchSubscription();
-          debugger;
           const data = resp?.data || null;
           if (data) {
             const tier = detectTierFromPlanId(data.planId);
@@ -278,7 +277,6 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ subscription }) => {
               cancellationScheduledUntil: periodEnd,
             };
             setUserSubscription(updated);
-            debugger;
             try { localStorage.setItem("userSubscription", JSON.stringify(updated)); } catch {}
           } else {
             const updated = {
@@ -508,7 +506,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ subscription }) => {
         <div className="subscription-card">
           <div className="subscription-header">
             <div className="plan-info">
-              <h4 className="plan-name">{userSubscription?.plan    || "Free Plan"}</h4>
+              <h4 className="plan-name">{userSubscription?.plan || "Free Plan"}</h4>
               <span className={`status-badge status-${userSubscription?.status?.toLowerCase() || 'inactive'}`}>
                 {userSubscription?.status || "Inactive"}
               </span>
