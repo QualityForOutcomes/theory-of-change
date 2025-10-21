@@ -21,8 +21,8 @@ export default function SubscriptionPlans() {
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" | "warning" | "info" } | null>(null);
 
   // Read Stripe price IDs from environment with sensible defaults
-  const PRO_PRICE_ID = process.env.REACT_APP_STRIPE_PRICE_PRO || "price_1S8tsnQTtrbKnENdYfv6azfr";
-  const PREMIUM_PRICE_ID = process.env.REACT_APP_STRIPE_PRICE_PREMIUM || "price_1SB17tQTtrbKnENdT7aClaEe";
+  const PRO_PRICE_ID = process.env.REACT_APP_STRIPE_PRICE_PRO || "No REACT_APP_STRIPE_PRICE_PRO found in env";
+  const PREMIUM_PRICE_ID = process.env.REACT_APP_STRIPE_PRICE_PREMIUM || "NO REACT_APP_STRIPE_PRICE_PREMIUM foung in env";
   // Force frontend origin for Stripe redirects – prefer actual runtime origin
   const FRONTEND_ORIGIN = (typeof window !== 'undefined' && window.location.origin) || process.env.REACT_APP_FRONTEND_ORIGIN || "http://localhost:3000";
 

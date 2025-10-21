@@ -90,19 +90,52 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ subscription }) => {
 
     const loadSubscriptionData = () => {
       try {
-        // Load subscription from localStorage
-        const storedSubscription = localStorage.getItem("userSubscription");
-        if (storedSubscription) {
-          const subscriptionData = JSON.parse(storedSubscription);
-          setUserSubscription(subscriptionData);
-        } else {
-          // Fallback to default free plan
-          setUserSubscription({
-            plan: "Free Plan",
-            status: "active",
-            expiry: ""
-          });
+        // Prefer unified subscriptionData stored by Project/Success flows
+        const storedUnified = localStorage.getItem("subscriptionData");
+        if (storedUnified) {
+          const unified = JSON.parse(storedUnified);
+          if (unified) {
+            const tier = detectTierFromPlanId(unified.planId);
+            const displayPlan = tierToDisplayName(tier);
+            const expiryStr = unified.expiresAt ? new Date(unified.expiresAt).toLocaleDateString() : "";
+            const mapped: Subscription = {
+              plan: displayPlan,
+              status: unified.status || "active",
+              expiry: expiryStr,
+              price: undefined,
+              activatedAt: unified.startDate,
+              sessionId: undefined,
+              subscriptionId: unified.subscriptionId,
+              cancellationScheduledUntil: undefined,
+            };
+            setUserSubscription(mapped);
+            return;
+          }
         }
+
+        // // Legacy fallback: userSubscription used by older flows/tests
+        // const legacyRaw = localStorage.getItem("userSubscription");
+        // if (legacyRaw) {
+        //   const legacy = JSON.parse(legacyRaw);
+        //   setUserSubscription({
+        //     plan: legacy?.plan || "Free Plan",
+        //     status: legacy?.status || "active",
+        //     expiry: legacy?.expiry || "",
+        //     price: legacy?.price,
+        //     activatedAt: legacy?.activatedAt,
+        //     sessionId: legacy?.sessionId,
+        //     subscriptionId: legacy?.subscriptionId,
+        //     cancellationScheduledUntil: legacy?.cancellationScheduledUntil,
+        //   });
+        //   return;
+        // }
+
+        // // Default free plan when nothing is stored
+        // setUserSubscription({
+        //   plan: "Free Plan",
+        //   status: "active",
+        //   expiry: ""
+        // });
       } catch (error) {
         console.error("Error loading subscription data:", error);
         setUserSubscription({
@@ -228,6 +261,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ subscription }) => {
         // Refresh subscription details from backend and update local state
         try {
           const resp = await fetchSubscription();
+          debugger;
           const data = resp?.data || null;
           if (data) {
             const tier = detectTierFromPlanId(data.planId);
@@ -244,6 +278,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ subscription }) => {
               cancellationScheduledUntil: periodEnd,
             };
             setUserSubscription(updated);
+            debugger;
             try { localStorage.setItem("userSubscription", JSON.stringify(updated)); } catch {}
           } else {
             const updated = {
@@ -473,7 +508,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ subscription }) => {
         <div className="subscription-card">
           <div className="subscription-header">
             <div className="plan-info">
-              <h4 className="plan-name">{userSubscription?.plan || "Free Plan"}</h4>
+              <h4 className="plan-name">{userSubscription?.plan    || "Free Plan"}</h4>
               <span className={`status-badge status-${userSubscription?.status?.toLowerCase() || 'inactive'}`}>
                 {userSubscription?.status || "Inactive"}
               </span>
