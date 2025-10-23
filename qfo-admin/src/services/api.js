@@ -1,8 +1,16 @@
 import axios from "axios";
 
 // Use env-driven base URL, with production fallback
+const resolvedBase = import.meta.env.VITE_API_URL || 'https://toc-adminbackend.vercel.app';
+if (import.meta.env.DEV) {
+  console.info('[api] baseURL:', resolvedBase);
+  if (/localhost|127\.0\.0\.1/.test(resolvedBase)) {
+    console.warn('[api] Using localhost API base. Ensure your backend server is running.');
+  }
+}
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL,
+  baseURL: resolvedBase,
   // Remove if you don’t use cookies/sessions, keep if server sets cookies
   withCredentials: false,
 });
