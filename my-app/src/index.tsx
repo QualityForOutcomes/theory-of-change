@@ -6,7 +6,6 @@ import "./index.css";
 import App from "./pages/App";
 import ProfilePage from "./pages/profile";
 import Navbar from "./components/Nav";
-import UserListPage from "./pages/UsersList";
 import ProjectCreate from "./pages/Project";
 import ProjectsPage from "./pages/Project";
 
@@ -26,8 +25,8 @@ const root = ReactDOM.createRoot(
 
 root.render(
   <React.StrictMode>
-    <AuthProvider>                                     
-      <Router>
+    <Router>
+      <AuthProvider>                                     
         <Navbar />
         <Routes>
           {/* Public */}
@@ -71,14 +70,7 @@ root.render(
               </PrivateRoute>
             }
           />
-          <Route
-            path="/users"
-            element={
-              <PrivateRoute>
-                <UserListPage />
-              </PrivateRoute>
-            }
-          />
+          
           <Route
             path="/project"
             element={
@@ -88,7 +80,7 @@ root.render(
             }
           />
         </Routes>
-      </Router>
-    </AuthProvider>
+      </AuthProvider>
+    </Router>
   </React.StrictMode>
 );

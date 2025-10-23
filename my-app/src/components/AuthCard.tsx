@@ -6,6 +6,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../auth/AuthProvider";
 import { authLogin, authRegister, authGoogleLogin } from "../services/api";
 import { signInWithGooglePopup } from "../lib/firebase";
+import { handleRoleBasedRedirect } from "../utils/roleRouting";
 import Footer from "../components/Footer";
 
 type Mode = "login" | "register";
@@ -24,10 +25,11 @@ export default function AuthCard() {
     newsLetterSubs: false,
   });
 
-  const { setUser } = useAuth();
+  const { setUser, login, isAuthenticated, user } = useAuth();
   const [show, setShow] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
+
   const [loading, setLoading] = useState(false);
 
   const nav = useNavigate();
@@ -92,17 +94,23 @@ export default function AuthCard() {
     localStorage.setItem("token", token);
     localStorage.setItem("user", JSON.stringify(user));
     setUser(user as any);
+    // Immediately apply role-based redirect after successful registration
+    handleRoleBasedRedirect(user as any, nav);
   }
 
   async function submitLogin() {
-    const { token, user } = await authLogin({
-      email: form.email.trim(),
-      password: form.password,
-    });
-
-    localStorage.setItem("token", token);
-    localStorage.setItem("user", JSON.stringify(user));
-    setUser(user as any);
+    // Use AuthProvider's login function which handles role-based redirects
+    await login(form.email.trim(), form.password);
+    // Ensure redirect triggers even if provider navigation is delayed
+    setTimeout(() => {
+      try {
+        const raw = localStorage.getItem("user");
+        const u = raw ? JSON.parse(raw) : user;
+        handleRoleBasedRedirect(u as any, nav);
+      } catch {
+        nav(redirectAfterAuth, { replace: true });
+      }
+    }, 0);
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -121,11 +129,13 @@ export default function AuthCard() {
     try {
       if (mode === "register") {
         await submitRegister();
+        setSuccess(true);
+        // Role redirect already handled in submitRegister
       } else {
         await submitLogin();
+        setSuccess(true);
+        // No manual navigation needed - AuthProvider handles role-based redirect
       }
-      setSuccess(true);
-      nav(redirectAfterAuth, { replace: true });
     } catch (e: any) {
       const msg =
         e?.response?.data?.error?.message ||
@@ -164,15 +174,22 @@ export default function AuthCard() {
     try {
       setLoading(true);
       setError("");
+      
+      // Get Google ID token
       const { idToken } = await signInWithGooglePopup();
+      
+      // Authenticate with backend
       const { token, user } = await authGoogleLogin(idToken);
 
+      // Store authentication data
       localStorage.setItem("token", token);
       localStorage.setItem("user", JSON.stringify(user));
       setUser(user as any);
 
+      // Use role-based redirect logic
+      handleRoleBasedRedirect(user, nav);
+      
       setSuccess(true);
-      nav(redirectAfterAuth, { replace: true });
     } catch (err: any) {
       setError(err?.message || "Google sign-in failed. Please try again.");
       setSuccess(false);

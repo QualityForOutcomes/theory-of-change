@@ -1,9 +1,28 @@
+import { useEffect } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 
-const isAuthed = () => Boolean(localStorage.getItem("qfo_token"));
-
 export default function ProtectedRoute({ children }) {
-  const loc = useLocation();
-  if (!isAuthed()) return <Navigate to="/login" replace state={{ from: loc }} />;
+  const location = useLocation();
+
+  useEffect(() => {
+    // On initial load, support token handoff: set qfo_token from ?token=...
+    const params = new URLSearchParams(location.search);
+    const incomingToken = params.get("token");
+    if (incomingToken) {
+      localStorage.setItem("qfo_token", incomingToken);
+      // Clean the URL to avoid leaking the token in the address bar
+      const cleanUrl = location.pathname + location.hash;
+      window.history.replaceState({}, "", cleanUrl);
+    }
+  }, [location.search, location.pathname, location.hash]);
+
+  const hasToken = !!localStorage.getItem("qfo_token");
+  if (!hasToken) {
+    const appLogin = import.meta.env.VITE_MYAPP_LOGIN_URL || "http://localhost:3000/login";
+    // Use hard redirect for external URL to unified login page
+    window.location.assign(appLogin);
+    return null;
+  }
+
   return children;
 }
