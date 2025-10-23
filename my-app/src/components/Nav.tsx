@@ -10,8 +10,8 @@ import logo from "../assets/logo.png";
 const detectTierFromPlanId = (planId?: string | null): 'free' | 'pro' | 'premium' => {
   const id = String(planId || '').toLowerCase();
   if (!id || id.includes('free') || id === 'price_free') return 'free';
-  const PRO_ID = (process.env.REACT_APP_STRIPE_PRICE_PRO || 'price_1S8tsnQTtrbKnENdYfv6azfr').toLowerCase();
-  const PREMIUM_ID = (process.env.REACT_APP_STRIPE_PRICE_PREMIUM || 'price_1SB17tQTtrbKnENdT7aClaEe').toLowerCase();
+  const PRO_ID = (process.env.REACT_APP_STRIPE_PRICE_PRO || 'No REACT_APP_STRIPE_PRICE_PRO found in env').toLowerCase();
+  const PREMIUM_ID = (process.env.REACT_APP_STRIPE_PRICE_PREMIUM || 'No REACT_APP_STRIPE_PRICE_PREMIUM ').toLowerCase();
   if (id === PRO_ID || id.includes('pro')) return 'pro';
   if (id === PREMIUM_ID || id.includes('premium')) return 'premium';
   return 'free';
