@@ -321,13 +321,13 @@ export default function AuthCard() {
                   <a 
                     href="/terms" 
                     target="_blank" 
-                    rel="noopener noreferrer"
                     style={{
                       color: "#3498db",
                       textDecoration: "underline",
                       fontWeight: "500",
                       transition: "color 0.2s ease"
                     }}
+                    onClick={(e) => { e.preventDefault(); window.open('/terms', '_blank'); }}
                     onMouseEnter={(e) => (e.target as HTMLAnchorElement).style.color = "#2980b9"}
                     onMouseLeave={(e) => (e.target as HTMLAnchorElement).style.color = "#3498db"}
                   >
