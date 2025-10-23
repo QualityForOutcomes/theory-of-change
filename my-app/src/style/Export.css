@@ -1,4 +1,4 @@
-/* Modern Export Modal */
+/* Overlay covering the entire screen when modal is open */
 .export-modal-overlay {
   position: fixed;
   top: 0;
@@ -13,6 +13,7 @@
   backdrop-filter: blur(4px);
 }
 
+/* Modal container */
 .export-modal {
   background: white;
   padding: 32px;
@@ -23,6 +24,7 @@
   animation: modalSlideIn 0.3s ease-out;
 }
 
+/* Modal slide-in animation */
 @keyframes modalSlideIn {
   from {
     opacity: 0;
@@ -34,6 +36,7 @@
   }
 }
 
+/* Modal headings */
 .export-modal h3 {
   margin: 0 0 12px 0;
   font-size: 20px;
@@ -41,18 +44,21 @@
   font-weight: 600;
 }
 
+/* Modal paragraph text */
 .export-modal p {
   margin: 0 0 24px 0;
   color: #666;
   font-size: 14px;
 }
 
+/* Buttons for selecting export format */
 .export-format-buttons {
   display: flex;
   gap: 12px;
   margin-bottom: 16px;
 }
 
+/* Individual export format button */
 .export-format-btn {
   flex: 1;
   padding: 16px;
@@ -66,23 +72,27 @@
   color: #333;
 }
 
+/* Hover effect for export format buttons */
 .export-format-btn:hover {
   border-color: #874bfd;
   background: #f8f5ff;
 }
 
+/* Selected state styling */
 .export-format-btn.selected {
   border-color: #874bfd;
   background: linear-gradient(135deg, #cb6ce6, #874bfd);
   color: white;
 }
 
+/* Modal action buttons container */
 .export-modal-actions {
   display: flex;
   gap: 10px;
   justify-content: flex-end;
 }
 
+/* Modal action buttons */
 .export-modal-btn {
   padding: 10px 20px;
   border: none;
@@ -93,6 +103,7 @@
   transition: all 0.2s ease;
 }
 
+/* Cancel button styling */
 .export-modal-btn.cancel {
   background: #f0f0f0;
   color: #333;
@@ -102,6 +113,7 @@
   background: #e0e0e0;
 }
 
+/* Export button styling */
 .export-modal-btn.export {
   background: linear-gradient(135deg, #cb6ce6, #874bfd);
   color: white;
@@ -117,7 +129,7 @@
   cursor: not-allowed;
 }
 
-/* Export Mode - Make all cards expand to show full content */
+/* Expand all cards to show full content in export mode */
 .export-mode .card,
 .export-mode .cloud-card {
   height: auto !important;
@@ -139,6 +151,7 @@
   display: block !important;
 }
 
+/* Set consistent font across modal and buttons */
 .export-modal,
 .export-modal button,
 .btn.export {
@@ -156,6 +169,7 @@
   text-align: center;
 }
 
+/* Lock icon with pulsing animation */
 .lock-icon {
   font-size: 64px;
   margin-bottom: 20px;
@@ -173,6 +187,7 @@
   }
 }
 
+/* Subscription modal heading */
 .subscription-required-content h3 {
   font-size: 24px;
   font-weight: 700;
@@ -180,6 +195,7 @@
   margin-bottom: 12px;
 }
 
+/* Subscription modal paragraph text */
 .subscription-required-content p {
   font-size: 16px;
   color: #666;
@@ -187,6 +203,7 @@
   line-height: 1.5;
 }
 
+/* Feature benefits box */
 .feature-benefits {
   background: #f8f9fa;
   border-radius: 12px;
@@ -195,6 +212,7 @@
   text-align: left;
 }
 
+/* Individual benefit items */
 .benefit-item {
   font-size: 15px;
   color: #333;
@@ -202,6 +220,7 @@
   border-bottom: 1px solid #e0e0e0;
 }
 
+/* Remove border for last item */
 .benefit-item:last-child {
   border-bottom: none;
 }
@@ -217,6 +236,7 @@
   vertical-align: middle;
 }
 
+/* Custom bullet points for benefits */
 .export-modal-btn.upgrade-btn {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
@@ -225,11 +245,13 @@
   box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
 }
 
+/* Upgrade button styling */
 .export-modal-btn.upgrade-btn:hover {
   transform: translateY(-2px);
   box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
 }
 
+/* Alternative cancel styling for subscription modal */
 .export-modal-btn.cancel {
   background: transparent;
   color: #666;

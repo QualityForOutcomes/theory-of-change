@@ -9,13 +9,18 @@ type FormProps = {
 
 type FormField = Exclude<keyof Data, "projectTitle">;
 
-export default function FormPanel({ data, updateField, highlightField }: FormProps) {
+export default function FormPanel({
+  data,
+  updateField,
+  highlightField,
+}: FormProps) {
   const [isOpen, setIsOpen] = useState(true);
   const [activeHighlight, setActiveHighlight] = useState<string | null>(null);
   const fieldRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
-  
+
   const toggleSidebar = () => setIsOpen(!isOpen);
 
+  // Form fields in order of completion steps
   const fields: FormField[] = [
     "goal",
     "aim",
@@ -52,31 +57,33 @@ export default function FormPanel({ data, updateField, highlightField }: FormPro
     externalInfluences: "",
   });
 
+  // Character limits for input validation
   const maxChars = 200;
   const warningThreshold = 180;
 
   const [progress, setProgress] = useState(0);
-  
-  // NEW: Handle highlighting when a field is added
+
+  // Handle highlighting and scrolling when field is added from visual panel
   useEffect(() => {
     if (highlightField) {
       setActiveHighlight(highlightField);
-      
-      // Scroll to the field
+
+      // Scroll to the newly added field
       const fieldElement = fieldRefs.current[highlightField];
       if (fieldElement) {
-        fieldElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        fieldElement.scrollIntoView({ behavior: "smooth", block: "center" });
       }
-      
-      // Remove highlight after animation completes
+
+      // Remove highlight after animation completes (2 seconds)
       const timer = setTimeout(() => {
         setActiveHighlight(null);
-      }, 2000); // 2 seconds (matches 2 animation cycles)
-      
+      }, 2000);
+
       return () => clearTimeout(timer);
     }
   }, [highlightField]);
-  
+
+  // Calculate completion progress based on filled fields
   useEffect(() => {
     const filledFields = fields.filter((f) => {
       const values: string[] = safeParseArray(data[f]);
@@ -85,16 +92,21 @@ export default function FormPanel({ data, updateField, highlightField }: FormPro
     setProgress((filledFields / fields.length) * 100);
   }, [data]);
 
+  // Validate field input for required and length constraints
   const validateField = (field: FormField, value: string) => {
     if (!value.trim()) {
       setErrors((prev) => ({ ...prev, [field]: `${field} is required` }));
     } else if (value.length > maxChars) {
-      setErrors((prev) => ({ ...prev, [field]: `Maximum ${maxChars} characters allowed` }));
+      setErrors((prev) => ({
+        ...prev,
+        [field]: `Maximum ${maxChars} characters allowed`,
+      }));
     } else {
       setErrors((prev) => ({ ...prev, [field]: "" }));
     }
   };
 
+  // Parse field values - handles JSON arrays, delimited strings, or single values
   const safeParseArray = (raw: string | undefined): string[] => {
     if (!raw) return [""];
     try {
@@ -117,9 +129,12 @@ export default function FormPanel({ data, updateField, highlightField }: FormPro
       <div className="sidebar-content">
         <div className="form-header">
           <h1 className="main-title">Theory of Change Form</h1>
-          <p className="project-title">{data.projectTitle || "Untitled Project"}</p>
+          <p className="project-title">
+            {data.projectTitle || "Untitled Project"}
+          </p>
         </div>
 
+        {/* Progress bar showing form completion */}
         <div className="progress-container">
           <div className="progress-bar" style={{ width: `${progress}%` }} />
         </div>
@@ -129,20 +144,23 @@ export default function FormPanel({ data, updateField, highlightField }: FormPro
           const cards = safeParseArray(data[field]);
 
           return (
-           <div
-  className="form-group"
-  key={field}
-  id={`step-${field}`}
-  ref={(el) => { fieldRefs.current[field] = el }}
->
-
+            <div
+              className="form-group"
+              key={field}
+              id={`step-${field}`}
+              ref={(el) => {
+                fieldRefs.current[field] = el;
+              }} // Store ref for scrolling
+            >
               <label htmlFor={`field-${field}`} className="form-label">
                 {fieldLabels[field]}
               </label>
               <p className="helper-text">{fieldExamples[field]}</p>
 
+              {/* Render input for each card (supports multiple values per field) */}
               {cards.map((cardValue, idx) => (
                 <div key={idx} style={{ marginBottom: "8px" }}>
+                  {/* Beneficiaries uses input, others use textarea */}
                   {field === "beneficiaries" ? (
                     <input
                       id={`field-${field}-${idx}`}
@@ -156,7 +174,9 @@ export default function FormPanel({ data, updateField, highlightField }: FormPro
                       }}
                       placeholder={`Enter ${field}...`}
                       className={`${errors[field] ? "error-input" : ""} ${
-                        activeHighlight === field && idx === cards.length - 1 ? "newly-added" : ""
+                        activeHighlight === field && idx === cards.length - 1
+                          ? "newly-added"
+                          : ""
                       }`}
                       style={{ width: "100%" }}
                     />
@@ -173,21 +193,29 @@ export default function FormPanel({ data, updateField, highlightField }: FormPro
                       }}
                       placeholder={`Enter ${field}...`}
                       className={`${errors[field] ? "error-input" : ""} ${
-                        activeHighlight === field && idx === cards.length - 1 ? "newly-added" : ""
+                        activeHighlight === field && idx === cards.length - 1
+                          ? "newly-added"
+                          : ""
                       }`}
                       style={{ width: "100%" }}
                     />
                   )}
 
-                  {cardValue.length >= warningThreshold && cardValue.length <= maxChars && (
-                    <span className="warning-text">
-                      Approaching character limit ({cardValue.length}/{maxChars})
-                    </span>
-                  )}
+                  {/* Warning when approaching character limit */}
+                  {cardValue.length >= warningThreshold &&
+                    cardValue.length <= maxChars && (
+                      <span className="warning-text">
+                        Approaching character limit ({cardValue.length}/
+                        {maxChars})
+                      </span>
+                    )}
                 </div>
               ))}
 
-              {errors[field] && <span className="error-text">{errors[field]}</span>}
+              {/* Display validation errors */}
+              {errors[field] && (
+                <span className="error-text">{errors[field]}</span>
+              )}
             </div>
           );
         })}

@@ -18,31 +18,31 @@ const SupportPanel: React.FC<SupportPanelProps> = ({
   const [userPlan, setUserPlan] = useState<'free' | 'pro' | 'premium'>('free');
   const navigate = useNavigate();
 
-  // Check user plan on mount
+  // Access control: Only paid users (pro/premium) can access support
   useEffect(() => {
     const plan = localStorage.getItem('userPlan') || 'free';
     setUserPlan(plan as 'free' | 'pro' | 'premium');
     
-    console.log('🔍 SupportPanel - User plan:', plan);
-    
-    // If free user, close panel and redirect
+    // Redirect free users to subscription page
     if (plan === 'free') {
-      console.log('❌ Free user tried to access support panel - closing');
+      console.log(' Free user tried to access support panel - closing');
       onClose();
       navigate('/subscription');
     }
   }, [onClose, navigate]);
 
-  // Don't render anything for free users
+  // Prevent rendering for free users
   if (userPlan === 'free') {
     return null;
   }
 
+  // Opens default email client with pre-filled message
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!message) return;
 
+    // Create mailto link with subject and body
     const mailtoLink = `mailto:${supportEmail}?subject=${encodeURIComponent(
       defaultSubject
     )}&body=${encodeURIComponent(message)}`;
@@ -50,13 +50,14 @@ const SupportPanel: React.FC<SupportPanelProps> = ({
     // Open user's default email client
     window.location.href = mailtoLink;
 
-    // Optional: show success message in modal
+    // Show success message and auto-close after 2 seconds
     setSubmitted(true);
     setTimeout(() => onClose(), 2000);
   };
 
   return (
     <>
+    {/* Overlay to close panel when clicking outside */}
       <div className="support-overlay" onClick={onClose}></div>
       <div className="support-panel">
         <div className="support-header">
@@ -66,6 +67,7 @@ const SupportPanel: React.FC<SupportPanelProps> = ({
           </button>
         </div>
 
+        {/* Show success message after submission */}
         {submitted ? (
           <div className="success-message">
             <p>✓ Your message is ready! Please send it from your email.</p>
