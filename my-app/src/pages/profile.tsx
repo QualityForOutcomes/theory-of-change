@@ -4,7 +4,7 @@ import Toast from "../components/Toast";
 import { useNavigate } from "react-router-dom";
 import { fetchUserProfile, updateUserProfile, cancelSubscription, updateSubscription, fetchSubscription } from "../services/api"; // Update the import path as needed
 import "../style/profile.css";
-// Local plan helpers (removed shared planMapping)
+// Local plan helpers 
 const detectTierFromPlanId = (planId?: string | null): 'free' | 'pro' | 'premium' => {
   const id = String(planId || '').toLowerCase();
   if (!id || id.includes('free') || id === 'price_free') return 'free';

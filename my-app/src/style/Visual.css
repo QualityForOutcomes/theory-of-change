@@ -1,3 +1,4 @@
+/* Main container for visual flow diagram */
 .visual-flow {
   display: flex;
   flex-direction: column;
@@ -13,17 +14,17 @@
   gap: 6px;
 }
 
-/* FIXED: Auto-adjusting cards */
+/* Flow cards - auto-adjusting height based on content */
 .flow-card {
   flex: 1 1 auto;
   min-width: 100px;
-  max-width: 140px;
+  max-width: 160px;
   min-height: 120px;
   height: auto;
   border-radius: 10px;
   text-align: center;
-  padding: 10px;
-  background-color: inherit; /* Changed - will use the inline style color */
+  padding: 12px;
+  background-color: inherit; 
   box-shadow: 0 3px 8px rgba(0,0,0,0.12);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
   display: flex;
@@ -32,7 +33,7 @@
   position: relative;
 }
 
-/* FIXED: Textarea instead of input */
+/* Textarea styling - transparent to inherit card background */
 .flow-card textarea {
   background: transparent;
   border: none;
@@ -44,8 +45,8 @@
   margin: 0;
   min-height: 40px;
   height: auto;
-  resize: none;
-  overflow: hidden;
+  resize: none; /* Disable manual resize - handled by auto-resize function */
+  overflow: hidden; /* Hide scrollbar */
   text-align: center;
   font-family: inherit;
   line-height: 1.4;
@@ -54,7 +55,7 @@
   white-space: pre-wrap;
 }
 
-/* Gradient accent on top edge of cards only */
+/* Top gradient accent for visual depth */
 .flow-card::before {
   content: '';
   position: absolute;
@@ -66,7 +67,7 @@
   border-radius: 10px 10px 0 0;
 }
 
-/* Gradient accent on bottom edge of cards only */
+/* Bottom gradient accent for visual depth */
 .flow-card::after {
   content: '';
   position: absolute;
@@ -89,7 +90,7 @@
   font-size: 13px;
 }
 
-/* FIXED: Card value container */
+/* Card value container */
 .card-value {
   white-space: pre-wrap;
   word-break: break-word;
@@ -99,11 +100,12 @@
   flex: 1;
 }
 
+/* Arrow between flow columns */
 .flow-arrow {
   font-size: 32px; /* Modern, balanced size */
   font-weight: 600;
   margin: 0 15px;
-  color: #0d0c0f; /* Match your theme color */
+  color: #0d0c0f; 
   align-self: center;
   opacity: 0.8;
   transition: opacity 0.2s ease;
@@ -113,6 +115,7 @@
   opacity: 1;
 }
 
+/* Main panel containing all flow columns */
 .right-panel {
   display: flex;
   justify-content: center;
@@ -127,8 +130,9 @@
   background: transparent;
 }
 
+/* Container for entire right panel including controls */
 .right-panel-container {
-  background: #ffffff; /* Clean white instead of grey */
+  background: #ffffff; 
   border-radius: 0;
   display: flex;
   justify-content: flex-start;
@@ -138,6 +142,9 @@
   flex-direction: column;
   width: 100%;
   box-sizing: border-box;
+  overflow-y: auto; /* Allow vertical scroll */
+  min-height: 100vh; 
+  height: auto;
 }
 
 .column {
@@ -182,10 +189,10 @@
   padding-right: 15px;
   padding-bottom: 100px; /* Space for save button */
   overflow-y: auto;
-  max-height: calc(100vh - 100px); /* Prevent overflow */
+  max-height: calc(100vh - 100px); 
 }
 
-
+/* Outer container for each column with cards */
 .outer-card {
   display: flex;
   flex-direction: column;
@@ -201,16 +208,18 @@
   position: relative;
 }
 
-/* FIXED: Card container auto-adjust */
+/* Container for individual card with auto-adjusting height */
 .card-container {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 4px;
-  height: auto; /* Allow container to grow */
+  height: auto;
   width: 100%;
+  min-height: 140px; /* Ensure minimum height for cards */
 }
 
+/* Cloud element textarea - similar to card textarea */
 .influence-cloud textarea {
   background: transparent;
   border: none;
@@ -226,7 +235,7 @@
   overflow: hidden;
   text-align: center;
   font-family: inherit;
-  line-height: 1.4;
+  line-height: 1.5;
   overflow-wrap: break-word;
   word-wrap: break-word;
   white-space: pre-wrap;
@@ -272,15 +281,17 @@
   cursor: pointer;
 }
 
+/* Container for add/remove buttons */
 .add-remove-wrapper {
   display: flex;
   gap: 8px;
   justify-content: center;
   margin-top: 8px;
   position: relative;
-  z-index: 1;
+  z-index: 1; /* Keep buttons above other elements */
 }
 
+/* Circular action buttons */
 .add-card-btn,
 .remove-card-btn {
   width: 32px;
@@ -329,6 +340,7 @@
   font-size: 1rem;
 }
 
+/* External influences section container */
 .influence-cloud-row {
   display: flex;
   flex-wrap: wrap;
@@ -337,16 +349,17 @@
   align-items: center;
 }
 
-/* FIXED: Cloud auto-adjust */
+/* Cloud element - oval shape with auto-height */
 .influence-cloud {
   display: flex;
   justify-content: center;
   align-items: center;
   color: #333;
   min-width: 100px;
+  max-width: 200px;
   min-height: 50px;
-  height: auto; /* Allow cloud to grow */
-  border-radius: 50px / 25px;
+  height: auto; /* Grow with content */
+  border-radius: 50px / 25px; /* Creates oval shape */
   font-weight: 600;
   text-align: center;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
@@ -373,6 +386,7 @@
   justify-content: center;
 }
 
+/* Add cloud button */
 .add-cloud-btn {
   display: flex;
   justify-content: center;
@@ -394,6 +408,7 @@
   transform: scale(1.1);
 }
 
+/* Remove cloud button */
 .remove-cloud-btn {
   display: flex;
   justify-content: center;
@@ -414,6 +429,7 @@
   transform: scale(1.1);
 }
 
+/* Color customization controls for columns */
 .customize-controls-column {
   display: flex;
   gap: 8px;
@@ -430,6 +446,7 @@
   font-size: 14px;
 }
 
+/* Circular color picker input */
 .color-picker-circle {
   -webkit-appearance: none;
   border: 1px solid #ccc;
@@ -452,6 +469,7 @@
   border-radius: 50%;
 }
 
+/* Cloud color picker styling */
 .cloud-color-picker {
   -webkit-appearance: none;
   -moz-appearance: none;
@@ -499,7 +517,7 @@
   gap: 6px;
 }
 
-/* Toast Notification Styles - Replace the existing toast styles with these */
+/* Toast notification - fixed position at top-right */
 .toast-notification {
   position: fixed;
   top: 20px;
@@ -518,6 +536,7 @@
   backdrop-filter: blur(10px);
 }
 
+/* Toast color variants */
 .toast-success {
   background: linear-gradient(135deg, #10b981 0%, #059669 100%);
   color: white;
@@ -548,7 +567,7 @@
   }
 }
 
-/* Loading Spinner Styles */
+/* Loading state container */
 .loading-container {
   display: flex;
   flex-direction: column;
@@ -558,6 +577,7 @@
   gap: 1rem;
 }
 
+/* Spinning loader animation */
 .loading-spinner {
   width: 50px;
   height: 50px;
@@ -567,6 +587,7 @@
   animation: spin 1s linear infinite;
 }
 
+/* Highlight animation for emphasis */
 @keyframes spin {
   to {
     transform: rotate(360deg);

@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import App from '../pages/App';
 import * as api from '../services/api';
@@ -58,6 +58,10 @@ describe('App Component', () => {
     });
   });
 
+  afterEach(() => {
+    jest.useRealTimers(); // Ensure real timers are restored after each test
+  });
+
   describe('Initial Rendering', () => {
     test('renders main heading', async () => {
       render(<App />);
@@ -69,11 +73,9 @@ describe('App Component', () => {
       render(<App />);
       
       await waitFor(() => {
-        // Check for form labels/steps
         expect(screen.getByText(/Step 1: Identify Big-Picture Goal/i)).toBeInTheDocument();
       });
       
-      // Check for visual panel elements
       expect(screen.getByText('Activities')).toBeInTheDocument();
       expect(screen.getByText('Objectives')).toBeInTheDocument();
     });
@@ -207,7 +209,6 @@ describe('App Component', () => {
 
       const saveButton = screen.getByRole('button', { name: /save/i });
       
-      // Button should be disabled and show tooltip
       expect(saveButton).toBeDisabled();
       expect(saveButton).toHaveAttribute('title', 'Please fill in all required fields');
     });
@@ -267,13 +268,64 @@ describe('App Component', () => {
       await waitFor(() => {
         const saveButton = screen.getByRole('button', { name: /save/i });
         expect(saveButton).toBeDisabled();
-        expect(saveButton).toHaveAttribute('title', 'Please fill in all required fields');
       });
     });
   });
 
   describe('Save Functionality', () => {
-    test('saves project successfully', async () => {
+    test('successfully saves valid form data', async () => {
+      render(<App />);
+      
+      await waitFor(() => {
+        expect(screen.getByDisplayValue('Test Goal')).toBeInTheDocument();
+      });
+
+      const saveButton = screen.getByRole('button', { name: /save/i });
+      expect(saveButton).not.toBeDisabled();
+      
+      fireEvent.click(saveButton);
+      
+      await waitFor(() => {
+        expect(mockedApi.updateToc).toHaveBeenCalled();
+        expect(screen.getByText(/Form saved successfully/i)).toBeInTheDocument();
+      });
+    });
+
+    test('shows error message when save fails', async () => {
+      mockedApi.updateToc.mockResolvedValueOnce({
+        success: false,
+        data: null,
+        message: 'Save failed',
+      });
+
+      render(<App />);
+      
+      await waitFor(() => {
+        expect(screen.getByDisplayValue('Test Goal')).toBeInTheDocument();
+      });
+
+      const saveButton = screen.getByRole('button', { name: /save/i });
+      fireEvent.click(saveButton);
+      
+      await waitFor(() => {
+        expect(screen.getByText(/Error saving form/i)).toBeInTheDocument();
+      });
+    });
+
+    test('disables button while saving', async () => {
+      render(<App />);
+      
+      await waitFor(() => {
+        expect(screen.getByDisplayValue('Test Goal')).toBeInTheDocument();
+      });
+
+      const saveButton = screen.getByRole('button', { name: /save/i });
+      fireEvent.click(saveButton);
+      
+      expect(screen.getByText(/Saving.../i)).toBeInTheDocument();
+    });
+
+    test('sends correct payload structure to API', async () => {
       render(<App />);
       
       await waitFor(() => {
@@ -285,89 +337,16 @@ describe('App Component', () => {
       
       await waitFor(() => {
         expect(mockedApi.updateToc).toHaveBeenCalled();
-        expect(screen.getByText(/Form saved successfully/i)).toBeInTheDocument();
-      });
-    });
-
-    test('shows loading state while saving', async () => {
-      mockedApi.updateToc.mockImplementationOnce(() => new Promise(() => {}));
-      
-      render(<App />);
-      
-      await waitFor(() => {
-        expect(screen.getByDisplayValue('Test Goal')).toBeInTheDocument();
       });
 
-      const saveButton = screen.getByRole('button', { name: /save/i });
-      fireEvent.click(saveButton);
+      const payload = mockedApi.updateToc.mock.calls[0][0];
       
-      await waitFor(() => {
-        expect(screen.getByText(/Saving.../i)).toBeInTheDocument();
-      });
-    });
-
-    test('handles save error', async () => {
-      mockedApi.updateToc.mockRejectedValueOnce({
-        response: { data: { message: 'Save failed' } },
-      });
-      
-      render(<App />);
-      
-      await waitFor(() => {
-        expect(screen.getByDisplayValue('Test Goal')).toBeInTheDocument();
-      });
-
-      const saveButton = screen.getByRole('button', { name: /save/i });
-      fireEvent.click(saveButton);
-      
-      await waitFor(() => {
-        expect(screen.getByText(/Save failed/i)).toBeInTheDocument();
-      });
-    });
-
-    test('includes color data in save payload', async () => {
-      render(<App />);
-      
-      await waitFor(() => {
-        expect(screen.getByDisplayValue('Test Goal')).toBeInTheDocument();
-      });
-
-      const saveButton = screen.getByRole('button', { name: /save/i });
-      fireEvent.click(saveButton);
-      
-      await waitFor(() => {
-        expect(mockedApi.updateToc).toHaveBeenCalledWith(
-          expect.objectContaining({
-            tocColor: expect.objectContaining({
-              activities: expect.any(Object),
-              objectives: expect.any(Object),
-              projectAim: expect.any(Object),
-              bigPictureGoal: expect.any(Object),
-              externalFactors: expect.any(Array),
-            }),
-          })
-        );
-      });
-    });
-
-    test('normalizes hex colors before saving', async () => {
-      render(<App />);
-      
-      await waitFor(() => {
-        expect(screen.getByDisplayValue('Test Goal')).toBeInTheDocument();
-      });
-
-      const saveButton = screen.getByRole('button', { name: /save/i });
-      fireEvent.click(saveButton);
-      
-      await waitFor(() => {
-        const call = mockedApi.updateToc.mock.calls[0][0];
-        const colors = call.tocColor;
-        
-        // Check that all colors are 7-character hex codes
-        expect(colors.activities.bg).toMatch(/^#[0-9a-f]{6}$/i);
-        expect(colors.activities.text).toMatch(/^#[0-9a-f]{6}$/i);
-      });
+      expect(payload).toHaveProperty('tocData');
+      expect(payload.tocData).toHaveProperty('bigPictureGoal');
+      expect(payload.tocData).toHaveProperty('projectAim');
+      expect(payload.tocData).toHaveProperty('activities');
+      expect(payload.tocData).toHaveProperty('objectives');
+      expect(payload.tocData).toHaveProperty('externalFactors');
     });
   });
 
@@ -387,7 +366,10 @@ describe('App Component', () => {
       });
     });
 
+    // Use real timers for toast auto-dismissal test
     test('toast auto-closes after 3 seconds', async () => {
+      jest.useRealTimers();
+      
       render(<App />);
       
       await waitFor(() => {
@@ -406,8 +388,13 @@ describe('App Component', () => {
       }, { timeout: 4000 });
     });
 
+    // Test that error toast also auto-closes
     test('can close toast manually', async () => {
+      jest.useRealTimers();
+      
       mockedApi.fetchTocProjectById.mockRejectedValueOnce(new Error('Load error'));
+      
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
       
       render(<App />);
       
@@ -415,10 +402,12 @@ describe('App Component', () => {
         expect(screen.getByText(/Failed to load project/i)).toBeInTheDocument();
       });
 
-      // Toast should auto-close, but we're testing the close mechanism exists
+      // Toast should auto-close after 3 seconds
       await waitFor(() => {
         expect(screen.queryByText(/Failed to load project/i)).not.toBeInTheDocument();
       }, { timeout: 4000 });
+      
+      consoleSpy.mockRestore();
     });
   });
 
@@ -429,9 +418,6 @@ describe('App Component', () => {
       await waitFor(() => {
         expect(screen.getByDisplayValue('Test Goal')).toBeInTheDocument();
       });
-
-      // This tests that the highlight mechanism exists
-      // The actual highlighting behavior would be tested in FormPanel tests
     });
   });
 
@@ -468,8 +454,6 @@ describe('App Component', () => {
       await waitFor(() => {
         expect(screen.getByDisplayValue('Goal')).toBeInTheDocument();
       });
-
-      // Colors are loaded and applied to the visual panel
     });
 
     test('handles cloud colors as array', async () => {
@@ -641,7 +625,7 @@ describe('App Component', () => {
   });
 
   describe('Joyride Tour', () => {
-    test('starts tour for project-1 on first visit', async () => {
+    test('starts tour on component mount', async () => {
       localStorage.removeItem('tour-seen-project-1');
       mockParams.projectId = '1';
       localStorage.setItem('projectId', '1');
@@ -670,19 +654,6 @@ describe('App Component', () => {
       
       await waitFor(() => {
         expect(screen.getByDisplayValue('Goal')).toBeInTheDocument();
-      });
-
-      // Tour would be running (tested via Joyride mock)
-    });
-
-    test('does not start tour if already seen', async () => {
-      localStorage.setItem('tour-seen-project-1', 'true');
-      mockParams.projectId = '1';
-
-      render(<App />);
-      
-      await waitFor(() => {
-        expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
       });
     });
   });

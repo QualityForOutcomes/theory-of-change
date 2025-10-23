@@ -1,28 +1,31 @@
+/* SUPPORT PANEL OVERLAY */
 .support-overlay {
-  position: fixed;
+  position: fixed; /* Stays on full viewport */
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  z-index: 9998;
+  background: rgba(0, 0, 0, 0.5);  /* Semi-transparent dark overlay */
+  z-index: 9998; /* Below panel but above page content */
 }
 
+/* SUPPORT PANEL CONTAINER */
 .support-panel {
   position: fixed;
-  right: 0;
+  right: 0;        /* Slide in from right */
   top: 0;
   bottom: 0;
-  width: 400px;
-  max-width: 90%;
+  width: 400px;     /* Fixed panel width */
+  max-width: 90%;   /* Responsive on small screens */
   background: white;
-  box-shadow: -2px 0 10px rgba(0, 0, 0, 0.2);
-  z-index: 9999;
+  box-shadow: -2px 0 10px rgba(0, 0, 0, 0.2);  /* Subtle shadow for depth */
+  z-index: 9999;       /* Above overlay */
   display: flex;
-  flex-direction: column;
-  animation: slideIn 0.3s ease;
+  flex-direction: column;         /* Header + form vertically */
+  animation: slideIn 0.3s ease;   /* Smooth entry animation */
 }
 
+/* Slide-in animation from right */
 @keyframes slideIn {
   from {
     transform: translateX(100%);
@@ -32,48 +35,54 @@
   }
 }
 
+/* SUPPORT PANEL HEADER */
 .support-header {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  justify-content: space-between;   /* Title left, close button right */
+  align-items: center;              /* Vertically centered */
   padding: 20px;
-  border-bottom: 1px solid #e6e6e6;
+  border-bottom: 1px solid #e6e6e6; /* Separator line */
 }
 
 .support-header h2 {
   margin: 0;
-  font-size: 20px;
+  font-size: 20px;     /* Clear, readable header */
 }
 
 .close-btn {
   background: none;
   border: none;
-  font-size: 30px;
+  font-size: 30px;          /* Big, clickable X */
   cursor: pointer;
-  color: #666;
+  color: #666;              /* Neutral gray */ 
   line-height: 1;
 }
 
 .close-btn:hover {
-  color: #333;
+  color: #333;            /* Darker on hover */
 }
 
+
+/* SUPPORT FORM */
 .support-form {
   padding: 20px;
-  flex: 1;
-  overflow-y: auto;
+  flex: 1;                /* Fill remaining panel height */
+  overflow-y: auto;        /* Scroll if content is long */
 }
 
+/* Form groups spacing */
 .support-form .form-group {
   margin-bottom: 20px;
 }
 
+/* Form labels */
 .support-form label {
   display: block;
   margin-bottom: 8px;
   font-weight: 600;
 }
 
+/* Input & textarea styles */
 .support-form input,
 .support-form textarea {
   width: 100%;
@@ -87,6 +96,7 @@
   resize: vertical;
 }
 
+/* Submit button */
 .submit-btn {
   width: 100%;
   padding: 12px;
@@ -102,6 +112,7 @@
   background: linear-gradient(135deg, #b45ada, #7030f3);
 }
 
+/* Success message after submission */
 .success-message {
   padding: 40px 20px;
   text-align: center;
