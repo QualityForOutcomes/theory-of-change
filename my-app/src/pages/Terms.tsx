@@ -64,12 +64,22 @@ export default function Terms() {
   }
 
   const handleClose = () => {
-    // Try to close the window if it was opened in a new tab
+    // Prefer closing if the page was opened via script
     if (window.opener) {
       window.close();
-    } else {
-      // Otherwise, go back in history
+      return;
+    }
+    // If we have navigation history, go back
+    if (window.history.length > 1) {
       window.history.back();
+      return;
+    }
+    // Final fallback: navigate to login/home
+    const fallback = "/login";
+    try {
+      window.location.assign(fallback);
+    } catch {
+      window.location.href = "/";
     }
   };
 

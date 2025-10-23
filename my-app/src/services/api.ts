@@ -6,6 +6,7 @@ import { verifyLogin, signToken, createUser } from "../mocks/service.memory";
 
 // User backend (auth, user, project)
 const API_BASE = process.env.REACT_APP_API_BASE;
+const ADMIN_API_BASE = process.env.REACT_APP_ADMIN_API_BASE || API_BASE;
 // Password reset endpoints share the same user backend base
 const PASS_API_BASE = API_BASE;
 
@@ -645,57 +646,28 @@ export const updateSubscription = async (data: {
 export const fetchTerms = async () => {
   try {
     const response = await axios.get(
-      `${API_BASE}/api/admin/terms`,
+      `${ADMIN_API_BASE}/api/admin/terms`,
       { headers: getAuthHeaders() }
     );
 
-    const { success, data, message } = response.data || {};
-    if (!success) {
-      throw new Error(message || "Failed to fetch terms");
+    const payload = response.data || {};
+    if (payload && typeof payload === 'object' && 'content' in payload) {
+      return payload;
     }
-    return data;
+
+    const { success, data, message } = payload;
+    if (success) return data;
+
+    throw new Error(message || "Failed to fetch terms");
   } catch (err: any) {
-    // Fallback for when backend endpoint doesn't exist yet
-    /*if (err.response?.status === 404 || isNetworkError(err)) {
-      return {
-        content: `# Terms and Conditions
-
-## 1. Acceptance of Terms
-By accessing and using this Theory of Change Visualization tool, you accept and agree to be bound by the terms and provision of this agreement.
-
-## 2. Use License
-Permission is granted to temporarily download one copy of the materials on this website for personal, non-commercial transitory viewing only.
-
-## 3. Disclaimer
-The materials on this website are provided on an 'as is' basis. We make no warranties, expressed or implied, and hereby disclaim and negate all other warranties including without limitation, implied warranties or conditions of merchantability, fitness for a particular purpose, or non-infringement of intellectual property or other violation of rights.
-
-## 4. Limitations
-In no event shall Quality for Outcomes or its suppliers be liable for any damages (including, without limitation, damages for loss of data or profit, or due to business interruption) arising out of the use or inability to use the materials on this website.
-
-## 5. Privacy Policy
-Your privacy is important to us. We collect and use your information in accordance with our Privacy Policy.
-
-## 6. User Accounts
-You are responsible for maintaining the confidentiality of your account and password and for restricting access to your computer.
-
-## 7. Modifications
-Quality for Outcomes may revise these terms of service at any time without notice. By using this website, you are agreeing to be bound by the then current version of these terms of service.
-
-## 8. Contact Information
-If you have any questions about these Terms and Conditions, please contact us at support@qualityforoutcomes.com.
-
-Last updated: ${new Date().toLocaleDateString()}`,
-        lastUpdated: new Date().toISOString()
-      };
-    }*/
     throw new Error(err.response?.data?.message || err.message || "Failed to fetch terms");
   }
 };
 
 export const updateTerms = async (content: string) => {
   try {
-    const response = await axios.put(
-      `${API_BASE}/api/admin/terms`,
+    const response = await axios.post(
+      `${ADMIN_API_BASE}/api/admin/terms`,
       { content },
       { headers: { ...getAuthHeaders(), "Content-Type": "application/json" } }
     );
