@@ -6,6 +6,7 @@ import "../style/App.css";
 import { updateToc, fetchTocProjectById, fetchUserTocs } from "../services/api";
 import Joyride, { Step, CallBackProps, STATUS } from "react-joyride";
 
+// Main data structure for Theory of Change project
 export type Data = {
   projectTitle: string;
   goal: string;
@@ -21,7 +22,17 @@ export type ColumnColors = {
 
 export type CloudColor = { bg: string; text: string };
 
-const Toast = ({ message, type = "success", onClose }: { message: string; type?: "success" | "error" | "warning"; onClose: () => void }) => {
+// Toast notification component - displays temporary messages
+const Toast = ({
+  message,
+  type = "success",
+  onClose,
+}: {
+  message: string;
+  type?: "success" | "error" | "warning";
+  onClose: () => void;
+}) => {
+  // Auto-dismiss after 3 seconds
   useEffect(() => {
     const timer = setTimeout(onClose, 3000);
     return () => clearTimeout(timer);
@@ -29,21 +40,76 @@ const Toast = ({ message, type = "success", onClose }: { message: string; type?:
 
   const icons = {
     success: (
-      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <circle cx="10" cy="10" r="9" stroke="currentColor" strokeWidth="2" fill="none"/>
-        <path d="M6 10L9 13L14 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+      <svg
+        width="20"
+        height="20"
+        viewBox="0 0 20 20"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <circle
+          cx="10"
+          cy="10"
+          r="9"
+          stroke="currentColor"
+          strokeWidth="2"
+          fill="none"
+        />
+        <path
+          d="M6 10L9 13L14 7"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
       </svg>
     ),
     error: (
-      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <circle cx="10" cy="10" r="9" stroke="currentColor" strokeWidth="2" fill="none"/>
-        <path d="M7 7L13 13M13 7L7 13" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+      <svg
+        width="20"
+        height="20"
+        viewBox="0 0 20 20"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <circle
+          cx="10"
+          cy="10"
+          r="9"
+          stroke="currentColor"
+          strokeWidth="2"
+          fill="none"
+        />
+        <path
+          d="M7 7L13 13M13 7L7 13"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+        />
       </svg>
     ),
     warning: (
-      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M10 2L2 17h16L10 2z" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
-        <path d="M10 8v4M10 14v.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+      <svg
+        width="20"
+        height="20"
+        viewBox="0 0 20 20"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="M10 2L2 17h16L10 2z"
+          stroke="currentColor"
+          strokeWidth="2"
+          fill="none"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+        <path
+          d="M10 8v4M10 14v.5"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+        />
       </svg>
     ),
   };
@@ -57,11 +123,13 @@ const Toast = ({ message, type = "success", onClose }: { message: string; type?:
 };
 
 function App() {
+  // Get project ID from URL params
   const { projectId } = useParams<{ projectId: string }>();
-  
+
   const userId = localStorage.getItem("userId");
   const currentProjectId = projectId || localStorage.getItem("projectId");
-  
+
+  // Default color scheme for column cards
   const defaultColumnColors = {
     activities: { bg: "#8C6BDC", text: "#ffffff" },
     objectives: { bg: "#A07CFD", text: "#ffffff" },
@@ -69,6 +137,7 @@ function App() {
     goal: { bg: "#8C6BDC", text: "#ffffff" },
   };
 
+  // State management
   const [data, setData] = useState<Data>({
     projectTitle: "",
     goal: "",
@@ -80,19 +149,23 @@ function App() {
   });
 
   const [columnColors, setColumnColors] = useState<{
-    [field in keyof Data]?: { bg: string; text: string }
+    [field in keyof Data]?: { bg: string; text: string };
   }>(defaultColumnColors);
 
-  const [cloudColors, setCloudColors] = useState<{ bg: string; text: string }[]>([
-    { bg: "#cbe3ff", text: "#333333" },
-  ]);
+  const [cloudColors, setCloudColors] = useState<
+    { bg: string; text: string }[]
+  >([{ bg: "#cbe3ff", text: "#333333" }]);
 
   const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [runTour, setRunTour] = useState(false);
+  const [runTour, setRunTour] = useState(false); // Controls onboarding tour
   const [highlightField, setHighlightField] = useState<string | null>(null);
-  const [toast, setToast] = useState<{ message: string; type: "success" | "error" | "warning" } | null>(null);
+  const [toast, setToast] = useState<{
+    message: string;
+    type: "success" | "error" | "warning";
+  } | null>(null);
 
+  // Normalize 3-character hex codes to 6-character format
   const normalizeHex = (hex: string) => {
     if (/^#[0-9a-f]{3}$/i.test(hex)) {
       return "#" + hex[1] + hex[1] + hex[2] + hex[2] + hex[3] + hex[3];
@@ -100,25 +173,25 @@ function App() {
     return hex;
   };
 
-  // Helper function to check if a field has content
+  // Check if a field has actual content
   const hasContent = (value: string): boolean => {
-    if (!value || value.trim() === '') return false;
-    
+    if (!value || value.trim() === "") return false;
+
     try {
       const parsed = JSON.parse(value);
       if (Array.isArray(parsed)) {
-        return parsed.some(item => item && item.trim() !== '');
+        return parsed.some((item) => item && item.trim() !== "");
       }
-      return value.trim() !== '';
+      return value.trim() !== "";
     } catch {
-      return value.trim() !== '';
+      return value.trim() !== "";
     }
   };
 
-  // Check if all required fields are filled
+  // Validate that all required fields are filled
   const isFormValid = (): boolean => {
     return (
-      data.projectTitle.trim() !== '' &&
+      data.projectTitle.trim() !== "" &&
       hasContent(data.goal) &&
       hasContent(data.aim) &&
       hasContent(data.beneficiaries) &&
@@ -132,39 +205,40 @@ function App() {
   const getEmptyFields = (): string[] => {
     const emptyFields: string[] = [];
     const fieldNames: Record<string, string> = {
-      projectTitle: 'Project Title',
-      goal: 'Goal',
-      aim: 'Aim',
-      beneficiaries: 'Beneficiaries',
-      activities: 'Activities',
-      objectives: 'Objectives',
-      externalInfluences: 'External Influences'
+      projectTitle: "Project Title",
+      goal: "Goal",
+      aim: "Aim",
+      beneficiaries: "Beneficiaries",
+      activities: "Activities",
+      objectives: "Objectives",
+      externalInfluences: "External Influences",
     };
 
-    if (data.projectTitle.trim() === '') emptyFields.push(fieldNames.projectTitle);
+    if (data.projectTitle.trim() === "")
+      emptyFields.push(fieldNames.projectTitle);
     if (!hasContent(data.goal)) emptyFields.push(fieldNames.goal);
     if (!hasContent(data.aim)) emptyFields.push(fieldNames.aim);
-    if (!hasContent(data.beneficiaries)) emptyFields.push(fieldNames.beneficiaries);
+    if (!hasContent(data.beneficiaries))
+      emptyFields.push(fieldNames.beneficiaries);
     if (!hasContent(data.activities)) emptyFields.push(fieldNames.activities);
     if (!hasContent(data.objectives)) emptyFields.push(fieldNames.objectives);
-    if (!hasContent(data.externalInfluences)) emptyFields.push(fieldNames.externalInfluences);
+    if (!hasContent(data.externalInfluences))
+      emptyFields.push(fieldNames.externalInfluences);
 
     return emptyFields;
   };
 
+  // Start onboarding tour after 1 second delay
   useEffect(() => {
-    const currentProjectId = projectId || localStorage.getItem("projectId");
-    const hasSeenTour = localStorage.getItem("tour-seen-project-1");
-    
-    if (currentProjectId === "1" && !hasSeenTour) {
-      setTimeout(() => setRunTour(true), 1000);
-    }
+    setTimeout(() => setRunTour(true), 1000);
   }, [projectId]);
 
+  // Load project data from API when component mounts or projectId changes
   useEffect(() => {
     const loadProject = async () => {
-      const projectIdFromParams = projectId || localStorage.getItem("projectId");
-      
+      const projectIdFromParams =
+        projectId || localStorage.getItem("projectId");
+
       if (!projectIdFromParams) {
         setColumnColors(defaultColumnColors);
         setCloudColors([{ bg: "#cbe3ff", text: "#333333" }]);
@@ -179,16 +253,19 @@ function App() {
           const toc = project.tocData;
           const colors = project.tocColor || {};
 
+          // Parse external influences array
           let externalInfluencesString = "";
           if (toc.externalFactors && Array.isArray(toc.externalFactors)) {
             externalInfluencesString = JSON.stringify(toc.externalFactors);
           }
 
+          // Parse activities array
           let activitiesString = "";
           if (toc.activities && Array.isArray(toc.activities)) {
             activitiesString = JSON.stringify(toc.activities);
           }
 
+          // Parse objectives array
           let objectivesString = "";
           if (toc.objectives && Array.isArray(toc.objectives)) {
             objectivesString = JSON.stringify(toc.objectives);
@@ -204,26 +281,28 @@ function App() {
             externalInfluences: externalInfluencesString,
           });
 
+          // Load saved colors or use defaults
           const newColumnColors = {
-            activities: (colors.activities?.bg) 
-              ? colors.activities 
+            activities: colors.activities?.bg
+              ? colors.activities
               : defaultColumnColors.activities,
-            objectives: (colors.objectives?.bg) 
-              ? colors.objectives 
+            objectives: colors.objectives?.bg
+              ? colors.objectives
               : defaultColumnColors.objectives,
-            aim: (colors.projectAim?.bg) 
-              ? colors.projectAim 
+            aim: colors.projectAim?.bg
+              ? colors.projectAim
               : defaultColumnColors.aim,
-            goal: (colors.bigPictureGoal?.bg) 
-              ? colors.bigPictureGoal 
+            goal: colors.bigPictureGoal?.bg
+              ? colors.bigPictureGoal
               : defaultColumnColors.goal,
           };
           setColumnColors(newColumnColors);
 
+          // Load cloud colors - handles both array and object formats
           if (colors.externalFactors) {
             if (Array.isArray(colors.externalFactors)) {
               setCloudColors([...colors.externalFactors]);
-            } else if (typeof colors.externalFactors === 'object') {
+            } else if (typeof colors.externalFactors === "object") {
               const cloudArray = [];
               for (let i = 0; i < 10; i++) {
                 if (colors.externalFactors[i.toString()]) {
@@ -232,7 +311,11 @@ function App() {
                   break;
                 }
               }
-              setCloudColors(cloudArray.length > 0 ? cloudArray : [{ bg: "#cbe3ff", text: "#333333" }]);
+              setCloudColors(
+                cloudArray.length > 0
+                  ? cloudArray
+                  : [{ bg: "#cbe3ff", text: "#333333" }]
+              );
             }
           } else {
             setCloudColors([{ bg: "#cbe3ff", text: "#333333" }]);
@@ -258,7 +341,9 @@ function App() {
     setData((prev) => ({ ...prev, [field]: value }));
   };
 
-  const updateColumnColors = (colors: { [field in keyof Data]?: { bg: string; text: string } }) => {
+  const updateColumnColors = (colors: {
+    [field in keyof Data]?: { bg: string; text: string };
+  }) => {
     setColumnColors(colors);
   };
 
@@ -271,39 +356,49 @@ function App() {
     setTimeout(() => setHighlightField(null), 2100);
   };
 
+  // Save project data to backend
   const handleSave = async () => {
     // Validate form before saving
     if (!isFormValid()) {
       const emptyFields = getEmptyFields();
-      const fieldList = emptyFields.length <= 3 
-        ? emptyFields.join(', ')
-        : `${emptyFields.slice(0, 2).join(', ')}, and ${emptyFields.length - 2} more`;
-      
-      setToast({ 
-        message: `Please fill in all required fields: ${fieldList}`, 
-        type: "warning" 
+      const fieldList =
+        emptyFields.length <= 3
+          ? emptyFields.join(", ")
+          : `${emptyFields.slice(0, 2).join(", ")}, and ${
+              emptyFields.length - 2
+            } more`;
+
+      setToast({
+        message: `Please fill in all required fields: ${fieldList}`,
+        type: "warning",
       });
       return;
     }
 
     setIsSaving(true);
     try {
+      // Helper to parse field values that might be JSON arrays
       const parseArrayField = (value: string): string[] => {
         if (!value) return [];
         try {
           const parsed = JSON.parse(value);
           return Array.isArray(parsed) ? parsed : [value];
         } catch {
-          return value.split(",").map(s => s.trim()).filter(s => s);
+          return value
+            .split(",")
+            .map((s) => s.trim())
+            .filter((s) => s);
         }
       };
 
       const externalFactorsArray = parseArrayField(data.externalInfluences);
 
-      const normalizedCloudColors = externalFactorsArray.map((_, index) => 
-        cloudColors[index] || { bg: "#cbe3ff", text: "#333333" }
+      // Ensure cloud colors array matches number of external influences
+      const normalizedCloudColors = externalFactorsArray.map(
+        (_, index) => cloudColors[index] || { bg: "#cbe3ff", text: "#333333" }
       );
 
+      // Prepare color payload with normalized hex values
       const tocColorPayload = {
         bigPictureGoal: {
           bg: normalizeHex(columnColors.goal?.bg || "#8C6BDC"),
@@ -321,12 +416,13 @@ function App() {
           bg: normalizeHex(columnColors.activities?.bg || "#8C6BDC"),
           text: normalizeHex(columnColors.activities?.text || "#ffffff"),
         },
-        externalFactors: normalizedCloudColors.map(c => ({
+        externalFactors: normalizedCloudColors.map((c) => ({
           bg: normalizeHex(c.bg),
           text: normalizeHex(c.text),
         })),
       };
 
+      // Prepare API payload
       const payload = {
         userId,
         projectId: currentProjectId,
@@ -337,9 +433,9 @@ function App() {
           bigPictureGoal: data.goal || "",
           projectAim: data.aim || "",
           objectives: parseArrayField(data.objectives),
-          beneficiaries: { 
-            description: data.beneficiaries || "", 
-            estimatedReach: 0 
+          beneficiaries: {
+            description: data.beneficiaries || "",
+            estimatedReach: 0,
           },
           activities: parseArrayField(data.activities),
           outcomes: [],
@@ -353,35 +449,57 @@ function App() {
       if (result.success) {
         setToast({ message: "Form saved successfully!", type: "success" });
       } else {
-        setToast({ message: `Error saving form: ${result.message}`, type: "error" });
+        setToast({
+          message: `Error saving form: ${result.message}`,
+          type: "error",
+        });
         console.error("Save error:", result);
       }
     } catch (err: any) {
       console.error("Save error:", err);
-      setToast({ message: err.response?.data?.message || "Unexpected error occurred", type: "error" });
+      setToast({
+        message: err.response?.data?.message || "Unexpected error occurred",
+        type: "error",
+      });
     } finally {
       setIsSaving(false);
     }
   };
 
+  // Onboarding tour steps
   const steps: Step[] = [
-    { target: ".progress-container", content: "Track your completion progress here." },
+    {
+      target: ".progress-container",
+      content: "Track your completion progress here.",
+    },
     { target: "#step-goal", content: "Step 1: Define your long-term Goal." },
     { target: "#step-aim", content: "Step 2: Define your project Aim." },
-    { target: "#step-beneficiaries", content: "Step 3: Specify the beneficiaries." },
+    {
+      target: "#step-beneficiaries",
+      content: "Step 3: Specify the beneficiaries.",
+    },
     { target: "#step-activities", content: "Step 4: List project activities." },
-    { target: "#step-objectives", content: "Step 5: Define project objectives." },
-    { target: "#step-externalInfluences", content: "Step 6: Mention external influences." },
-    { target: ".btn.customise", content: "Step 7: Customise your visual map colors." },
+    {
+      target: "#step-objectives",
+      content: "Step 5: Define project objectives.",
+    },
+    {
+      target: "#step-externalInfluences",
+      content: "Step 6: Mention external influences.",
+    },
+    {
+      target: ".btn.customize",
+      content: "Step 7: Customise your visual map colors.",
+    },
     { target: ".btn.export", content: "Step 8: Export your diagram." },
     { target: ".btn-save", content: "Step 9: Save your work." },
   ];
 
+  // Handle tour completion or skip
   const handleJoyrideCallback = (data: CallBackProps) => {
     const { status } = data;
-    
+
     if (status === STATUS.FINISHED || status === STATUS.SKIPPED) {
-      localStorage.setItem("tour-seen-project-1", "true");
       setRunTour(false);
     }
   };
@@ -390,12 +508,19 @@ function App() {
 
   return (
     <div>
-      {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
-      
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
+      )}
+
       <div className="app-header">
         <h1>Theory of Change Visualisation</h1>
       </div>
 
+      {/* Onboarding tour */}
       <Joyride
         steps={steps}
         run={runTour}
@@ -410,14 +535,17 @@ function App() {
       />
 
       <div className="app-container">
-        <FormPanel 
-          data={data} 
+        {/* Left panel - Form inputs */}
+        <FormPanel
+          data={data}
           updateField={updateField}
           highlightField={highlightField}
         />
+
+        {/* Right panel - Visual diagram */}
         <div className="right-panel-wrapper">
-          <VisualPanel 
-            data={data} 
+          <VisualPanel
+            data={data}
             updateField={updateField}
             columnColors={columnColors}
             cloudColors={cloudColors}
@@ -426,9 +554,11 @@ function App() {
             onFieldAdded={handleFieldAdded}
             isLoading={isLoading}
           />
-          <button 
-            className="btn-save" 
-            onClick={handleSave} 
+
+          {/* Save button - disabled if form is invalid */}
+          <button
+            className="btn-save"
+            onClick={handleSave}
             disabled={isSaving || !canSave}
             title={!canSave ? "Please fill in all required fields" : ""}
           >

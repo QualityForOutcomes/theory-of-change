@@ -26,10 +26,13 @@ function getAllowedOrigins(): string[] {
         'http://localhost:5173',      // Vite dev server
         'http://localhost:5174',      // Vite dev server (alternate port)
         'http://localhost:3000',      // React dev server
+        'http://localhost:3004',      // Static preview server
         'https://qfo-admin.vercel.app',         // Legacy production admin frontend
         'https://qfo-admin-*.vercel.app',       // Legacy preview deployments (wildcard)
         'https://toc-adminfrontend.vercel.app', // Current production admin frontend
         'https://toc-adminfrontend-*.vercel.app', // Current preview deployments (wildcard)
+        'https://toc-userfrontend.vercel.app',
+        'https://toc-userfrontend-*.vercel.app',
     ]
 }
 

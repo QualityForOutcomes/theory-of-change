@@ -1,4 +1,4 @@
-/* Popup Styles */
+/* Overlay for popup modals */
 .popup-overlay {
   position: fixed;
   top: 0;
@@ -13,6 +13,7 @@
   animation: fadeIn 0.3s ease-out;
 }
 
+/* Popup content container */
 .popup-content {
   background: white;
   padding: 30px;
@@ -24,6 +25,7 @@
   animation: slideIn 0.3s ease-out;
 }
 
+/* Success / Error variants */
 .popup-content.success {
   border-top: 4px solid var(--success-color);
 }
@@ -32,6 +34,7 @@
   border-top: 4px solid var(--error-color);
 }
 
+/* Popup header (icon + title) */
 .popup-header {
   display: flex;
   flex-direction: column;
@@ -39,11 +42,13 @@
   margin-bottom: 20px;
 }
 
+/* Icon inside popup header */
 .popup-icon {
   font-size: 48px;
   margin-bottom: 10px;
 }
 
+/* Header text */
 .popup-header h3 {
   margin: 0;
   font-size: 24px;
@@ -51,6 +56,7 @@
   color: var(--text-primary);
 }
 
+/* Popup message */
 .popup-content p {
   font-size: 16px;
   color: var(--text-secondary);
@@ -58,6 +64,7 @@
   line-height: 1.5;
 }
 
+/* Close button */
 .popup-close-btn {
   background: var(--primary-color);
   color: white;
@@ -93,7 +100,6 @@
   }
 }
 
-/* Your existing profile.css styles */
 :root {
   --navbar-height: 60px;
   --primary-color: #8750fd;
@@ -119,7 +125,7 @@
   background: transparent;
 }
 
-/* Left panel - Enhanced */
+/* Left panel */
 .profile-left {
   flex: 1;
   min-width: 250px;
@@ -136,6 +142,7 @@
   overflow: hidden;
 }
 
+/* Decorative top gradient */
 .profile-left::before {
   content: '';
   position: absolute;
@@ -147,17 +154,19 @@
   z-index: 0;
 }
 
+/* Ensure content is above gradient */
 .profile-left > * {
   position: relative;
   z-index: 1;
 }
 
+/* Hover effect */
 .profile-left:hover {
   transform: translateY(-5px);
   box-shadow: var(--shadow-medium);
 }
 
-/* Avatar Styles - Enhanced */
+/* Avatar Styles */
 .avatar {
   width: 100px;
   height: 100px;
@@ -200,7 +209,6 @@
   transform: scale(1.05);
 }
 
-/* Typography Enhancements */
 .display-name {
   font-size: 28px;
   font-weight: 700;
@@ -244,7 +252,7 @@
   max-width: 220px;
 }
 
-/* Right panel - Enhanced */
+/* Right panel */
 .profile-right {
   flex: 2;
   background: #fff;
@@ -268,7 +276,7 @@
   gap: 10px;
 }
 
-/* Subscription Card - Enhanced */
+/* Subscription Card */
 .subscription-card {
   background: linear-gradient(135deg, #f8fafc 0%, var(--secondary-color) 100%);
   padding: 25px;
@@ -331,6 +339,7 @@
   color: white;
 }
 
+/* Expiry info */
 .expiry-info {
   background: white;
   padding: 15px;
@@ -344,7 +353,7 @@
   color: var(--text-primary);
 }
 
-/* Action Buttons */
+/* Subscription action buttons */
 .subscription-actions {
   display: flex;
   gap: 12px;
@@ -557,7 +566,7 @@
   }
 }
 
-/* Edit Form Styles */
+/* Edit Form */
 .edit-form {
   width: 100%;
   max-width: 300px;

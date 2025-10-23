@@ -3,9 +3,9 @@ import { withCors } from '../../lib/cors';
 import { supabase } from '../../lib/supabase';
 import { verifyAdminAuto, hasRequiredRole } from '../../lib/auth';
 import nodemailer from 'nodemailer';
-
+ 
 const NEWSLETTER_TABLE = 'UserNewsLetterSubs';
-
+ 
 // Environment config
 const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY || '';
 const NEWSLETTER_FROM_EMAIL = process.env.NEWSLETTER_FROM_EMAIL || '';
@@ -14,12 +14,12 @@ const SMTP_HOST = process.env.SMTP_HOST || '';
 const SMTP_PORT = Number(process.env.SMTP_PORT || 0);
 const SMTP_USER = process.env.SMTP_USER || '';
 const SMTP_PASS = process.env.SMTP_PASS || '';
-
+ 
 // Optional SMTP transport
 const smtpTransport = (SMTP_HOST && SMTP_PORT && SMTP_USER && SMTP_PASS)
   ? nodemailer.createTransport({ host: SMTP_HOST, port: SMTP_PORT, secure: SMTP_PORT === 465, auth: { user: SMTP_USER, pass: SMTP_PASS } })
   : null;
-
+ 
 // Lazy init SendGrid to avoid import cost when unused
 let sgMail: any = null;
 if (SENDGRID_API_KEY) {
@@ -31,14 +31,14 @@ if (SENDGRID_API_KEY) {
     sgMail = null;
   }
 }
-
+ 
 export default withCors(async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST');
     res.status(405).json({ success: false, message: 'Method Not Allowed', statusCode: 405 });
     return;
   }
-
+ 
   // Admin authentication
   const auth = await verifyAdminAuto(req);
   // if (!auth.success || !auth.user || !hasRequiredRole(auth.user.role || 'viewer', 'admin')) {
@@ -59,7 +59,7 @@ export default withCors(async function handler(req: VercelRequest, res: VercelRe
     res.status(400).json({ success: false, message: 'HTML content is required', statusCode: 400 });
     return;
   }
-
+ 
   try {
     const { data, error } = await supabase
       .from(NEWSLETTER_TABLE)
@@ -75,7 +75,7 @@ export default withCors(async function handler(req: VercelRequest, res: VercelRe
       res.status(200).json({ success: true, message: 'Campaign dispatched', statusCode: 200, data: { total: 0, sent: 0, failed: 0, failures: [] } });
       return;
     }
-
+ 
     // Prefer SMTP
     if (smtpTransport && NEWSLETTER_FROM_EMAIL) {
       const failures: string[] = [];
@@ -97,7 +97,7 @@ export default withCors(async function handler(req: VercelRequest, res: VercelRe
       res.status(200).json({ success: true, message: 'Campaign dispatched', statusCode: 200, data: { total: recipients.length, sent, failed: failures.length, failures } });
       return;
     }
-
+ 
     // Then SendGrid
     if (sgMail && NEWSLETTER_FROM_EMAIL) {
       try {
@@ -112,7 +112,7 @@ export default withCors(async function handler(req: VercelRequest, res: VercelRe
         return;
       }
     }
-
+ 
     // Fallback simulation
     res.status(200).json({ success: true, message: 'Campaign dispatched', statusCode: 200, data: { total: recipients.length, sent: recipients.length, failed: 0, failures: [] } });
   } catch (err: any) {

@@ -2,7 +2,7 @@ import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import "../style/Export.css"
 
-// Get user plan from localStorage
+// Retrieve user's subscription plan from localStorage
 const getUserPlanFromStorage = (): 'free' | 'pro' | 'premium' => {
   const userPlan = localStorage.getItem('userPlan');
   if (userPlan === 'pro' || userPlan === 'premium') {
@@ -11,7 +11,7 @@ const getUserPlanFromStorage = (): 'free' | 'pro' | 'premium' => {
   return 'free';
 };
 
-// Check if user has export access
+// Check if user has permission to export (Pro/Premium only)
 const hasExportAccess = (): boolean => {
   const userPlan = getUserPlanFromStorage();
   const hasAccess = userPlan === 'pro' || userPlan === 'premium';
@@ -26,7 +26,7 @@ const hasExportAccess = (): boolean => {
   return hasAccess;
 };
 
-// Subscription check modal
+// Modal for free users prompting upgrade to access export
 const showSubscriptionRequiredModal = (onUpgradeClick?: () => void): Promise<void> => {
   return new Promise((resolve) => {
     const overlay = document.createElement('div');
@@ -64,11 +64,13 @@ const showSubscriptionRequiredModal = (onUpgradeClick?: () => void): Promise<voi
       resolve();
     });
     
+    // Navigate to subscription page on upgrade click
     modal.querySelector('.cancel')?.addEventListener('click', () => {
       document.body.removeChild(overlay);
       resolve();
     });
     
+    // Close on overlay click
     overlay.addEventListener('click', (e) => {
       if (e.target === overlay) {
         document.body.removeChild(overlay);
@@ -78,6 +80,7 @@ const showSubscriptionRequiredModal = (onUpgradeClick?: () => void): Promise<voi
   });
 };
 
+// Modal for selecting export format (PNG or PDF)
 const showExportModal = (): Promise<string | null> => {
   return new Promise((resolve) => {
     const overlay = document.createElement('div');
@@ -110,6 +113,7 @@ const showExportModal = (): Promise<string | null> => {
     overlay.appendChild(modal);
     document.body.appendChild(overlay);
     
+    // Handle format selection
     const formatButtons = modal.querySelectorAll('.export-format-btn');
     formatButtons.forEach(btn => {
       btn.addEventListener('click', () => {
@@ -138,41 +142,38 @@ const showExportModal = (): Promise<string | null> => {
   });
 };
 
-// Main export function - READS FROM LOCALSTORAGE
+// Main export function - handles permission check, UI preparation, and export
 export const exportVisualDiagram = async (
   element: HTMLElement, 
   filename: string = 'theory-of-change',
   onUpgradeClick?: () => void
 ) => {
   try {
-    // Check export access from localStorage
-    console.log('🚀 Export initiated');
     
+    // Check export permission - redirect free users to upgrade
     if (!hasExportAccess()) {
-      console.log('❌ User does not have export access - showing upgrade modal');
       await showSubscriptionRequiredModal(onUpgradeClick);
       return; // Stop execution if user doesn't have access
     }
     
-    console.log('✅ User has export access - proceeding with export');
-
+    // Get user's format preference
     const format = await showExportModal();
     
     if (!format) {
       return;
     }
 
-    // Add export class
+    // Prepare element for export - add export mode class
     element.classList.add('export-mode');
 
-    // Hide sidebar
+   // Hide sidebar during export
     const sidebar = document.querySelector('.sidebar') as HTMLElement;
     const originalSidebarDisplay = sidebar ? sidebar.style.display : '';
     if (sidebar) {
       sidebar.style.display = 'none';
     }
 
-    // Hide customization controls
+    // Hide all interactive controls (buttons, color pickers)
     const customizeControls = element.querySelectorAll(
       '.customize-controls-column, .cloud-customize-controls, .add-card-btn, .remove-card-btn, .add-cloud-btn, .remove-cloud-btn, .cloud-buttons, .add-remove-wrapper'
     );
@@ -180,7 +181,7 @@ export const exportVisualDiagram = async (
       (el as HTMLElement).style.display = 'none';
     });
 
-    // Store original styles for ALL containers and elements
+    // Store original styles to restore after export
     const originalStyles: Array<{
       el: HTMLElement;
       height: string;
@@ -190,7 +191,7 @@ export const exportVisualDiagram = async (
       whiteSpace: string;
     }> = [];
 
-    // Force expand all parent containers (cards, clouds, wrappers) - HEIGHT ONLY
+    // Force all containers to expand fully (prevent content clipping)
     const containers = element.querySelectorAll(
       '.flow-card, .influence-cloud, .card-container, .outer-card, .card-value, .cloud-value, .flow-row'
     );
@@ -206,7 +207,7 @@ export const exportVisualDiagram = async (
         whiteSpace: el.style.whiteSpace
       });
       
-      // Force containers to expand and NOT clip children
+      // Remove height constraints and show all content
       el.style.height = 'auto';
       el.style.minHeight = 'auto';
       el.style.maxHeight = 'none';
@@ -214,7 +215,7 @@ export const exportVisualDiagram = async (
       el.style.whiteSpace = 'normal';
     });
     
-    // ensure any wrapper divs don't clip
+    // ensure any wrapper divs don't clip content
     const allDivs = element.querySelectorAll('div');
     const divOriginalStyles: Array<{ el: HTMLElement; overflow: string }> = [];
     allDivs.forEach((div) => {
@@ -223,13 +224,13 @@ export const exportVisualDiagram = async (
         el: el,
         overflow: el.style.overflow
       });
-      // Force all divs to show overflow content
+     // Force visible overflow for all divs
       if (el.style.overflow === 'hidden' || el.style.overflow === 'auto' || el.style.overflow === 'scroll') {
         el.style.overflow = 'visible';
       }
     });
 
-    // Force all textareas to expand to their full scrollHeight
+    // Replace textareas with divs for proper rendering in canvas
     const allTextareas = element.querySelectorAll('textarea');
     const originalTextareaStyles: Array<{
       el: HTMLTextAreaElement;
@@ -255,12 +256,12 @@ export const exportVisualDiagram = async (
         display: textarea.style.display
       });
       
-      // Create a div replacement that will render the text properly
+      // Create div that mimics textarea styling
       const replacement = document.createElement('div');
       replacement.className = 'textarea-replacement';
       replacement.textContent = textarea.value;
       
-      // Copy all computed styles from textarea to div
+      // Copy computed styles from textarea to ensure identical appearance
       const computedStyle = window.getComputedStyle(textarea);
       replacement.style.cssText = textarea.style.cssText;
       replacement.style.width = computedStyle.width;
@@ -282,17 +283,17 @@ export const exportVisualDiagram = async (
       replacement.style.color = computedStyle.color;
       replacement.style.boxSizing = 'border-box';
       
-      // Hide textarea and insert replacement
+     // Hide original textarea and insert replacement
       textarea.style.display = 'none';
       textarea.parentNode?.insertBefore(replacement, textarea);
       
       textareaReplacements.push({ textarea, replacement });
     });
 
-    // Wait for layout to settle and force another reflow
+    // Wait for browser layout to settle before capturing
     await new Promise(resolve => setTimeout(resolve, 400));
     
-    // Second pass: Re-check all textareas after initial layout
+    // Second pass: Re-verify textarea heights after layout
     allTextareas.forEach((textarea) => {
       const computedStyle = window.getComputedStyle(textarea);
       const width = computedStyle.width;
@@ -308,7 +309,7 @@ export const exportVisualDiagram = async (
     
     await new Promise(resolve => setTimeout(resolve, 400));
     
-    // Third pass: Final verification
+    // Third pass: Final height verification
     allTextareas.forEach((textarea) => {
       void textarea.offsetHeight;
       const verifyHeight = textarea.scrollHeight;
@@ -319,7 +320,7 @@ export const exportVisualDiagram = async (
     
     await new Promise(resolve => setTimeout(resolve, 200));
 
-    // Capture with html2canvas
+    // Capture element as canvas using html2canvas
     const canvas = await html2canvas(element, {
       backgroundColor: '#ffffff',
       useCORS: true,
@@ -335,7 +336,7 @@ export const exportVisualDiagram = async (
         // Additional fixes in the cloned document
         const clonedElement = clonedDoc.querySelector('.export-mode');
         if (clonedElement) {
-          // Force all containers in clone to expand
+          // Force expansion in cloned document
           const clonedContainers = clonedElement.querySelectorAll(
             '.flow-card, .influence-cloud, .card-container, .outer-card, .card-value, .cloud-value'
           );
@@ -347,12 +348,11 @@ export const exportVisualDiagram = async (
             htmlEl.style.overflow = 'visible';
           });
 
-          // Force all textareas in clone - MORE AGGRESSIVE
+          // Force textarea expansion in clone with multiple reflow passes
           const clonedTextareas = clonedElement.querySelectorAll('textarea');
           clonedTextareas.forEach((textarea) => {
             const ta = textarea as HTMLTextAreaElement;
             
-            // Get computed width first
             const computedStyle = window.getComputedStyle(ta);
             const width = computedStyle.width;
             
@@ -366,7 +366,7 @@ export const exportVisualDiagram = async (
             ta.style.boxSizing = 'border-box';
             ta.style.width = width;
             
-            // Multiple reflow passes for accurate height
+            // Multiple reflow passes for accurate height calculation
             void ta.offsetHeight;
             void ta.scrollHeight;
             let scrollHeight = ta.scrollHeight;
@@ -382,7 +382,7 @@ export const exportVisualDiagram = async (
       }
     });
 
-    // Restore all container styles
+    // Restore all original styles
     originalStyles.forEach(({ el, height, minHeight, maxHeight, overflow }) => {
       el.style.height = height;
       el.style.minHeight = minHeight;
@@ -390,12 +390,10 @@ export const exportVisualDiagram = async (
       el.style.overflow = overflow;
     });
 
-    // Restore div overflow styles
     divOriginalStyles.forEach(({ el, overflow }) => {
       el.style.overflow = overflow;
     });
 
-    // Restore textarea styles
     originalTextareaStyles.forEach(({ el, height, minHeight, maxHeight, overflow, resize }) => {
       el.style.height = height;
       el.style.minHeight = minHeight;
@@ -404,15 +402,15 @@ export const exportVisualDiagram = async (
       el.style.resize = resize;
     });
 
-    // Remove export mode
+    // Remove export mode class
     element.classList.remove('export-mode');
 
-    // Restore sidebar
+    // Restore sidebar visibility
     if (sidebar) {
       sidebar.style.display = originalSidebarDisplay;
     }
 
-    // Restore controls
+    // Restore controls visibility
     customizeControls.forEach((el) => {
       (el as HTMLElement).style.display = '';
     });
@@ -423,19 +421,23 @@ export const exportVisualDiagram = async (
       textarea.style.display = '';
     });
     
+    // Export based on selected format
     if (format.toLowerCase() === 'pdf') {
       const imgData = canvas.toDataURL('image/png', 1.0);
       
       const imgWidth = canvas.width;
       const imgHeight = canvas.height;
       
+      // A4 dimensions in points
       const a4Width = 595.28;
       const a4Height = 841.89;
       
+      // Determine orientation based on image aspect ratio
       const orientation = imgWidth > imgHeight ? 'landscape' : 'portrait';
       const pageWidth = orientation === 'landscape' ? a4Height : a4Width;
       const pageHeight = orientation === 'landscape' ? a4Width : a4Height;
       
+      // Calculate scaling to fit image on page with padding
       const padding = 20;
       const availableWidth = pageWidth - (2 * padding);
       const availableHeight = pageHeight - (2 * padding);
@@ -447,6 +449,7 @@ export const exportVisualDiagram = async (
       const scaledWidth = imgWidth * scale;
       const scaledHeight = imgHeight * scale;
       
+      // Center image on page
       const x = (pageWidth - scaledWidth) / 2;
       const y = (pageHeight - scaledHeight) / 2;
       

@@ -191,7 +191,18 @@ export default function AuthCard() {
       
       setSuccess(true);
     } catch (err: any) {
-      setError(err?.message || "Google sign-in failed. Please try again.");
+      const code = err?.code;
+      let message = err?.message || "Google sign-in failed. Please try again.";
+      if (code === "auth/unauthorized-domain") {
+        message = "Firebase unauthorized domain. Add localhost:3000 and localhost:3004 in Firebase console → Authentication → Settings → Authorized domains.";
+      } else if (code === "auth/popup-blocked") {
+        message = "Popup blocked. Allow popups for this site and try again.";
+      } else if (code === "auth/popup-closed-by-user") {
+        message = "Popup closed before completing sign-in. Please try again.";
+      } else if (code === "auth/network-request-failed") {
+        message = "Network error during Google sign-in. Check connectivity and disable blockers.";
+      }
+      setError(message);
       setSuccess(false);
     } finally {
       setLoading(false);
@@ -321,13 +332,13 @@ export default function AuthCard() {
                   <a 
                     href="/terms" 
                     target="_blank" 
-                    rel="noopener noreferrer"
                     style={{
                       color: "#3498db",
                       textDecoration: "underline",
                       fontWeight: "500",
                       transition: "color 0.2s ease"
                     }}
+                    onClick={(e) => { e.preventDefault(); window.open('/terms', '_blank'); }}
                     onMouseEnter={(e) => (e.target as HTMLAnchorElement).style.color = "#2980b9"}
                     onMouseLeave={(e) => (e.target as HTMLAnchorElement).style.color = "#3498db"}
                   >

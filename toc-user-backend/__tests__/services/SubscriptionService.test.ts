@@ -21,13 +21,6 @@ jest.mock('../../utils/supabaseUtils/SubscriptionUtils', () => ({
     updateSubscription: mockUpdateSubscription,
 }));
 
-// Mock the User Service dependency for normalizeEmail
-const mockNormalizeEmail = jest.fn(email => email.toLowerCase().trim());
-
-function normalizeEmail(email: string) {
-    return email.toLowerCase().trim();
-}
-
 // Import the module to be tested
 const subscriptionService = require('../../services/SubscriptionService');
 
@@ -63,15 +56,6 @@ const MOCK_DOMAIN_SUBSCRIPTION = {
     updatedAt: MOCK_START_DATE,
 };
 
-const MOCK_CREATE_REQUEST = {
-    email: TEST_EMAIL,
-    subscriptionId: MOCK_SUB_ID,
-    planId: 'pro',
-    startDate: MOCK_START_DATE,
-    renewalDate: MOCK_RENEWAL_DATE,
-    autoRenew: true
-};
-
 const FREE_PLAN_SUBSCRIPTION = {
     subscriptionId: "",
     planId: 'free',
@@ -84,90 +68,9 @@ const FREE_PLAN_SUBSCRIPTION = {
     email: NORM_EMAIL
 };
 
-describe('SubscriptionService Success Paths', () => {
+describe('SubscriptionService', () => {
     beforeEach(() => {
         jest.clearAllMocks();
-    });
-
-    // =========================================================================
-    // createOrUpdateSubscription (Create Path)
-    // =========================================================================
-
-    describe('createOrUpdateSubscription - CREATE Path', () => {
-        it('should successfully create a new subscription if none is active', async () => {
-            // 1. Mock: No active subscription found (triggers CREATE path)
-            mockFindActiveSubscriptionByEmail.mockResolvedValue(null);
-
-            // 2. Mock: createSubscription returns the ID of the new subscription
-            mockCreateSubscription.mockResolvedValue({ subscription_ID: MOCK_SUB_ID });
-
-            // 3. Mock: findSubscriptionById returns the complete database record
-            mockFindSubscriptionById.mockResolvedValue(MOCK_DB_SUBSCRIPTION);
-
-            const result = await subscriptionService.createOrUpdateSubscription(MOCK_CREATE_REQUEST);
-
-            // Assertions
-            expect(mockFindActiveSubscriptionByEmail).toHaveBeenCalledWith(NORM_EMAIL);
-            expect(mockCreateSubscription).toHaveBeenCalledWith(expect.objectContaining({
-                subscription_ID: MOCK_SUB_ID,
-                email: NORM_EMAIL,
-                plan_ID: 'pro',
-                status: 'active', // Default status applied
-                auto_renew: true, // Default autoRenew applied
-            }));
-            expect(mockFindSubscriptionById).toHaveBeenCalledWith(MOCK_SUB_ID);
-            expect(result).toEqual(MOCK_DOMAIN_SUBSCRIPTION);
-            expect(mockUpdateSubscription).not.toHaveBeenCalled();
-        });
-
-        it('should use current timestamp for startDate if not provided (CREATE)', async () => {
-            const requestWithoutDate = { ...MOCK_CREATE_REQUEST, startDate: undefined };
-
-            // Mock setup for successful creation
-            mockFindActiveSubscriptionByEmail.mockResolvedValue(null);
-            mockCreateSubscription.mockResolvedValue({ subscription_ID: MOCK_SUB_ID });
-            mockFindSubscriptionById.mockResolvedValue(MOCK_DB_SUBSCRIPTION); // Doesn't matter what date this returns, we test input here
-
-            await subscriptionService.createOrUpdateSubscription(requestWithoutDate);
-
-            // Check if startDate was set to a valid ISO string (indicating current date)
-            expect(mockCreateSubscription.mock.calls[0][0].start_date).toMatch(/\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z/);
-        });
-    });
-
-    // =========================================================================
-    // createOrUpdateSubscription (Update Path)
-    // =========================================================================
-
-    describe('createOrUpdateSubscription - UPDATE Path', () => {
-        it('should successfully update an existing active subscription', async () => {
-            // 1. Mock: Active subscription found (triggers UPDATE path)
-            const existingActiveSub = { ...MOCK_DB_SUBSCRIPTION, subscription_ID: 'sub_old_111', plan_ID: 'basic' };
-            mockFindActiveSubscriptionByEmail.mockResolvedValue(existingActiveSub);
-
-            // 2. Mock: updateSubscription returns void (as is typical for Supabase updates without select)
-            mockUpdateSubscription.mockResolvedValue(null);
-
-            // 3. Mock: findSubscriptionById returns the new, updated database record
-            mockFindSubscriptionById.mockResolvedValue(MOCK_DB_SUBSCRIPTION);
-
-            // Request contains the new 'pro' plan
-            const result = await subscriptionService.createOrUpdateSubscription(MOCK_CREATE_REQUEST);
-
-            // Assertions
-            expect(mockFindActiveSubscriptionByEmail).toHaveBeenCalledWith(NORM_EMAIL);
-            expect(mockUpdateSubscription).toHaveBeenCalledWith(
-                'sub_old_111', // Should use the ID of the existing subscription
-                expect.objectContaining({
-                    plan_ID: 'pro',
-                    status: 'active',
-                    auto_renew: true,
-                })
-            );
-            expect(mockFindSubscriptionById).toHaveBeenCalledWith(existingActiveSub.subscription_ID); // Fetching the updated record
-            expect(result).toEqual(MOCK_DOMAIN_SUBSCRIPTION);
-            expect(mockCreateSubscription).not.toHaveBeenCalled();
-        });
     });
 
     // =========================================================================

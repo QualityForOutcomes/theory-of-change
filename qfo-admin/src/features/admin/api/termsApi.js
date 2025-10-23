@@ -25,14 +25,14 @@ export const fetchTerms = async () => {
  */
 export const updateTerms = async (content) => {
   try {
-    const response = await api.put("/api/admin/terms", { 
-      content,
-      updatedAt: new Date().toISOString()
+    const now = new Date().toISOString();
+    const response = await api.post("/api/admin/terms", {
+      content
     });
     return {
-      content: response.data.content,
-      updatedAt: response.data.updatedAt || new Date().toISOString(),
-      version: response.data.version || 1
+      content: response.data.content ?? content,
+      updatedAt: response.data.updatedAt ?? now,
+      version: response.data.version ?? 1
     };
   } catch (error) {
     console.error("Error updating terms:", error);
@@ -67,6 +67,11 @@ export const validateTermsContent = (content) => {
   // Basic validation
   if (!content || content.trim().length === 0) {
     errors.push("Terms content cannot be empty");
+  }
+
+  // Enforce backend rule: minimum 50 characters
+  if (content && content.trim().length < 50) {
+    errors.push("Terms content must be at least 50 characters.");
   }
 
   if (content && content.length < 100) {

@@ -48,7 +48,6 @@ export function handleRoleBasedRedirect(user: User, navigate: NavigateFunction) 
     window.location.assign(url.toString());
     return;
   }
-  debugger;
   // Regular user: navigate within my-app
   navigate(getMyAppDashboardUrl(), { replace: true });
 }

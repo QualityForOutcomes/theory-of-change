@@ -41,8 +41,17 @@ export default function ProtectedRoute({ children }) {
       console.error("VITE_MYAPP_LOGIN_URL is not configured");
       return <div>Configuration error: Login URL not set</div>;
     }
-    // Use hard redirect for external URL to unified login page
-    window.location.assign(appLogin);
+    // Use hard redirect for external URL to unified logout page so my-app clears its localStorage
+    let target = appLogin;
+    try {
+      const u = new URL(appLogin);
+      u.pathname = "/logout";
+      u.search = "";
+      target = u.toString();
+    } catch {
+      target = appLogin.replace(/login(?:\/?$)/, "logout");
+    }
+    window.location.assign(target);
     return null;
   }
 

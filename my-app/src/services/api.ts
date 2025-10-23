@@ -6,6 +6,7 @@ import { verifyLogin, signToken, createUser } from "../mocks/service.memory";
 
 // User backend (auth, user, project)
 const API_BASE = process.env.REACT_APP_API_BASE;
+const ADMIN_API_BASE = process.env.REACT_APP_ADMIN_API_BASE || API_BASE;
 // Password reset endpoints share the same user backend base
 const PASS_API_BASE = API_BASE;
 
@@ -177,26 +178,29 @@ export const authGoogleLogin = async (idToken: string) => {
   }
 };
 
-// User Profile API
+// Fetch the currently authenticated user's profile
 export const fetchUserProfile = async () => {
   try {
+    // Call the backend API with authorization headers
     const response = await getApi(`/api/user/Get`, {
       "Content-Type": "application/json",
-      ...getAuthHeaders(),
+      ...getAuthHeaders(), // Adds authentication token
     });
 
     const { success, data, message } = response.data;
 
     if (!success) throw new Error(message || "Failed to fetch user profile");
 
-    return data; // Returns the user profile data
+    return data; // Returns the user profile object if successful
   } catch (err: any) {
     if (isNetworkError(err)) {
-      // Graceful fallback: use localStorage user
+      // Handle network errors gracefully by falling back to localStorage
       try {
         const raw = localStorage.getItem("user");
         if (!raw) throw new Error("No local user available");
         const u = JSON.parse(raw);
+        
+        // Construct a fallback user object with default/demo values
         return {
           userId: Number(u?.userId || 0),
           email: u?.email || "demo@example.com",
@@ -209,13 +213,16 @@ export const fetchUserProfile = async () => {
           createdAt: new Date().toISOString(),
         };
       } catch (e: any) {
+        // If localStorage fallback fails
         throw new Error(e?.message || "Failed to load user profile (backend unreachable)");
       }
     }
+    // Re-throw API or other errors
     throw new Error(err.response?.data?.message || err.message || "Failed to fetch user profile");
   }
 };
 
+// Update user's profile data (firstName, lastName, username, organisation)
 export const updateUserProfile = async (payload: {
   firstName?: string;
   lastName?: string;
@@ -226,7 +233,7 @@ export const updateUserProfile = async (payload: {
     const response = await axios.put(`${API_BASE}/api/user/Update`, payload, {
       headers: {
         "Content-Type": "application/json",
-        ...getAuthHeaders(),
+        ...getAuthHeaders(), // Auth token
       },
     });
 
@@ -234,13 +241,14 @@ export const updateUserProfile = async (payload: {
 
     if (!success) throw new Error(message || "Failed to update user profile");
 
-    return data; // Returns the updated user profile data
+    return data; // Returns the updated profile data
   } catch (err: any) {
     throw new Error(err.response?.data?.message || err.message || "Failed to update user profile");
   }
 };
 // TOC Project APIs
 
+// Create a new TOC (Table of Contents) project
 export const createTocProject = async (data: {
   userId: string;
   projectTitle: string;
@@ -253,12 +261,13 @@ export const createTocProject = async (data: {
       {
         headers: {
           "Content-Type": "application/json",
-          ...getAuthHeaders(),
+          ...getAuthHeaders(), // Auth token
         },
       }
     );
-    return response.data; // { success, message, data, statusCode }
+    return response.data; // Returns success/message/data/statusCode from backend
   } catch (err: any) {
+    // Offline mode fallback: create a local project ID
     if (isNetworkError(err)) {
       const projectId = `local-${Date.now()}`;
       return {
@@ -276,6 +285,7 @@ export const createTocProject = async (data: {
   }
 };
 
+// Update an existing TOC project
 export const updateToc = async (payload: any) => {
   const token = localStorage.getItem("token"); // get the stored token
   if (!token) throw new Error("No authentication token found");
@@ -292,8 +302,9 @@ export const updateToc = async (payload: any) => {
       }
     );
 
-    return response.data; // { success, message, data, statusCode }
+    return response.data; // Returns backend success/message/data/statusCode
   } catch (err: any) {
+     // Offline save fallback
     if (isNetworkError(err)) {
       return { success: true, message: "Saved locally (offline mode)", data: {}, statusCode: 200 };
     }
@@ -301,20 +312,19 @@ export const updateToc = async (payload: any) => {
   }
 };
 
-
+// Fetch all TOC projects for the authenticated user
 export const fetchUserTocs = async () => {
   try {
     const response = await axios.get(`${API_BASE}/api/project/GetProjectList`, {
       headers: {
         "Content-Type": "application/json",
-        ...getAuthHeaders(), // token identifies the user
+        ...getAuthHeaders(), 
       },
     });
-    return response.data; // { success, data, message }
+    return response.data; // Returns projects array
   } catch (err: any) {
     const msg = err?.response?.data?.message || err?.message || "Failed to fetch projects";
-    // Be resilient: always return an empty list in error cases to avoid noisy UI
-    // and allow the workspace to render. Preserve a friendly message.
+    // Always return empty array in error cases to avoid breaking UI
     const friendly = /collection/i.test(String(msg))
       ? "We couldn't load your projects right now. Please try again shortly."
       : msg;
@@ -322,7 +332,7 @@ export const fetchUserTocs = async () => {
   }
 };
 
-
+// Fetch a specific TOC project by its ID
 export const fetchTocProjectById = async (projectId: string) => {
   if (!projectId) throw new Error("Project ID is required");
 
@@ -335,9 +345,9 @@ export const fetchTocProjectById = async (projectId: string) => {
       },
     });
 
-    // response.data should contain your saved tocData and tocColor
-    return response.data;
+    return response.data; // Returns project details: tocData and tocColor
   } catch (err: any) {
+    // Offline fallback: return empty project
     if (isNetworkError(err)) {
       return { success: true, data: { projects: [] }, message: "No project loaded (offline mode)" };
     }
@@ -562,7 +572,6 @@ export const updateSubscription = async (data: {
 }) => {
   try {
     // Backend expects EXACT camelCase keys as below
-    debugger;
     const payload = {
       subscriptionId: data.subscriptionId,
       email: data.email,
@@ -582,28 +591,13 @@ export const updateSubscription = async (data: {
       },
     });
 
-    const { success, message } = response.data || {};
-    if (!success) {
-      throw new Error(message || "Failed to update subscription");
-    }
-    return { success, message };
+    const { success, data: resData, message } = response.data;
+
+    if (!success) throw new Error(message || "Failed to update subscription");
+
+    return resData;
   } catch (err: any) {
-    // Enhanced logging for easier debugging
-    const status = err?.response?.status;
-    const data = err?.response?.data;
-    console.error(
-      "Subscription update error",
-      {
-        status,
-        message: err?.message,
-        response: data,
-      }
-    );
-    // Dev/local fallback: if backend endpoint is unavailable or unauthorized, simulate success
-    if (status === 404 || status === 401 || isNetworkError(err)) {
-      return { success: true, message: "Subscription saved locally (dev fallback)" };
-    }
-    throw new Error(err.response?.data?.message || err.message || "Failed to update subscription");
+    throw new Error(err?.response?.data?.message || err.message || "Failed to update subscription");
   }
 };
 
@@ -636,57 +630,28 @@ export const updateSubscription = async (data: {
 export const fetchTerms = async () => {
   try {
     const response = await axios.get(
-      `${API_BASE}/api/admin/terms`,
+      `${ADMIN_API_BASE}/api/admin/terms`,
       { headers: getAuthHeaders() }
     );
 
-    const { success, data, message } = response.data || {};
-    if (!success) {
-      throw new Error(message || "Failed to fetch terms");
+    const payload = response.data || {};
+    if (payload && typeof payload === 'object' && 'content' in payload) {
+      return payload;
     }
-    return data;
+
+    const { success, data, message } = payload;
+    if (success) return data;
+
+    throw new Error(message || "Failed to fetch terms");
   } catch (err: any) {
-    // Fallback for when backend endpoint doesn't exist yet
-    /*if (err.response?.status === 404 || isNetworkError(err)) {
-      return {
-        content: `# Terms and Conditions
-
-## 1. Acceptance of Terms
-By accessing and using this Theory of Change Visualization tool, you accept and agree to be bound by the terms and provision of this agreement.
-
-## 2. Use License
-Permission is granted to temporarily download one copy of the materials on this website for personal, non-commercial transitory viewing only.
-
-## 3. Disclaimer
-The materials on this website are provided on an 'as is' basis. We make no warranties, expressed or implied, and hereby disclaim and negate all other warranties including without limitation, implied warranties or conditions of merchantability, fitness for a particular purpose, or non-infringement of intellectual property or other violation of rights.
-
-## 4. Limitations
-In no event shall Quality for Outcomes or its suppliers be liable for any damages (including, without limitation, damages for loss of data or profit, or due to business interruption) arising out of the use or inability to use the materials on this website.
-
-## 5. Privacy Policy
-Your privacy is important to us. We collect and use your information in accordance with our Privacy Policy.
-
-## 6. User Accounts
-You are responsible for maintaining the confidentiality of your account and password and for restricting access to your computer.
-
-## 7. Modifications
-Quality for Outcomes may revise these terms of service at any time without notice. By using this website, you are agreeing to be bound by the then current version of these terms of service.
-
-## 8. Contact Information
-If you have any questions about these Terms and Conditions, please contact us at support@qualityforoutcomes.com.
-
-Last updated: ${new Date().toLocaleDateString()}`,
-        lastUpdated: new Date().toISOString()
-      };
-    }*/
     throw new Error(err.response?.data?.message || err.message || "Failed to fetch terms");
   }
 };
 
 export const updateTerms = async (content: string) => {
   try {
-    const response = await axios.put(
-      `${API_BASE}/api/admin/terms`,
+    const response = await axios.post(
+      `${ADMIN_API_BASE}/api/admin/terms`,
       { content },
       { headers: { ...getAuthHeaders(), "Content-Type": "application/json" } }
     );

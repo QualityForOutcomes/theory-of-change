@@ -2,7 +2,7 @@
   --navbar-height: 60px;
 }
 
-/* Gradient background fills the whole screen */
+/* Full-page gradient background */
 html, body {
   margin: 0;
   padding: 0;
@@ -22,7 +22,7 @@ html, body {
 
 /* ---------- Main container ---------- */
 .app-container {
-  display: flex;
+  display: flex;      /* Layout panels side by side */
   flex-direction: row;
   padding-top: 10px;
   padding-bottom: 20px;
@@ -43,16 +43,15 @@ html, body {
 
 /* ---------- Left panel ---------- */
 
-
-/* Padding between form content and scrollbar */
+/* Scrollable left panel */
 .left-panel .form-group {
-  flex: 1;              /* fill remaining height */
-  overflow-y: auto;     /* scroll when content is too tall */
+  flex: 1;              
+  overflow-y: auto;     /* Scroll if form content overflows */
   overflow-x: hidden;
   padding-right: 10px;
 }
 
-/* Thin scrollbar */
+/* Thin custom scrollbar */
 .left-panel::-webkit-scrollbar {
   width: 8px;
 }
@@ -65,14 +64,14 @@ html, body {
   border-radius: 6px;
 }
 
-/* Headings */
+/* Headings in left panel */
 .left-panel h1 {
   margin-bottom: 20px;
   font-size: 20px;
   text-align: center;
 }
 
-/* Form fields */
+/* Form group styling */
 .form-group {
   display: flex;
   flex-direction: column;
@@ -84,6 +83,7 @@ html, body {
   margin-bottom: 6px;
 }
 
+/* Input and textarea fields */
 .form-group input,
 .form-group textarea {
   width: 100%;
@@ -96,6 +96,7 @@ html, body {
   transition: border 0.3s ease, box-shadow 0.3s ease;
 }
 
+/* Focus state */
 .form-group input:focus,
 .form-group textarea:focus {
   border-color: #D46CFA;
@@ -103,10 +104,12 @@ html, body {
   box-shadow: 0 0 8px rgba(212, 108, 250, 0.6);
 }
 
+/* Textarea specific */
 .form-group textarea {
   min-height: 80px;
   resize: vertical;
 }
+
 /* Progress Bar */
 .progress-container {
   width: 100%;
@@ -129,13 +132,14 @@ html, body {
   color: #555;
 }
 
+/* Helper text under inputs */
 .helper-text {
   font-size: 0.85rem;
   color: #555;
   margin: 2px 0 6px 0;
 }
 
-/* Errors */
+/* Error handling */
 .error-input {
   border: 1px solid #e74c3c;
   background-color: #ffeaea;
@@ -196,21 +200,21 @@ html, body {
 
 /* Expanded / collapsed */
 .sidebar.open {
-  width: 350px;                 /* expanded width */
-  overflow: visible;            /* allow scrolling/content */
+  width: 350px;                 
+  overflow: visible;            
 }
 
 .sidebar.collapsed {
-  width: 64px;                  /* collapsed width */
-  overflow: hidden;             /* hide inner content */
+  width: 64px;                  
+  overflow: hidden;             /* Disable interactions when collapsed */
 }
 
-/* Scrollable content inside sidebar */
+/* Scrollable sidebar content */
 .sidebar-content {
   padding: 24px;
   padding-bottom: 30px;
   height: 100%;
-  overflow-y: auto;             /* scroll if content too tall */
+  overflow-y: auto;             
   transition: opacity 0.3s ease;
   box-sizing: border-box;
 }
@@ -220,6 +224,7 @@ html, body {
   pointer-events: none;         /* disable interactions */
 }
 
+/* Sidebar header with toggle */
 .sidebar-header {
   display: flex;
   align-items: center; /* Center vertically */
@@ -255,6 +260,7 @@ html, body {
   padding: 5px;
   justify-content: space-between;
 }
+
 .toggle-btn span {
   display: block;
   height: 3px;
@@ -289,6 +295,7 @@ html, body {
   z-index: 1000; 
 }
 
+/* Hover, active, disabled states */
 .btn-save:hover:not(:disabled) {
   transform: translateY(-2px);
   box-shadow: 0 6px 12px rgba(102, 126, 234, 0.4);
@@ -309,7 +316,7 @@ html, body {
   transform: none;
 }
 
-/* Spinner */
+/* Spinner inside save button */
 .btn-save .spinner {
   width: 16px;
   height: 16px;
