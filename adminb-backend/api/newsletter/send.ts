@@ -50,6 +50,7 @@ export default withCors(async function handler(req: VercelRequest, res: VercelRe
       return;
     }
 
+ 
   const { subject, html } = (req.body as any) || {};
   if (!subject || typeof subject !== 'string' || subject.trim().length < 2) {
     res.status(400).json({ success: false, message: 'Subject is required', statusCode: 400 });
