@@ -109,28 +109,39 @@ const MOCK_PROJECT_DATA = {
 
 
 describe('ProjectService', () => {
-    // Override Date globally to fix timestamps for predictable testing
-    const realDate = Date;
+    // Remove manual Date override; use Jest fake timers instead
+    let logSpy: jest.SpyInstance;
+    let errorSpy: jest.SpyInstance;
+    let warnSpy: jest.SpyInstance;
+
     beforeAll(() => {
-        global.Date = class extends realDate {
-            constructor(arg) {
-                if (arg) return new realDate(arg);
-                return new realDate(MOCK_TIMESTAMP);
-            }
-        };
+        jest.useFakeTimers();
+        jest.setSystemTime(new Date(MOCK_TIMESTAMP));
     });
 
     afterAll(() => {
-        global.Date = realDate;
+        jest.useRealTimers();
     });
 
     beforeEach(() => {
         // Clear all mocks for a clean slate
         jest.clearAllMocks();
+        // Silence console noise from service logging during tests
+        logSpy = jest.spyOn(console, 'log').mockImplementation(() => { });
+        errorSpy = jest.spyOn(console, 'error').mockImplementation(() => { });
+        warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => { });
+        // Ensure mocked client connect behaves like a resolved promise
+        mockClient.connect.mockResolvedValue(undefined);
         // Reset the internal singleton state before each test
         // This is necessary because the static properties client and db persist state
         ProjectService.client = null;
         ProjectService.db = null;
+    });
+
+    afterEach(() => {
+        logSpy?.mockRestore();
+        errorSpy?.mockRestore();
+        warnSpy?.mockRestore();
     });
 
     // =========================================================================
@@ -492,7 +503,8 @@ describe('ProjectService', () => {
     describe('closeConnection', () => {
         it('should call client.close and reset static properties if client exists', async () => {
             // Simulate that the connection was established
-            mockClient.connect.mockResolvedValue();
+            -            //mockClient.connect.mockResolvedValue();
+                +            mockClient.connect.mockResolvedValue(undefined);
             await ProjectService.getDatabase();
 
             await ProjectService.closeConnection();

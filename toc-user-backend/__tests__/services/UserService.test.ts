@@ -112,6 +112,17 @@ const MOCK_USER_RESPONSE = {
 describe('UserService', () => {
     // Clear all mocks before each test
     beforeEach(() => {
+        // Reset all mock implementations and call histories to avoid cross-test leakage
+        mockSupabase.from.mockReset();
+        mockSupabase.insert.mockReset();
+        mockSupabase.select.mockReset();
+        mockSupabase.single.mockReset();
+
+        // Restore default chainable behavior for Supabase query builder
+        mockSupabase.from.mockReturnThis();
+        mockSupabase.insert.mockReturnThis();
+        mockSupabase.select.mockReturnThis();
+
         jest.clearAllMocks();
         mockHashPassword.mockResolvedValue('hashed_password_abc');
 
@@ -155,11 +166,11 @@ describe('UserService', () => {
             expect(mockFindUserByEmail).toHaveBeenCalledWith('nonexistent@example.com');
         });
 
-        //it('should return false on internal database error', async () => {
-        //    mockFindUserByEmail.mockRejectedValue(new Error('DB connection failed'));
-        //    const exists = await userService.checkEmailExists('test@example.com');
-        //    expect(exists).toBe(false);
-        //});
+        it('should return false on internal database error', async () => {
+            mockFindUserByEmail.mockRejectedValue(new Error('DB connection failed'));
+            const exists = await userService.checkEmailExists('test@example.com');
+            expect(exists).toBe(false);
+        });
     });
 
     // =========================================================================
@@ -181,11 +192,11 @@ describe('UserService', () => {
             expect(mockCheckUsernameInDB).toHaveBeenCalledWith('availableusername');
         });
 
-        //it('should return false on internal database error', async () => {
-        //    mockCheckUsernameInDB.mockRejectedValue(new Error('DB read error'));
-        //    const exists = await userService.checkUsernameExists('testuser');
-        //    expect(exists).toBe(false);
-        //});
+        it('should return false on internal database error', async () => {
+            mockCheckUsernameInDB.mockRejectedValue(new Error('DB read error'));
+            const exists = await userService.checkUsernameExists('testuser');
+            expect(exists).toBe(false);
+        });
     });
 
     // =========================================================================
@@ -209,10 +220,10 @@ describe('UserService', () => {
             expect(result).toBeNull();
         });
 
-        //it('should throw a custom error on database failure', async () => {
-        //    mockGetSupabaseUserProfile.mockRejectedValue(new Error('Query failed'));
-        //    await expect(userService.getUserProfile('test@example.com')).rejects.toThrow('Failed to get user profile');
-        //});
+        it('should throw a custom error on database failure', async () => {
+            mockGetSupabaseUserProfile.mockRejectedValue(new Error('Query failed'));
+            await expect(userService.getUserProfile('test@example.com')).rejects.toThrow('Failed to get user profile');
+        });
     });
 
     // =========================================================================
@@ -254,81 +265,79 @@ describe('UserService', () => {
             expect(result).toEqual(MOCK_USER_RESPONSE);
         });
 
-        //it('should throw "Failed to retrieve created user" error on email unique violation', async () => {
-        //    const uniqueConstraintError = {
-        //        code: '23505',
-        //        message: 'duplicate key value violates unique constraint "User_email_key"'
-        //    };
+        it('throws Email already registered on email unique violation', async () => {
+            const uniqueConstraintError = {
+                code: '23505',
+                message: 'duplicate key value violates unique constraint "User_email_key"'
+            };
 
-        //    // Mock User table insert to fail
-        //    mockSupabase.insert.mockImplementationOnce(() => mockSupabase);
-        //    mockSupabase.select.mockImplementationOnce(() => mockSupabase);
-        //    // This is the error-throwing step
-        //    mockSupabase.single.mockResolvedValueOnce({ data: null, error: uniqueConstraintError });
+            mockSupabase.insert.mockImplementationOnce(() => mockSupabase);
+            mockSupabase.select.mockImplementationOnce(() => mockSupabase);
+            mockSupabase.single.mockResolvedValueOnce({ data: null, error: uniqueConstraintError });
 
-        //    // Ensure subsequent non-blocking calls are still mocked to resolve
-        //    // (These calls would normally happen if the database query didn't throw immediately, 
-        //    // but mocking them prevents unexpected behavior when the mock chain is consumed)
-        //    mockFindUserByEmail.mockResolvedValue(null);
+            await expect(userService.createUser(MOCK_USER_DATA)).rejects.toThrow('Email already registered');
+        });
 
-        //    await expect(userService.createUser(MOCK_USER_DATA)).rejects.toThrow('Failed to retrieve created user');
-        //});
+        it('throws Username already taken on username unique violation', async () => {
+            const usernameConstraintError = {
+                code: '23505',
+                message: 'duplicate key value violates unique constraint "User_username_key"'
+            };
 
-        //it('should throw USERNAME_TAKEN error on username unique violation', async () => {
-        //    const usernameConstraintError = {
-        //        code: '23505',
-        //        // Crucial: The message must reference 'username' and not 'email'
-        //        message: 'duplicate key value violates unique constraint "User_username_key"'
-        //    };
+            mockSupabase.insert.mockImplementationOnce(() => mockSupabase);
+            mockSupabase.select.mockImplementationOnce(() => mockSupabase);
+            mockSupabase.single.mockResolvedValueOnce({ data: null, error: usernameConstraintError });
 
-        //    // Mock User table insert to fail
-        //    mockSupabase.insert.mockImplementationOnce(() => mockSupabase);
-        //    mockSupabase.select.mockImplementationOnce(() => mockSupabase);
-        //    // This is the error-throwing step
-        //    mockSupabase.single.mockResolvedValueOnce({ data: null, error: usernameConstraintError });
+            await expect(userService.createUser(MOCK_USER_DATA_SAME_USERNAME)).rejects.toThrow('Username already taken');
+        });
 
-        //    // Ensure subsequent non-blocking calls are still mocked to resolve
-        //    mockFindUserByEmail.mockResolvedValue(null);
+        it('throws generic error if user creation fails for other reasons', async () => {
+            const genericError = { code: '500', message: 'Internal DB Error' };
 
-        //    await expect(userService.createUser(MOCK_USER_DATA_SAME_USERNAME)).rejects.toThrow('Username already taken');
-        //});
+            mockSupabase.insert.mockImplementationOnce(() => mockSupabase);
+            mockSupabase.select.mockImplementationOnce(() => mockSupabase);
+            mockSupabase.single.mockResolvedValueOnce({ data: null, error: genericError });
 
-        //it('should throw a generic error if user creation fails for other reasons', async () => {
-        //    const genericError = { code: '500', message: 'Internal DB Error' };
+            await expect(userService.createUser(MOCK_USER_DATA)).rejects.toMatchObject(genericError);
+        });
 
-        //    // Mock User table insert to fail
-        //    mockSupabase.insert.mockImplementationOnce(() => mockSupabase);
-        //    mockSupabase.select.mockImplementationOnce(() => mockSupabase);
-        //    mockSupabase.single.mockResolvedValueOnce({ data: null, error: genericError });
+        it('throws if password hashing fails', async () => {
+            mockHashPassword.mockRejectedValue(new Error('Hashing service offline'));
 
-        //    await expect(userService.createUser(MOCK_USER_DATA)).rejects.toThrow();
-        //});
+            await expect(userService.createUser(MOCK_USER_DATA)).rejects.toThrow('Hashing service offline');
+            expect(mockSupabase.insert).not.toHaveBeenCalled();
+        });
 
-        //it('should throw an error if password hashing fails', async () => {
-        //    mockHashPassword.mockRejectedValue(new Error('Hashing service offline'));
+        it('throws error if retrieving created user fails', async () => {
+            // Step 2: user insert success
+            mockSupabase.insert.mockImplementationOnce(() => mockSupabase);
+            mockSupabase.select.mockImplementationOnce(() => mockSupabase);
+            mockSupabase.single.mockResolvedValueOnce({ data: MOCK_DB_USER, error: null });
 
-        //    await expect(userService.createUser(MOCK_USER_DATA)).rejects.toThrow('Hashing service offline');
-        //    expect(mockSupabase.insert).not.toHaveBeenCalled();
-        //});
+            // Step 3: profile insert success (returns object with no error)
+            mockSupabase.insert.mockResolvedValueOnce({ error: null });
 
-        //it('should throw an error if retrieving the created user fails', async () => {
-        //    // 1. Mock successful User table insert (STEP 2)
-        //    mockSupabase.insert.mockImplementationOnce(() => mockSupabase);
-        //    mockSupabase.select.mockImplementationOnce(() => mockSupabase);
-        //    mockSupabase.single.mockResolvedValueOnce({ data: MOCK_DB_USER, error: null });
+            // Step 6: final fetch returns null
+            mockFindUserByEmail.mockResolvedValueOnce(null);
 
-        //    // 2. Mock successful UserProfile table insert (STEP 3)
-        //    mockSupabase.insert.mockImplementationOnce(() => mockSupabase);
-        //    mockSupabase.select.mockImplementationOnce(() => mockSupabase);
-        //    mockSupabase.single.mockResolvedValueOnce({ data: null, error: null });
+            await expect(userService.createUser(MOCK_USER_DATA)).rejects.toThrow('Failed to retrieve created user');
+        });
 
-        //    // 3. Preferences (non-blocking) are mocked via beforeEach to resolve.
+        it('continues when profile creation fails', async () => {
+            // Step 2: insert successful
+            mockSupabase.insert.mockImplementationOnce(() => mockSupabase);
+            mockSupabase.select.mockImplementationOnce(() => mockSupabase);
+            mockSupabase.single.mockResolvedValueOnce({ data: MOCK_DB_USER, error: null });
 
-        //    // 4. Mock the final fetch to return null (STEP 6)
-        //    mockFindUserByEmail.mockResolvedValue(null);
+            // Step 3: profile insert returns error
+            mockSupabase.insert.mockResolvedValueOnce({ error: { code: '400', message: 'Profile error' } });
 
-        //    await expect(userService.createUser(MOCK_USER_DATA)).rejects.toThrow('Failed to retrieve created user');
-        //});
+            // Step 6: final fetch
+            mockFindUserByEmail.mockResolvedValueOnce(MOCK_DB_USER);
+
+            const result = await userService.createUser(MOCK_USER_DATA);
+            expect(result).toEqual(MOCK_USER_RESPONSE);
+        });
     });
 
     // =========================================================================
@@ -382,23 +391,20 @@ describe('UserService', () => {
             expect(mockCreateTermsAcceptance).not.toHaveBeenCalled();
         });
 
-        //it('should throw a custom error if terms acceptance fails for a different reason', async () => {
-        //    mockCreateTermsAcceptance.mockRejectedValue(new Error('DB failure'));
+        it('should throw a custom error if terms acceptance fails for a different reason', async () => {
+            mockCreateTermsAcceptance.mockRejectedValue(new Error('DB failure'));
+            await expect(userService.updateUserPreferences(testEmail, true, undefined)).rejects.toThrow('Failed to update user preferences');
+        });
 
-        //    await expect(userService.updateUserPreferences(testEmail, true, undefined)).rejects.toThrow('Failed to update user preferences');
-        //});
+        it('should throw a custom error if newsletter subscription fails for a different reason', async () => {
+            mockCreateNewsletterSubscription.mockRejectedValue(new Error('DB failure'));
+            await expect(userService.updateUserPreferences(testEmail, undefined, true)).rejects.toThrow('Failed to update user preferences');
+        });
 
-        //it('should throw a custom error if newsletter subscription fails for a different reason', async () => {
-        //    mockCreateNewsletterSubscription.mockRejectedValue(new Error('DB failure'));
-
-        //    await expect(userService.updateUserPreferences(testEmail, undefined, true)).rejects.toThrow('Failed to update user preferences');
-        //});
-
-        //it('should throw a custom error if newsletter unsubscription fails', async () => {
-        //    mockUnsubscribeFromNewsletter.mockRejectedValue(new Error('Unsubscribe failed'));
-
-        //    await expect(userService.updateUserPreferences(testEmail, undefined, false)).rejects.toThrow('Failed to update newsletter preferences');
-        //});
+        it('should throw a custom error if newsletter unsubscription fails', async () => {
+            mockUnsubscribeFromNewsletter.mockRejectedValue(new Error('Unsubscribe failed'));
+            await expect(userService.updateUserPreferences(testEmail, undefined, false)).rejects.toThrow('Failed to update user preferences');
+        });
     });
 
     // =========================================================================
@@ -434,11 +440,10 @@ describe('UserService', () => {
             });
         });
 
-        //it('should throw a custom error if preference retrieval fails', async () => {
-        //    mockHasAcceptedTerms.mockRejectedValue(new Error('Terms check failed'));
-        //    mockIsSubscribedToNewsletter.mockResolvedValue(true); // Still test if one fails
-
-        //    await expect(userService.getUserPreferences(testEmail)).rejects.toThrow('Failed to get user preferences');
-        //});
+        it('should throw a custom error if preference retrieval fails', async () => {
+            mockHasAcceptedTerms.mockRejectedValue(new Error('Terms check failed'));
+            mockIsSubscribedToNewsletter.mockResolvedValue(true);
+            await expect(userService.getUserPreferences(testEmail)).rejects.toThrow('Failed to get user preferences');
+        });
     });
 });
