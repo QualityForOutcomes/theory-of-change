@@ -141,6 +141,9 @@ export default function TermsManagement() {
   }, []);
 
   useEffect(() => {
+    // Track change state across both editors
+    setHasChanges(content !== originalContent);
+
     // Validate content on change
     if (content !== originalContent) {
       const validationResult = validateTermsContent(content);
