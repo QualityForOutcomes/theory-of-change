@@ -65,13 +65,23 @@ export default function AdminLayout() {
   const location = useLocation();
   
   const logout = () => {
-    localStorage.removeItem("qfo_token");
+    try { localStorage.removeItem("qfo_token"); } catch {}
     const appLogin = import.meta.env.VITE_MYAPP_LOGIN_URL;
     if (!appLogin) {
-    throw new Error('VITE_MYAPP_LOGIN_URL is not set in .env');
-  }
-    // Full redirect to unified login page in my-app
-    window.location.assign(appLogin);
+      throw new Error('VITE_MYAPP_LOGIN_URL is not set in .env');
+    }
+    // Redirect to my-app logout to ensure localStorage is cleared on that origin
+    let target = appLogin;
+    try {
+      const u = new URL(appLogin);
+      u.pathname = "/logout";
+      u.search = "";
+      target = u.toString();
+    } catch {
+      // Fallback: replace common login path segment with logout
+      target = appLogin.replace(/login(?:\/?$)/, "logout");
+    }
+    window.location.assign(target);
   };
 
   const isActive = (path) => location.pathname === path;

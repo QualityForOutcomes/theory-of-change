@@ -572,7 +572,6 @@ export const updateSubscription = async (data: {
 }) => {
   try {
     // Backend expects EXACT camelCase keys as below
-    debugger;
     const payload = {
       subscriptionId: data.subscriptionId,
       email: data.email,
@@ -592,28 +591,13 @@ export const updateSubscription = async (data: {
       },
     });
 
-    const { success, message } = response.data || {};
-    if (!success) {
-      throw new Error(message || "Failed to update subscription");
-    }
-    return { success, message };
+    const { success, data: resData, message } = response.data;
+
+    if (!success) throw new Error(message || "Failed to update subscription");
+
+    return resData;
   } catch (err: any) {
-    // Enhanced logging for easier debugging
-    const status = err?.response?.status;
-    const data = err?.response?.data;
-    console.error(
-      "Subscription update error",
-      {
-        status,
-        message: err?.message,
-        response: data,
-      }
-    );
-    // Dev/local fallback: if backend endpoint is unavailable or unauthorized, simulate success
-    if (status === 404 || status === 401 || isNetworkError(err)) {
-      return { success: true, message: "Subscription saved locally (dev fallback)" };
-    }
-    throw new Error(err.response?.data?.message || err.message || "Failed to update subscription");
+    throw new Error(err?.response?.data?.message || err.message || "Failed to update subscription");
   }
 };
 

@@ -49,6 +49,7 @@ export default withCors(async function handler(req: VercelRequest, res: VercelRe
       res.status(401).json({ success: false, message: auth.error || 'Unauthorized', statusCode: 401 });
       return;
     }
+
  
   const { subject, html } = (req.body as any) || {};
   if (!subject || typeof subject !== 'string' || subject.trim().length < 2) {
