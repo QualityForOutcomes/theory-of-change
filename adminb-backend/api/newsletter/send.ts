@@ -41,10 +41,14 @@ export default withCors(async function handler(req: VercelRequest, res: VercelRe
 
   // Admin authentication
   const auth = await verifyAdminAuto(req);
-  if (!auth.success || !auth.user || !hasRequiredRole(auth.user.role || 'viewer', 'admin')) {
-    res.status(401).json({ success: false, message: auth.error || 'Unauthorized', statusCode: 401 });
-    return;
-  }
+  // if (!auth.success || !auth.user || !hasRequiredRole(auth.user.role || 'viewer', 'admin')) {
+  //   res.status(401).json({ success: false, message: auth.error || 'Unauthorized', statusCode: 401 });
+  //   return;
+  // }
+  if (!auth.success || !auth.user) {
+      res.status(401).json({ success: false, message: auth.error || 'Unauthorized', statusCode: 401 });
+      return;
+    }
 
   const { subject, html } = (req.body as any) || {};
   if (!subject || typeof subject !== 'string' || subject.trim().length < 2) {
