@@ -1,8 +1,13 @@
 import axios from "axios";
 
 // Use env-driven base URL, with production fallback
-const resolvedBase = import.meta.env.VITE_API_URL || 'https://toc-adminbackend.vercel.app';
+const resolvedBase = import.meta.env.DEV
+  ? '' // use relative paths in dev; Vite proxy forwards to backend
+  : (import.meta.env.VITE_API_URL || 'https://toc-adminbackend.vercel.app');
+
 if (import.meta.env.DEV) {
+  console.info('[api] baseURL (dev via proxy):', resolvedBase || '[relative]');
+} else {
   console.info('[api] baseURL:', resolvedBase);
   if (/localhost|127\.0\.0\.1/.test(resolvedBase)) {
     console.warn('[api] Using localhost API base. Ensure your backend server is running.');

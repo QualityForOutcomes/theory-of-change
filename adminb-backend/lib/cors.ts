@@ -24,9 +24,13 @@ function getAllowedOrigins(): string[] {
     // Default origins
     return [
         'http://localhost:5173',      // Vite dev server
+        'http://127.0.0.1:5173',      // Vite dev server (loopback alias)
         'http://localhost:5174',      // Vite dev server (alternate port)
+        'http://127.0.0.1:5174',      // Vite dev server (alternate port, loopback alias)
         'http://localhost:3000',      // React dev server
+        'http://127.0.0.1:3000',      // React dev server (loopback alias)
         'http://localhost:3004',      // Static preview server
+        'http://127.0.0.1:3004',      // Static preview server (loopback alias)
         'https://qfo-admin.vercel.app',         // Legacy production admin frontend
         'https://qfo-admin-*.vercel.app',       // Legacy preview deployments (wildcard)
         'https://toc-adminfrontend.vercel.app', // Current production admin frontend
