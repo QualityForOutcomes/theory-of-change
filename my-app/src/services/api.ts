@@ -629,8 +629,9 @@ export const updateSubscription = async (data: {
 // ---- Terms & Conditions APIs ----
 export const fetchTerms = async () => {
   try {
+    const base = ADMIN_API_BASE || ""; // fallback to relative path for CRA proxy
     const response = await axios.get(
-      `${ADMIN_API_BASE}/api/admin/terms`,
+      `${base}/api/admin/terms`,
       { headers: getAuthHeaders() }
     );
 
@@ -650,8 +651,9 @@ export const fetchTerms = async () => {
 
 export const updateTerms = async (content: string) => {
   try {
+    const base = ADMIN_API_BASE || ""; // fallback to relative path for CRA proxy
     const response = await axios.post(
-      `${ADMIN_API_BASE}/api/admin/terms`,
+      `${base}/api/admin/terms`,
       { content },
       { headers: { ...getAuthHeaders(), "Content-Type": "application/json" } }
     );
