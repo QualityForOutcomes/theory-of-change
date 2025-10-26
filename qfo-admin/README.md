@@ -1,47 +1,78 @@
-# QFO Admin — Frontend
+# QFO Admin — Frontend (Vercel)
 
-A Vite + React admin dashboard for Quality for Outcomes. Provides protected access to operational metrics, terms management, and newsletter dispatch. Uses React Router for navigation and React Query for data fetching, with Axios for API calls.
+A Vite + React admin dashboard for Quality for Outcomes, deployed on Vercel. It provides protected access to operational metrics, terms management, and newsletter dispatch. Uses React Router for navigation, React Query for data fetching, and Axios for authenticated API calls.
+
+## Features
+- Protected admin shell with JWT handoff from `?token` and unified logout.
+- Dashboard metrics: traffic, revenue, subscriptions, premium/pro customer KPIs.
+- Terms & Conditions editor with validation and Markdown (`@uiw/react-md-editor`).
+- Newsletter broadcast tooling (subscribe and send endpoints).
+- Dev proxy for `"/api"` and environment-driven base URL in production.
 
 ## Quick Start
-
-- Prerequisites: Node 18+ and npm.
-- Install:
-  ```bash
-  cd qfo-admin
-  npm install
-  ```
-- Run dev server:
-  ```bash
-  npm run dev
-  ```
-  The server starts on `http://localhost:5173` (or the next available port shown in the terminal). In development, all `"/api"` requests are proxied to the admin backend.
-- Build & preview:
-  ```bash
-  npm run build
-  npm run preview
-  ```
-- Lint:
-  ```bash
-  npm run lint
-  ```
+- Prerequisites: Node `>=18`, Vercel CLI (`npm i -g vercel`).
+- Install deps: `npm install`.
+- Create `.env.local` (refer the `.env.example`) in project root with:
+  - Frontend: `VITE_API_URL` (admin backend base URL), `VITE_MYAPP_LOGIN_URL` (user app login URL).
+  - Optional: `VITE_USE_DASHBOARD_QUICK_STUB`, `VITE_STRIPE_PRO_PRODUCT_ID`, `VITE_STRIPE_PREMIUM_PRODUCT_ID`, `VITE_STRIPE_DASHBOARD_PAYOUT_URL`.
+- Run locally: `npm run dev`.
+- Or via Vercel: `vercel dev` (uses SPA rewrites from `vercel.json`).
+- Build & preview: `npm run build` then `npm run preview`.
+- Run tests: `npx vitest run --coverage`.
 
 ## Environment Variables
 Create a `.env` (see `.env.example`) and set:
-
 - `VITE_API_URL` — Admin backend base URL for production builds. In dev, the app uses relative `"/api"` and the Vite proxy.
 - `VITE_MYAPP_LOGIN_URL` — Login page on the user app (e.g. `http://localhost:3000/login` or `https://toc-userfrontend.vercel.app/login`).
 - `VITE_USE_DASHBOARD_QUICK_STUB` — Optional (`true|1|yes`) to fetch quick dashboard data via `"/api/dashboard?quick=1"`.
 - `VITE_STRIPE_PRO_PRODUCT_ID`, `VITE_STRIPE_PREMIUM_PRODUCT_ID` — Optional product IDs surfaced in UI.
-- `VITE_STRIPE_DASHBOARD_PAYOUT_URL` — Optional link used by the dashboard to open Stripe payout settings. Defaults to `https://dashboard.stripe.com/test/settings/payouts`.
+- `VITE_STRIPE_DASHBOARD_PAYOUT_URL` — Optional link for Stripe payout settings; defaults to `https://dashboard.stripe.com/test/settings/payouts`.
 
 Example:
 ```env
 VITE_API_URL=https://toc-adminbackend.vercel.app
-VITE_MYAPP_LOGIN_URL=http://localhost:3000/login
+VITE_MYAPP_LOGIN_URL=https://toc-userfrontend.vercel.app/login
 VITE_USE_DASHBOARD_QUICK_STUB=false
 VITE_STRIPE_PRO_PRODUCT_ID=prod_...
 VITE_STRIPE_PREMIUM_PRODUCT_ID=prod_...
+VITE_STRIPE_DASHBOARD_PAYOUT_URL=https://dashboard.stripe.com/test/settings/payouts
 ```
+
+## Backend Endpoints (consumed)
+- `GET /api/dashboard` — Dashboard data (supports `?quick=1` when `VITE_USE_DASHBOARD_QUICK_STUB` is set).
+- `GET /api/admin/terms` — Fetch current terms content and metadata.
+- `POST /api/admin/terms` — Update terms content.
+- `GET /api/terms/history` — Optional; terms versions/history (if supported by backend).
+- `POST /api/newsletter/subscribe` — Subscribe an email to the newsletter.
+- `POST /api/newsletter/send` — Broadcast an email with `subject` and `html` body.
+
+Example request bodies:
+```json
+// POST /api/admin/terms
+{ "content": "...markdown or text..." }
+
+// POST /api/newsletter/subscribe
+{ "email": "user@example.com" }
+
+// POST /api/newsletter/send
+{ "subject": "Updates", "html": "<h1>Hello</h1>" }
+```
+
+## Architecture
+- Routing: `src/app/routes.jsx`
+  - Protects `/admin` routes via `ProtectedRoute` and handles token handoff from `?token=`.
+  - Routes: `/admin`, `/admin/dashboard`, `/admin/terms`, `/admin/newsletter`.
+- Layout: `src/layouts/AdminLayout.jsx`
+  - Header/navigation, logout button; logout clears `localStorage.qfo_token` and redirects to the user app’s `/logout` on `VITE_MYAPP_LOGIN_URL`.
+- Auth Guard: `src/routes/ProtectedRoutes.jsx`
+  - On first load, reads `?token` and stores `localStorage.qfo_token`.
+  - When missing/expired token, hard-redirects to the user app’s `/logout`.
+- Data Fetching: React Query
+  - `src/features/admin/hooks/useDashboard.js` calls `fetchDashboard` and normalizes via `adaptDashboard`.
+- API Client: `src/services/api.js`
+  - Axios instance uses bearer token from `localStorage.qfo_token`.
+  - Dev base is relative (proxy); prod base is `VITE_API_URL`. On `401`, clears token and redirects to user app logout.
+- Services: `src/services/newsletter.js` exposes `newsletterSubscribe`, `newsletterSend`.
 
 ## Dev Proxy
 `vite.config.js` proxies all `"/api"` routes in dev to:
@@ -76,44 +107,9 @@ Axios uses a relative base in dev so requests go through this proxy; in producti
   ```
 Test config (`vitest.config.ts`) uses `jsdom`, `src/setupTests.js`, and the V8 coverage provider with `text` and `html` reporters.
 
-## Architecture
-
-- Routing: `src/app/routes.jsx`
-  - Uses `ProtectedRoute` to guard the admin shell and handle token handoff from `?token=`.
-  - Routes:
-    - `/admin` and `/admin/dashboard` → `AdminDashboard`
-    - `/admin/terms` → `TermsManagement`
-    - `/admin/newsletter` → `Newsletter`
-- Layout: `src/layouts/AdminLayout.jsx`
-  - Header with navigation, logout button, and shell layout.
-  - Logout clears `localStorage.qfo_token` and redirects to the user app’s `/logout` on `VITE_MYAPP_LOGIN_URL`.
-- Auth Guard: `src/routes/ProtectedRoutes.jsx`
-  - On first load, reads `?token` from the URL and stores it as `localStorage.qfo_token`.
-  - When no token, redirects to the user app’s `/logout` (ensures unified sign-out).
-- Data Fetching: React Query
-  - `src/features/admin/hooks/useDashboard.js` calls `fetchDashboard` and normalizes data via `adaptDashboard`.
-- API Client: `src/services/api.js`
-  - Axios instance with bearer token from `localStorage.qfo_token`.
-  - Dev base is relative (proxy), prod base is `VITE_API_URL`.
-  - On `401`, clears token and hard redirects to the user app’s logout.
-- Features:
-  - `AdminDashboard.jsx`: KPIs, charts (Recharts), revenue, subscriptions list.
-  - `TermsManagement.jsx`: fetch/edit/validate Terms & Conditions; includes a Markdown editor (`@uiw/react-md-editor`).
-  - `Newsletter.jsx`: broadcast tool calling `POST /api/newsletter/send`.
-- Services:
-  - `src/services/newsletter.js`: `newsletterSubscribe`, `newsletterSend`.
-
-## Styling
-Primarily inline styles with CSS variables (`src/index.css`). Tailwind CSS v4 is available in devDependencies; use as preferred. Iconography via `lucide-react`; charts via `recharts`.
-
-## Deployment
+## Deployment (Vercel)
 - Build with `npm run build`; output is in `dist/`.
-
-### Vercel
-- Uses `vercel.json` for SPA hosting.
-- Build command: `npm run build`
-- Output directory: `dist`
-- SPA rewrites: `/(.*)` → `/index.html` to support client-side routing.
+- SPA rewrites ensure client routing: `/(.*)` → `/index.html`.
 
 `vercel.json`:
 ```json
@@ -129,17 +125,16 @@ Primarily inline styles with CSS variables (`src/index.css`). Tailwind CSS v4 is
 - Set environment variables in Vercel → Project Settings → Environment Variables:
   - `VITE_API_URL` → `https://toc-adminbackend.vercel.app`
   - `VITE_MYAPP_LOGIN_URL` → `https://toc-userfrontend.vercel.app/login`
-  - Optional: `VITE_USE_DASHBOARD_QUICK_STUB`, `VITE_STRIPE_PRO_PRODUCT_ID`, `VITE_STRIPE_PREMIUM_PRODUCT_ID`
+  - Optional: `VITE_USE_DASHBOARD_QUICK_STUB`, `VITE_STRIPE_PRO_PRODUCT_ID`, `VITE_STRIPE_PREMIUM_PRODUCT_ID`, `VITE_STRIPE_DASHBOARD_PAYOUT_URL`
 - Production URL: `https://toc-adminfrontend.vercel.app` (preview deployments under `https://toc-adminfrontend-*.vercel.app`).
 - Backend CORS already allows the production and preview domains; if you use a custom domain, update backend `ALLOWED_ORIGINS` accordingly.
-- API calls use `VITE_API_URL`; do not rely on dev proxy in production.
 
 ### Deploy Steps
 - Connect the repo in Vercel or run `vercel --prod` from `qfo-admin`.
 - Add/verify environment variables, then redeploy if changed.
-- Confirm the SPA rewrite works by testing nested routes (e.g., `https://toc-adminfrontend.vercel.app/admin/terms`).
+- Confirm SPA rewrites by testing nested routes (e.g., `/admin/terms`).
 
 ## Notes
 - If `VITE_MYAPP_LOGIN_URL` is missing, protected routes render a configuration error.
+- When testing auth flows, simulate handoff by visiting `/admin?token=YOUR_JWT`.
 - In dev, check the terminal for the actual port (commonly `5173` or `5174`).
-- When testing auth flows, you can simulate handoff by visiting `/admin?token=YOUR_JWT`.
