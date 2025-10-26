@@ -2,6 +2,33 @@
 
 Serverless admin API deployed on Vercel and consumed by the admin frontend.
 
+## Quick Start
+
+### Prerequisites
+- Node >=18
+- Vercel CLI: `npm i -g vercel`
+
+### Install
+- `npm install`
+
+### Environment: `.env.local`
+- `cp .env.example .env.local`
+- Fill required keys:
+  - Supabase: `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` (required), `SUPABASE_ANON_KEY` (optional)
+  - Auth: `JWT_SECRET` (required), `JWT_REFRESH_SECRET` (recommended), `JWT_EXPIRES_IN`, `JWT_REFRESH_EXPIRES_IN`
+  - External user service (recommended): `USER_SERVICE_BASE_URL`, `USER_SERVICE_VERIFY_PATH`
+  - CORS: `ALLOWED_ORIGINS` (comma-separated)
+  - Stripe (optional): `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PRO_PRICE_ID`, `STRIPE_PREMIUM_PRICE_ID`, `STRIPE_PRO_PRODUCT_ID`, `STRIPE_PREMIUM_PRODUCT_ID`
+  - Newsletter (optional): `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, or `SENDGRID_API_KEY`, plus `NEWSLETTER_FROM_EMAIL`, `NEWSLETTER_FROM_NAME`
+  - Dev toggles: `DISABLE_AUTH=1` (non-prod only), `VERBOSE=1` (debug), `ALLOW_STUB_LOGIN=1` (not recommended for prod)
+
+### Run locally
+- `vercel dev`
+- API available at `http://localhost:3000/api/...`
+
+### Run tests
+- `npx jest --coverage`
+
 ## Production Overview
 
 - Base URL: `https://toc-adminbackend.vercel.app`
