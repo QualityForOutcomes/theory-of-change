@@ -21,6 +21,15 @@
 
 **Total Issues Resolved**: 11
 
+## Existing Issues
+
+### Payments & Subscriptions
+* Subscription downgrade feature access not properly restricted:
+  - When cancelling Premium subscription and downgrading to Pro, website should only load Pro features (currently loads incorrect features)
+  - When cancelling Pro subscription and downgrading to Free, website should only load Free features (currently loads incorrect features)
+  - When cancelling Pro subscription and upgrading to Premium, website should load all Premium features (currently not working correctly)
+* Export visualization feature not properly restricted to Pro and Premium tiers only
+
 ## Notes
 
 * `.env` files ignored by Git (see `.gitignore`)
@@ -46,6 +55,5 @@
 * **Product Owners**: Melinda Craike, Bo Rolih  
 * **Development Team**: Divyam Juneja, Dulanjali Koswatte, Dinil Kodituwakku, Monica Radhakrishnan
 
-
 **Version**: 1.0.0  
-**Status**: Production Ready 
+**Status**: Production Ready
