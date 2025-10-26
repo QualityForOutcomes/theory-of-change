@@ -1,86 +1,89 @@
-# QFO Admin Backend
+# QFO Admin Backend (Vercel Production)
 
-Serverless backend for admin APIs deployed on Vercel.
+Serverless admin API deployed on Vercel and consumed by the admin frontend.
 
-## Development
+## Production Overview
 
-1. Install dependencies: `npm install`
-2. Local Express dev server: `node dev-server.js` (or `npm run dev` for Vercel functions)
-3. Ensure `.env` has `PORT=4001` and optionally `DISABLE_AUTH=1` for local testing.
+- Base URL: `https://toc-adminbackend.vercel.app`
+- Admin Frontend: `https://toc-adminfrontend.vercel.app`
+- User Frontend (login/logout): `https://toc-userfrontend.vercel.app`
+- All APIs live under `https://toc-adminbackend.vercel.app/api/...`
 
-## Environment Variables
+## Key Endpoints
 
-Create a `.env` at the project root:
+- `GET /api/dashboard`
+  - Requires `Authorization: Bearer <token>`.
+  - Query `?quick=1` returns a fast stub for UI responsiveness.
+  - When `STRIPE_SECRET_KEY` is set, returns live aggregates (active subscription counts, revenue, trends, recent subscriptions). Without Stripe, returns a demo payload.
 
-```
-SUPABASE_URL=your_supabase_url
-SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
+- `GET /api/auth/verify`
+  - Validates token via `verifyAdminAuto` and returns the admin user payload.
 
-STRIPE_SECRET_KEY=sk_test_...
-STRIPE_WEBHOOK_SECRET=whsec_...
-STRIPE_PRO_PRICE_ID=price_...
-STRIPE_PREMIUM_PRICE_ID=price_...
-STRIPE_PRO_PRODUCT_ID=prod_...            # optional: match by Product ID
-STRIPE_PREMIUM_PRODUCT_ID=prod_...        # optional: match by Product ID
+- `POST /api/auth/login`
+  - Stub login (issues JWT). Disabled in production unless `ALLOW_STUB_LOGIN=1` and `JWT_SECRET` is configured.
 
-# External token verification (Option B)
-USER_SERVICE_BASE_URL=https://nodejs-serverless-function-express-rho-ashen.vercel.app
-USER_SERVICE_VERIFY_PATH=/api/auth/Verify
+- `GET | POST /api/admin/terms`
+  - Fetch or update Terms & Conditions content stored in Supabase (`TermsAndCondition` table using key `terms_content`).
 
-# JWT (local verification) and security controls
-JWT_SECRET=your_production_jwt_secret
-JWT_EXPIRES_IN=7d
-# Disable all auth checks only in non-production (local testing)
-DISABLE_AUTH=0
-# Explicitly allow stub login in production (default disabled)
-ALLOW_STUB_LOGIN=0
-```
+- `POST /api/newsletter/send`
+  - Dispatches newsletters to subscribers in `UserNewsLetterSubs` using SMTP or SendGrid if configured.
 
-Also set these in Vercel Project Settings → Environment Variables.
+- `POST /api/newsletter/subscribe`
+  - Upserts a subscriber by email (FK checked against `User`).
 
-### Auth Modes
+- `POST /api/webhooks/stripe`
+  - Stripe webhook endpoint; set `STRIPE_WEBHOOK_SECRET` and enable subscription/invoice events.
 
-- External verification (recommended): set `USER_SERVICE_BASE_URL` to your user service; backend verifies tokens at `USER_SERVICE_VERIFY_PATH`.
-- Local JWT verification (fallback): omit `USER_SERVICE_BASE_URL`; backend verifies tokens it issues via `/api/auth/login` using `JWT_SECRET`.
-- Dev bypass: `DISABLE_AUTH=1` only works when `NODE_ENV!==production`. In production, auth bypass is disabled.
-- Stub login in production: disabled by default; use `ALLOW_STUB_LOGIN=1` if you must enable temporarily (not recommended).
+## Frontend Integration
 
-## Stripe Webhook
+- Admin frontend attaches `Authorization: Bearer <token>` on each request.
+- Initial token handoff is supported via `?token=<JWT>`; the frontend stores it in `localStorage` and cleans the URL.
+- On `401`, the frontend hard-redirects to `https://toc-userfrontend.vercel.app/logout` to clear session.
+- In production, set `VITE_API_URL=https://toc-adminbackend.vercel.app` in the admin frontend.
 
-- Endpoint: `POST /api/webhooks/stripe`
-- Configure a Stripe webhook endpoint to point to your deployed URL, e.g. `https://<your-vercel-project>.vercel.app/api/webhooks/stripe`.
-- Events to enable:
-  - `customer.subscription.created`
-  - `customer.subscription.updated`
-  - `customer.subscription.deleted`
-  - `invoice.payment_succeeded`
-  - `invoice.payment_failed`
-  - `customer.created`
-  - `customer.updated`
+## Authentication & Security
 
-After creating the endpoint in Stripe Dashboard, copy the `Signing secret` and set it as `STRIPE_WEBHOOK_SECRET`.
+- Token sources: `Authorization` header (preferred), `auth_token` cookie, or `?token` query (discouraged for production).
+- External verification (recommended): set `USER_SERVICE_BASE_URL` (e.g., user service) and `USER_SERVICE_VERIFY_PATH` (default `/auth/me`). Fallback paths include `/api/auth/Verify`.
+- Local JWT verification (fallback): omit `USER_SERVICE_BASE_URL`; tokens issued via `/api/auth/login` are verified with `JWT_SECRET`.
+- Dev bypass: `DISABLE_AUTH=1` only applies when `NODE_ENV !== production`.
+- Stub login in production: disabled by default; set `ALLOW_STUB_LOGIN=1` only temporarily.
 
-### Local Testing
+## CORS
 
-Use Stripe CLI to forward events:
+- Allowed origins include `https://toc-adminfrontend.vercel.app`, `https://toc-userfrontend.vercel.app`, and local dev hosts. Override with `ALLOWED_ORIGINS` (comma-separated) in Vercel Environment Variables for custom domains.
 
-```
-stripe login
-stripe listen --forward-to localhost:3000/api/webhooks/stripe
-```
+## Required Environment Variables (Vercel)
 
-### Frontend (qfo-admin) Dev Setup
+- Supabase: `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` (required), `SUPABASE_ANON_KEY` (optional)
+- Stripe: `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PRO_PRICE_ID`, `STRIPE_PREMIUM_PRICE_ID`, optional `STRIPE_PRO_PRODUCT_ID`, `STRIPE_PREMIUM_PRODUCT_ID`
+- Auth: `JWT_SECRET`, `JWT_REFRESH_SECRET` (recommended), `JWT_EXPIRES_IN`, `JWT_REFRESH_EXPIRES_IN`, `USER_SERVICE_BASE_URL`, `USER_SERVICE_VERIFY_PATH`, `DISABLE_AUTH`, `ALLOW_STUB_LOGIN`
+- CORS: `ALLOWED_ORIGINS`
+- Newsletter (optional): `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, or `SENDGRID_API_KEY`, plus `NEWSLETTER_FROM_EMAIL`, `NEWSLETTER_FROM_NAME`
 
-- Vite dev server runs at `http://localhost:5173`.
-- Proxy forwards `/api` to backend on `http://localhost:4001`.
-- Axios `baseURL` is relative (`/`) in development so the proxy applies.
-- In `qfo-admin/.env.development`, set `VITE_DEV_BYPASS_AUTH=true` to bypass ProtectedRoute locally.
-- Backend `.env` can set `DISABLE_AUTH=1` to make `/api/dashboard` accessible without external token verification.
+Add all variables in Vercel → Project Settings → Environment Variables.
 
-With this setup, hitting `http://localhost:5173/api/dashboard` returns either:
-- Live Stripe aggregate data if `STRIPE_SECRET_KEY` is configured; message: `Dashboard data retrieved successfully`.
-- Demo payload if Stripe keys are absent; message: `Demo dashboard (no STRIPE_SECRET_KEY configured)`.
+## Stripe Webhook Setup (Production)
 
-Notes:
-- Premium/Pro totals count ONLY `active` subscriptions.
-- Tier detection matches either `price.id` (via `STRIPE_*_PRICE_ID`) or, if provided, `product.id` (via `STRIPE_*_PRODUCT_ID`). Use Product IDs when multiple prices exist under one tier.
+- Endpoint: `POST https://toc-adminbackend.vercel.app/api/webhooks/stripe`
+- Enable events: subscriptions (created/updated/deleted), invoices (payment_succeeded/payment_failed), and customer updates.
+- Set the Stripe “Signing secret” as `STRIPE_WEBHOOK_SECRET` in Vercel.
+
+## Example Requests (Production)
+
+- Verify auth:
+  - `curl -H "Authorization: Bearer $TOKEN" https://toc-adminbackend.vercel.app/api/auth/verify`
+- Dashboard (live):
+  - `curl -H "Authorization: Bearer $TOKEN" https://toc-adminbackend.vercel.app/api/dashboard`
+- Dashboard (quick stub):
+  - `curl -H "Authorization: Bearer $TOKEN" "https://toc-adminbackend.vercel.app/api/dashboard?quick=1"`
+- Update terms:
+  - `curl -X POST -H "Content-Type: application/json" -H "Authorization: Bearer $TOKEN" -d '{"content":"..."}' https://toc-adminbackend.vercel.app/api/admin/terms`
+- Send newsletter:
+  - `curl -X POST -H "Content-Type: application/json" -H "Authorization: Bearer $TOKEN" -d '{"subject":"Hello","html":"<p>Welcome</p>"}' https://toc-adminbackend.vercel.app/api/newsletter/send`
+
+## Notes
+
+- Premium/Pro totals count only `active` subscriptions; tier detection matches by `price.id` or `product.id`.
+- Set `ALLOWED_ORIGINS` when using custom frontend domains.
+- In production, prefer `Authorization` header over `?token` for security.
