@@ -1,77 +1,145 @@
-# QFO Admin — Quick Start
+# QFO Admin — Frontend
 
-A lightweight React + Vite admin dashboard. This guide gives simple, practical steps to set up, run, test, and build the app.
+A Vite + React admin dashboard for Quality for Outcomes. Provides protected access to operational metrics, terms management, and newsletter dispatch. Uses React Router for navigation and React Query for data fetching, with Axios for API calls.
 
-## Prerequisites
-- Node.js 18+ (LTS recommended)
-- npm 9+ (or use `pnpm`/`yarn` if preferred)
+## Quick Start
 
-## 1) Install
-```bash
-# from repo root
-cd qfo-admin
-npm install
+- Prerequisites: Node 18+ and npm.
+- Install:
+  ```bash
+  cd qfo-admin
+  npm install
+  ```
+- Run dev server:
+  ```bash
+  npm run dev
+  ```
+  The server starts on `http://localhost:5173` (or the next available port shown in the terminal). In development, all `"/api"` requests are proxied to the admin backend.
+- Build & preview:
+  ```bash
+  npm run build
+  npm run preview
+  ```
+- Lint:
+  ```bash
+  npm run lint
+  ```
+
+## Environment Variables
+Create a `.env` (see `.env.example`) and set:
+
+- `VITE_API_URL` — Admin backend base URL for production builds. In dev, the app uses relative `"/api"` and the Vite proxy.
+- `VITE_MYAPP_LOGIN_URL` — Login page on the user app (e.g. `http://localhost:3000/login` or `https://toc-userfrontend.vercel.app/login`).
+- `VITE_USE_DASHBOARD_QUICK_STUB` — Optional (`true|1|yes`) to fetch quick dashboard data via `"/api/dashboard?quick=1"`.
+- `VITE_STRIPE_PRO_PRODUCT_ID`, `VITE_STRIPE_PREMIUM_PRODUCT_ID` — Optional product IDs surfaced in UI.
+- `VITE_STRIPE_DASHBOARD_PAYOUT_URL` — Optional link used by the dashboard to open Stripe payout settings. Defaults to `https://dashboard.stripe.com/test/settings/payouts`.
+
+Example:
+```env
+VITE_API_URL=https://toc-adminbackend.vercel.app
+VITE_MYAPP_LOGIN_URL=http://localhost:3000/login
+VITE_USE_DASHBOARD_QUICK_STUB=false
+VITE_STRIPE_PRO_PRODUCT_ID=prod_...
+VITE_STRIPE_PREMIUM_PRODUCT_ID=prod_...
 ```
 
-## 2) Configure Environment
-- Copy `.env.example` to `.env`:
-```bash
-cp .env.example .env
+## Dev Proxy
+`vite.config.js` proxies all `"/api"` routes in dev to:
+```js
+server: {
+  proxy: {
+    '/api': {
+      target: 'https://toc-adminbackend.vercel.app',
+      changeOrigin: true,
+      secure: true,
+    }
+  }
+}
 ```
-- Fill in any required values in `.env` (e.g., API URLs, auth keys). If unsure, start with defaults and adjust when connecting to your backend.
+Axios uses a relative base in dev so requests go through this proxy; in production it uses `VITE_API_URL`.
 
-## 3) Run in Development
-```bash
-npm run dev
-```
-- Open the printed URL (usually `http://localhost:5173/`).
-- Hot Reload (Fast Refresh) is enabled via `@vitejs/plugin-react`.
+## Scripts
+- `npm run dev` — Start local dev server.
+- `npm run build` — Build production bundle to `dist/`.
+- `npm run preview` — Preview built app locally.
+- `npm run lint` — Run ESLint on the project.
 
-## 4) Lint
-```bash
-npm run lint
-```
-- Ensures code quality using ESLint. Fix issues as reported in the terminal.
+## Testing & Coverage
+- Run tests:
+  ```bash
+  npx vitest run
+  ```
+- Run coverage and open HTML report:
+  ```bash
+  npx vitest run --coverage
+  open coverage/index.html
+  ```
+Test config (`vitest.config.ts`) uses `jsdom`, `src/setupTests.js`, and the V8 coverage provider with `text` and `html` reporters.
 
-## 5) Test (Vitest)
-Vitest is installed. If you want to run tests:
-```bash
-npx vitest
-# or for UI mode
-npx vitest --ui
-```
-- Test files live under `__tests__` or `*.test.ts(x)` (if present).
+## Architecture
 
-## 6) Build for Production
-```bash
-npm run build
-```
-- Outputs production assets to `dist/`.
-- To preview the build locally:
-```bash
-npm run preview
-```
+- Routing: `src/app/routes.jsx`
+  - Uses `ProtectedRoute` to guard the admin shell and handle token handoff from `?token=`.
+  - Routes:
+    - `/admin` and `/admin/dashboard` → `AdminDashboard`
+    - `/admin/terms` → `TermsManagement`
+    - `/admin/newsletter` → `Newsletter`
+- Layout: `src/layouts/AdminLayout.jsx`
+  - Header with navigation, logout button, and shell layout.
+  - Logout clears `localStorage.qfo_token` and redirects to the user app’s `/logout` on `VITE_MYAPP_LOGIN_URL`.
+- Auth Guard: `src/routes/ProtectedRoutes.jsx`
+  - On first load, reads `?token` from the URL and stores it as `localStorage.qfo_token`.
+  - When no token, redirects to the user app’s `/logout` (ensures unified sign-out).
+- Data Fetching: React Query
+  - `src/features/admin/hooks/useDashboard.js` calls `fetchDashboard` and normalizes data via `adaptDashboard`.
+- API Client: `src/services/api.js`
+  - Axios instance with bearer token from `localStorage.qfo_token`.
+  - Dev base is relative (proxy), prod base is `VITE_API_URL`.
+  - On `401`, clears token and hard redirects to the user app’s logout.
+- Features:
+  - `AdminDashboard.jsx`: KPIs, charts (Recharts), revenue, subscriptions list.
+  - `TermsManagement.jsx`: fetch/edit/validate Terms & Conditions; includes a Markdown editor (`@uiw/react-md-editor`).
+  - `Newsletter.jsx`: broadcast tool calling `POST /api/newsletter/send`.
+- Services:
+  - `src/services/newsletter.js`: `newsletterSubscribe`, `newsletterSend`.
 
-## Project Notes
-- Tooling: React 19, Vite 7, React Router, Axios, TanStack Query, TailwindCSS.
-- Styling: TailwindCSS is included; add your styles in `src/` as needed.
-- Routing: Pages are under `src/`; update routes in the router configuration.
-- API: Use Axios clients; configure base URLs via `.env` when needed.
-
-## Troubleshooting
-- Port in use: set a different port with `--port` (e.g., `npm run dev -- --port=5174`).
-- Env not loaded: ensure `.env` exists and values are correct; restart the dev server after changes.
-- Node version: verify `node -v` is 18+.
-
-## Scripts (package.json)
-- `npm run dev` — start the dev server
-- `npm run build` — production build
-- `npm run preview` — preview the production build
-- `npm run lint` — run ESLint
+## Styling
+Primarily inline styles with CSS variables (`src/index.css`). Tailwind CSS v4 is available in devDependencies; use as preferred. Iconography via `lucide-react`; charts via `recharts`.
 
 ## Deployment
-- The project includes `vercel.json`. For Vercel deployment:
-  - Connect the repo to Vercel and set required env vars.
-  - Use the default build command (`npm run build`), output `dist/`.
+- Build with `npm run build`; output is in `dist/`.
 
-That’s it — you’re ready to develop and ship QFO Admin.
+### Vercel
+- Uses `vercel.json` for SPA hosting.
+- Build command: `npm run build`
+- Output directory: `dist`
+- SPA rewrites: `/(.*)` → `/index.html` to support client-side routing.
+
+`vercel.json`:
+```json
+{
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
+}
+```
+
+- Set environment variables in Vercel → Project Settings → Environment Variables:
+  - `VITE_API_URL` → `https://toc-adminbackend.vercel.app`
+  - `VITE_MYAPP_LOGIN_URL` → `https://toc-userfrontend.vercel.app/login`
+  - Optional: `VITE_USE_DASHBOARD_QUICK_STUB`, `VITE_STRIPE_PRO_PRODUCT_ID`, `VITE_STRIPE_PREMIUM_PRODUCT_ID`
+- Production URL: `https://toc-adminfrontend.vercel.app` (preview deployments under `https://toc-adminfrontend-*.vercel.app`).
+- Backend CORS already allows the production and preview domains; if you use a custom domain, update backend `ALLOWED_ORIGINS` accordingly.
+- API calls use `VITE_API_URL`; do not rely on dev proxy in production.
+
+### Deploy Steps
+- Connect the repo in Vercel or run `vercel --prod` from `qfo-admin`.
+- Add/verify environment variables, then redeploy if changed.
+- Confirm the SPA rewrite works by testing nested routes (e.g., `https://toc-adminfrontend.vercel.app/admin/terms`).
+
+## Notes
+- If `VITE_MYAPP_LOGIN_URL` is missing, protected routes render a configuration error.
+- In dev, check the terminal for the actual port (commonly `5173` or `5174`).
+- When testing auth flows, you can simulate handoff by visiting `/admin?token=YOUR_JWT`.
