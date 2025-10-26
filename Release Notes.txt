@@ -1,0 +1,57 @@
+## Bug Fixes (v1.0.0)
+
+### Authentication & Security
+* Fixed password reset email configuration
+* Resolved CORS errors on Vercel deployment  
+* Fixed admin routing to dashboard
+
+### Visualization
+* Fixed default colors after customization
+* Corrected string display in form fields
+* Fixed export content cutoff
+* Resolved hidden content issues
+
+### Payments & Subscriptions
+* Fixed Stripe integration
+* Resolved tier detection and feature access
+
+### Features
+* Fixed newsletter subscription errors
+* Corrected Terms & Conditions save button
+
+**Total Issues Resolved**: 11
+
+## Notes
+
+* `.env` files ignored by Git (see `.gitignore`)
+* All authenticated routes require `Authorization: Bearer <token>` header
+* JWT tokens stored in localStorage (cleared on logout)
+* Stripe handles payment security (PCI compliant, no card data stored)
+* Mock services in `__mocks__/` for testing without backend dependency
+
+## Technology Stack
+
+| Category | Technology |
+|----------|-----------|
+| **Framework** | React 18, TypeScript |
+| **Routing** | React Router v6 |
+| **HTTP Client** | Axios (REST APIs) |
+| **Payments** | Stripe.js |
+| **Testing** | Jest, React Testing Library |
+| **Styling** | CSS Modules |
+| **Build** | Create React App (Webpack) |
+
+## Team
+
+* **Product Owners**: Melinda Craike, Bo Rolih
+* **Scrum Master**: Milan Ghadiya  
+* **Development Team**: Divyam Juneja, Dulanjali Koswatte, Dinil Kodituwakku, Monica Radhakrishnan
+
+## License
+
+[Add license]
+
+---
+
+**Version**: 1.0.0  
+**Status**: Production Ready 
