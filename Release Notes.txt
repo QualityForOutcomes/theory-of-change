@@ -43,15 +43,9 @@
 
 ## Team
 
-* **Product Owners**: Melinda Craike, Bo Rolih
-* **Scrum Master**: Milan Ghadiya  
+* **Product Owners**: Melinda Craike, Bo Rolih  
 * **Development Team**: Divyam Juneja, Dulanjali Koswatte, Dinil Kodituwakku, Monica Radhakrishnan
 
-## License
-
-[Add license]
-
----
 
 **Version**: 1.0.0  
 **Status**: Production Ready 

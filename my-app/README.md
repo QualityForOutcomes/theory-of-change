@@ -13,7 +13,7 @@ TypeScript React application for creating and managing Theory of Change diagrams
 
 ## Quick Start
 
-**Prerequisites**: Node `>=14`, npm, Backend API running
+**Prerequisites**: Node `>=18`, npm, Backend API running
 
 **Install dependencies**:
 ```bash
